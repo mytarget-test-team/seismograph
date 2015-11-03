@@ -1,0 +1,172 @@
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+import time
+import logging
+from random import randint
+from importlib import import_module
+
+from .exceptions import LoaderError
+
+
+logger = logging.getLogger(__name__)
+
+
+TEST_NAME_PREFIX = 'test'
+DEFAULT_TEST_NAME = 'test'
+
+
+def check_path_is_exist(path):
+    if not os.path.exists(path):
+        raise LoaderError('Dir "{}" is not exist'.format(path))
+
+
+def is_package(path):
+    return os.path.isfile(
+        os.path.join(path, '__init__.py'),
+    )
+
+
+def is_py_module(file_name):
+    return not file_name.startswith('_') \
+        and file_name.endswith('.py')
+
+
+def load_module(module_name, package=None):
+    module_name = '{}{}'.format(
+        package + '.' if package else '', module_name,
+    )
+
+    # Can be conflict with global name
+    # We're obliged to talk about this
+    if module_name in sys.modules:
+        raise LoaderError(
+            'Module "{}" already exit in program context. {}.'.format(
+                module_name, sys.modules[module_name],
+            ),
+        )
+
+    module = import_module(module_name)
+
+    load_session = str(time.time() + randint(0, 1000))
+    system_name = '{}_{}'.format(module_name, load_session)
+
+    del sys.modules[module_name]
+    sys.modules[system_name] = module
+
+    return module
+
+
+def load_test_names_from_case(
+        cls,
+        test_name_prefix=None,
+        default_test_name=None):
+    def is_test_name(name):
+        return name.startswith((test_name_prefix or TEST_NAME_PREFIX)) \
+            or \
+            name == (default_test_name or DEFAULT_TEST_NAME)
+
+    for name in sorted(dir(cls)):
+        if is_test_name(name):
+            yield name
+
+
+def load_tests_from_case(
+        test_case_class,
+        config=None,
+        box_class=None,
+        extensions=None,
+        method_name=None,
+        test_name_prefix=None,
+        default_test_name=None):
+    logger.debug('Load test from test case: "%s"', test_case_class.__name__)
+
+    if method_name:
+        for name in filter(lambda n: n == method_name, dir(test_case_class)):
+            case = test_case_class(name, config=config)
+            if box_class:
+                yield box_class((case, ))
+            else:
+                yield case
+            raise StopIteration
+        else:
+            raise LoaderError(
+                'Test "{}" is not found on "{}"'.format(
+                    method_name, test_case_class.__name__,
+                ),
+            )
+    else:
+        names = load_test_names_from_case(
+            test_case_class,
+            test_name_prefix=(test_name_prefix or TEST_NAME_PREFIX),
+            default_test_name=(default_test_name or DEFAULT_TEST_NAME),
+        )
+
+        if box_class:
+            cases = []
+
+            for name in names:
+                cases.append(
+                    test_case_class(name, config=config, extensions=extensions)
+                )
+
+            yield box_class(cases)
+        else:
+            for name in names:
+                yield test_case_class(name, config=config, extensions=extensions)
+
+
+def load_suite_by_name(name, suites):
+    logger.debug('Load suite "%s" from list', name)
+
+    for suite in filter(lambda s: s.name == name, suites):
+        return suite
+    else:
+        raise LoaderError(
+            'Suite "{}" is not found'.format(name),
+        )
+
+
+def load_case_from_suite(class_name, suite):
+    logger.debug('Load test case "%s" from suite "%s"', class_name, suite.name)
+
+    for case_cls in filter(lambda c: c.__name__ == class_name, suite.cases):
+        return case_cls
+    else:
+        raise LoaderError(
+            'Test case "{}" is not found'.format(class_name),
+        )
+
+
+def load_suites_from_module(module, suite_class):
+    for attribute in dir(module):
+        value = getattr(module, attribute, None)
+        if isinstance(value, suite_class):
+            yield value
+
+
+def load_suites_from_path(path_to_dir, suite_class, package=None, recursive=True):
+    check_path_is_exist(path_to_dir)
+
+    lst_dir = os.listdir(path_to_dir)
+    full_path = lambda *n: os.path.join(path_to_dir, *n)
+
+    modules = (n.replace('.py', '') for n in lst_dir if is_py_module(n))
+
+    for module_name in modules:
+        module = load_module(module_name, package=package)
+
+        for suite in load_suites_from_module(module, suite_class):
+            yield suite
+
+    if recursive:
+        packs = (n for n in lst_dir if is_package(full_path(n)))
+
+        for pack in packs:
+            if package:
+                pack = '{}.{}'.format(package, pack)
+
+            for suite in load_suites_from_path(
+                    full_path(pack), suite_class, package=pack):
+                yield suite
