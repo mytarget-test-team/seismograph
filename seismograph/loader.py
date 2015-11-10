@@ -76,7 +76,6 @@ def load_tests_from_case(
         test_case_class,
         config=None,
         box_class=None,
-        extensions=None,
         method_name=None,
         test_name_prefix=None,
         default_test_name=None):
@@ -108,13 +107,13 @@ def load_tests_from_case(
 
             for name in names:
                 cases.append(
-                    test_case_class(name, config=config, extensions=extensions)
+                    test_case_class(name, config=config)
                 )
 
             yield box_class(cases)
         else:
             for name in names:
-                yield test_case_class(name, config=config, extensions=extensions)
+                yield test_case_class(name, config=config)
 
 
 def load_suite_by_name(name, suites):

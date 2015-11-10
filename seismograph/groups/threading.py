@@ -16,6 +16,8 @@ def target(runnable_object, result):
 class ThreadingSuiteGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         pool = ThreadPool(
             get_pool_size_of_value(self.config.ASYNC_SUITES),
         )
@@ -34,6 +36,8 @@ class ThreadingSuiteGroup(runnable.RunnableGroup):
 class ThreadingCaseGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         pool = ThreadPool(
             get_pool_size_of_value(self.config.ASYNC_TESTS, in_two=True),
         )

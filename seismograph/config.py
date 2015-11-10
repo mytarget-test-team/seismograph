@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_option_parser():
-    parser = OptionParser('seismograph [suites_path] [options]')
+    parser = OptionParser('seismograph <suites_path> [options]')
 
     result_group = OptionGroup(parser, 'Result options')
     result_group.add_option(

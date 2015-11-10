@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 from .. import runnable
 from ..case import CaseBox
-from ..result import State
 from ..xunit import XUnitData
 from ..utils.common import waiting_for
 from ..exceptions import TimeoutException
@@ -33,26 +32,6 @@ def target(suite, mp_result):
     mp_result.save_result()
 
 
-class MPResultState(State):
-
-    def __init__(self, *args, **kwargs):
-        super(MPResultState, self).__init__(*args, **kwargs)
-
-        self._lock = MPLock()
-        self._should_stop = MPValue(
-            'b', self._should_stop,
-        )
-
-    @property
-    def should_stop(self):
-        return self._should_stop.value
-
-    @should_stop.setter
-    def should_stop(self, value):
-        with self._lock:
-            self._should_stop.value = value
-
-
 class MPResult(object):
 
     MATCH = {}
@@ -61,7 +40,11 @@ class MPResult(object):
         self.result = result
         self.queue = MPQueue()
 
-        self.result.current_state = MPResultState(result)
+        self.result.current_state.support_mp(
+            should_stop=MPValue(
+                'b', self.result.current_state.should_stop,
+            ),
+        )
 
     def __getattr__(self, item):
         return getattr(self.result, item)
@@ -79,24 +62,21 @@ class MPResult(object):
 
     def match(self, suite):
         self.MATCH[suite.id] = suite
-        runnable.stopped_on(
-            suite,
-            MPValue('s', runnable.method_name(suite)),
+        suite.support_mp(
+            stopped_on=MPValue('s', runnable.method_name(suite)),
         )
 
         for case in suite:
             if isinstance(case, CaseBox):
                 for c in case:
                     self.MATCH[c.id] = c
-                    runnable.stopped_on(
-                        c,
-                        MPValue('s', runnable.method_name(c)),
+                    c.support_mp(
+                        stopped_on=MPValue('s', runnable.method_name(c)),
                     )
             else:
                 self.MATCH[case.id] = case
-                runnable.stopped_on(
-                    case,
-                    MPValue('s', runnable.method_name(case)),
+                case.support_mp(
+                    stopped_on=MPValue('s', runnable.method_name(case)),
                 )
 
     def save_result(self):
@@ -194,7 +174,6 @@ class Multiprocessing(object):
         try:
             waiting_for(
                 self.is_release,
-                sleep=0.001,
                 timeout=self.release_timeout,
             )
         except TimeoutException:
@@ -225,6 +204,8 @@ class Multiprocessing(object):
 class MultiprocessingSuiteGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         import_mp()
 
         with Multiprocessing(result, self.config, suites=self.objects) as mp:

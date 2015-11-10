@@ -13,7 +13,7 @@ def format_reason_to_output(reason):
     return reason.__format_reason_to_output__()
 
 
-class CrashReason(object):
+class Reason(object):
 
     def __init__(self, runnable_object, reason, config):
         self.__config = config
@@ -73,3 +73,7 @@ class CrashReason(object):
         tmp.append(self.__reason)
 
         return u'\n'.join(tmp)
+
+
+def create(runnable_object, reason, config=None):
+    return Reason(runnable_object, reason, config)

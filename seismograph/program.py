@@ -101,16 +101,16 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 
     def start_context(self, program):
         try:
-            call_to_chain(self.__setup_callbacks, None)
             call_to_chain(self.layers, 'on_setup', program)
+            call_to_chain(self.__setup_callbacks, None)
         except BaseException:
             runnable.stopped_on(program, 'start_context')
             raise
 
     def stop_context(self, program):
         try:
-            call_to_chain(self.__teardown_callbacks, None)
             call_to_chain(self.layers, 'on_teardown', program)
+            call_to_chain(self.__teardown_callbacks, None)
         except BaseException:
             runnable.stopped_on(program, 'stop_context')
             raise
@@ -190,6 +190,8 @@ class Program(runnable.RunnableObject):
 
         parser = config.create_option_parser()
         self.__context.on_option_parser(parser)
+        for ext in EXTENSIONS:
+            extensions.add_options(ext, parser)
         options, _ = parser.parse_args()
 
         self.__config = self.__config_class__(
@@ -291,12 +293,12 @@ class Program(runnable.RunnableObject):
 
     @staticmethod
     def ext(name):
-        return extensions.get(name, singleton=True)
+        return extensions.get(name)
 
-    def setup(self):
+    def setup(self, *args, **kwargs):
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         pass
 
     def add_setup(self, f):

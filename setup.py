@@ -4,7 +4,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 
 if __name__ == '__main__':
@@ -22,24 +22,29 @@ if __name__ == '__main__':
         include_package_data=True,
         zip_safe=False,
         platforms='any',
-        install_requires=[
+        install_requires=(
             'six',
             'requests',
             'flask>=0.7',
-        ],
+            'selenium==2.46.0',
+        ),
         entry_points={
-            'console_scripts': [
+            'console_scripts': (
                 'seismograph = seismograph.__main__:main',
-            ],
+                'seismograph.mock_server = seismograph.ext.mock_server.__main__:main',
+            ),
         },
         test_suite='tests',
-        classifiers=[
+        classifiers=(
             'Development Status :: 3 - Alpha',
+            'Framework :: Seismograph',
+            'Natural Language :: Russian',
             'Intended Audience :: Developers',
             'Operating System :: OS Independent',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: Implementation :: CPython',
             'Topic :: Software Development :: Testing',
-        ],
+        ),
     )

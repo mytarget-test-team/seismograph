@@ -10,6 +10,8 @@ from .. import runnable
 class DefaultSuiteGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         for suite in self.objects:
             suite(result)
 
@@ -17,5 +19,7 @@ class DefaultSuiteGroup(runnable.RunnableGroup):
 class DefaultCaseGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         for case in self.objects:
             case(result)

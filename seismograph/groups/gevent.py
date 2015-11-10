@@ -16,6 +16,8 @@ def target(runnable_object, result):
 class GeventSuiteGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         pool = Pool(
             get_pool_size_of_value(
                 self.config.ASYNC_SUITES,
@@ -35,6 +37,8 @@ class GeventSuiteGroup(runnable.RunnableGroup):
 class GeventCaseGroup(runnable.RunnableGroup):
 
     def run(self, result):
+        self._is_run = True
+
         pool = Pool(
             get_pool_size_of_value(
                 self.config.ASYNC_TESTS, in_two=True,

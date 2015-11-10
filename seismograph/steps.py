@@ -15,6 +15,7 @@ STEPS_HISTORY_ATTRIBUTE_NAME = '__history__'
 CURRENT_STEP_ATTRIBUTE_NAME = '__current_step__'
 CURRENT_FLOW_ATTRIBUTE_NAME = '__current_flow__'
 STEP_BY_STEP_ATTRIBUTE_NAME = '__step_by_step__'
+STEPS_STORAGE_ATTRIBUTE_NAME = '__step_methods__'
 
 
 def step(num, doc=None, performer=None):
@@ -59,6 +60,10 @@ def reason(case):
             ),
         ),
     )
+
+
+def get_step_methods(case):
+    return getattr(case, STEPS_STORAGE_ATTRIBUTE_NAME)
 
 
 def get_case_name(case):
@@ -154,7 +159,7 @@ def _run_step(case, method, flow=None):
         raise
 
 
-def _make_run_test(steps):
+def _make_run_test():
     def run_test(self):
         run_test.__doc__ = self.__doc__
 
@@ -174,7 +179,7 @@ def _make_run_test(steps):
                 if self.config.STEPS_LOG:
                     self.console(u'  Flow: ', pyv.unicode_string(flow))
 
-                for step_method in steps:
+                for step_method in get_step_methods(self):
                     setattr(
                         self,
                         CURRENT_STEP_ATTRIBUTE_NAME,
@@ -190,7 +195,7 @@ def _make_run_test(steps):
 
         else:
 
-            for step_method in steps:
+            for step_method in get_step_methods(self):
                 setattr(
                     self,
                     CURRENT_STEP_ATTRIBUTE_NAME,
@@ -238,7 +243,8 @@ class CaseMeta(type):
             setattr(cls, STEPS_HISTORY_ATTRIBUTE_NAME, [])
             setattr(cls, CURRENT_STEP_ATTRIBUTE_NAME, None)
             setattr(cls, STEP_BY_STEP_ATTRIBUTE_NAME, True)
+            setattr(cls, STEPS_STORAGE_ATTRIBUTE_NAME, steps)
             setattr(cls, CURRENT_FLOW_ATTRIBUTE_NAME, 'Without flows')
-            setattr(cls, loader.DEFAULT_TEST_NAME, _make_run_test(steps))
+            setattr(cls, loader.DEFAULT_TEST_NAME, _make_run_test())
 
         return cls

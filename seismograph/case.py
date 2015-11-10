@@ -31,31 +31,18 @@ def repeat(case):
 
 
 def prepare(case):
-    return case.__prepare__(
-        getattr(case, runnable.method_name(case)),
-    )
-
-
-def set_no_skip():
-    global _skip
-
-    def no_skip(reason):
-        def wrapper(f):
-            return f
-        return wrapper
-
-    _skip = no_skip
+    return case.__prepare__()
 
 
 def setup_class_proxy(case):
-    if hasattr(case.__class__, '__setup_class_was_called__'):
+    if getattr(case.__class__, '__setup_class_was_called__', False):
         return
     case.setup_class()
     setattr(case.__class__, '__setup_class_was_called__', True)
 
 
 def teardown_class_proxy(case):
-    if hasattr(case.__class__, '__teardown_class_was_called__'):
+    if getattr(case.__class__, '__teardown_class_was_called__', False):
         return
     case.teardown_class()
     setattr(case.__class__, '__teardown_class_was_called__', True)
@@ -92,6 +79,17 @@ def skip_unless(condition, reason):
     return lambda obj: obj
 
 
+def set_no_skip():
+    global _skip
+
+    def no_skip(reason):
+        def wrapper(f):
+            return f
+        return wrapper
+
+    _skip = no_skip
+
+
 def flows(*flows):
     def wrapper(f):
         if pyv.is_class_type(f):
@@ -102,10 +100,24 @@ def flows(*flows):
         def wrapped(self, *args, **kwargs):
             for flow in flows:
                 if self.config.FLOWS_LOG:
-                    self.console('  Flow: ', pyv.unicode_string(flow))
+                    with self.console.tab():
+                        self.console(
+                            'Flow: ', pyv.unicode_string(flow),
+                        )
                 f(self, flow, *args, **kwargs)
         return wrapped
     return wrapper
+
+
+def apply_flows(case):
+    if not steps.is_step_by_step_case(case) and case.__flows__:
+        setattr(
+            case.__class__,
+            runnable.method_name(case),
+            flows(*case.__flows__)(
+                getattr(case.__class__, runnable.method_name(case)),
+            ),
+        )
 
 
 def make_case_class_from_function(
@@ -211,6 +223,9 @@ class MountData(object):
 class AssertionBase(object):
 
     __unittest__ = __UnitTest__('__call__')
+
+    def fail(self, msg=None):
+        self.__unittest__.fail(msg)
 
     def true(self, expr, msg=None):
         self.__unittest__.assertTrue(expr, msg=msg)
@@ -327,11 +342,10 @@ class CaseContext(runnable.ContextOfRunnableObject):
     def __init__(self,
                  setup,
                  teardown,
-                 layers=None,
-                 extensions=None):
+                 layers=None):
         self.__require = []
+        self.__extensions = {}
         self.__layers = layers if layers else []
-        self.__extensions = dict(extensions) if extensions else {}
 
         self.__setup_callbacks = [setup]
         self.__teardown_callbacks = [teardown]
@@ -364,20 +378,20 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
     def start_context(self, case):
         try:
-            call_to_chain(self.__setup_callbacks, None)
             call_to_chain(
                 with_match_layers(self, case), 'on_setup', case,
             )
+            call_to_chain(self.__setup_callbacks, None)
         except BaseException:
             runnable.stopped_on(case, 'start_context')
             raise
 
     def stop_context(self, case):
         try:
-            call_to_chain(self.__teardown_callbacks, None)
             call_to_chain(
                 with_match_layers(self, case), 'on_teardown', case,
             )
+            call_to_chain(self.__teardown_callbacks, None)
         except BaseException:
             runnable.stopped_on(case, 'stop_context')
             raise
@@ -513,7 +527,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     #
 
     @runnable.mount_method
-    def __init__(self, method_name, config=None, extensions=None):
+    def __init__(self, method_name, config=None, use_flows=True):
         if not hasattr(self, method_name):
             raise AttributeError(
                 '"{}" does not have attribute "{}"'.format(
@@ -522,23 +536,17 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 ),
             )
 
-        if self.__flows__ and not steps.is_step_by_step_case(self):
-            setattr(
-                self.__class__,
-                method_name,
-                flows(*self.__flows__)(getattr(self.__class__, method_name)),
-            )
-
+        self.__is_run = False
         self.__console = None
         self.__config = config
-
-        self.__is_run = False
         self._method_name = method_name
+
+        if use_flows:
+            apply_flows(self)
 
         self.__context = CaseContext(
             self.setup,
             self.teardown,
-            extensions=extensions,
             layers=self.__layers__,
         )
 
@@ -589,8 +597,8 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     def __repeat__(self):
         yield
 
-    def __prepare__(self, method):
-        return method
+    def __prepare__(self):
+        pass
 
     @property
     def config(self):
@@ -617,10 +625,10 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     def teardown_class(cls):
         pass
 
-    def setup(self):
+    def setup(self, *args, **kwargs):
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         pass
 
     def ext(self, name):
@@ -667,7 +675,10 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 with self.__context(self):
                     try:
                         repeater = repeat(self)
-                        test_method = prepare(self)
+                        prepare(self)
+                        test_method = getattr(
+                            self, runnable.method_name(self),
+                        )
 
                         for _ in iter(repeater):
                             test_method()

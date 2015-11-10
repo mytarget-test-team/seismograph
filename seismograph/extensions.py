@@ -8,6 +8,18 @@ from .exceptions import ExtensionNotFound
 _TMP = {}
 
 
+def install(ext, program):
+    assert isinstance(ext, BaseExtension), \
+        '"{}" is not instance of "BaseExtension"'.format(
+            ext.__class__.__name__,
+        )
+    ext.__install__(program)
+
+
+def add_options(ext, parser):
+    ext.__add_options__(parser)
+
+
 class BaseExtension(object):
 
     def __call__(self, *args, **kwargs):
@@ -23,6 +35,10 @@ class BaseExtension(object):
                 self.__class__.__module__, self.__class__.__name__,
             ),
         )
+
+    @staticmethod
+    def __add_options__(parser):
+        pass
 
 
 class ExtensionContainer(object):
@@ -54,22 +70,13 @@ class SingletonExtensionContainer(ExtensionContainer):
         return self.ext
 
 
-def install(ext, program):
-    assert isinstance(ext, BaseExtension)
-    ext.__install__(program)
-
-
-def get(name, singleton=False):
+def get(name):
     try:
         ext = _TMP[name]
     except KeyError:
         raise ExtensionNotFound(name)
 
     if isinstance(ext, ExtensionContainer):
-        if singleton:
-            if not isinstance(ext, SingletonExtensionContainer):
-                ext = SingletonExtensionContainer(ext())
-                _TMP[name] = ext
         return ext()
 
     return deepcopy(ext)

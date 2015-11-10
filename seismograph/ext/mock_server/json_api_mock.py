@@ -3,7 +3,7 @@
 import re
 import json
 
-from .base import BaseMock
+from .mock import BaseMock
 from .base import BaseMockServer
 
 

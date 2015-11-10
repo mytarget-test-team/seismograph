@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .base import BaseMock
+from optparse import OptionGroup
+
+from .mock import BaseMock
 from .base import BaseMockServer
 from .json_api_mock import JsonMock
 from .json_api_mock import JsonApiMockServer
@@ -21,27 +23,51 @@ class MockServerExtension(BaseExtension):
     __config_key__ = 'MOCK_SERVER_EX'
     __default_server_type__ = 'json_api'
 
+    @staticmethod
+    def __add_options__(parser):
+        group = OptionGroup(parser, 'MockServer extension options')
+
+        group.add_option(
+            '--mock-server-mocks-dir',
+            dest='MOCK_SERVER_MOCKS_DIR',
+            default=None,
+        )
+        group.add_option(
+            '--mock-server-host',
+            dest='MOCK_SERVER_HOST',
+            default=None,
+        )
+        group.add_option(
+            '--mock-server-port',
+            dest='MOCK_SERVER_PORT',
+            default=None,
+            type=int,
+        )
+        group.add_option(
+            '--mock-server-debug',
+            dest='MOCK_SERVER_DEBUG',
+            action='store_true',
+            default=False,
+        )
+
+        parser.add_option_group(group)
+
     def __install__(self, program):
         params = program.config.get(self.__config_key__, {})
 
         ex_kwargs = {
-            'host': params.get('HOST'),
-            'port': params.get('PORT'),
             'mocks': params.get('MOCKS'),
-            'debug': params.get('DEBUG'),
-            'mocks_path': params.get('MOCKS_PATH'),
+            'host': program.config.MOCK_SERVER_HOST or params.get('HOST'),
+            'port': program.config.MOCK_SERVER_PORT or params.get('PORT'),
+            'debug': program.config.MOCK_SERVER_DEBUG or params.get('DEBUG'),
+            'mocks_path': program.config.MOCK_SERVER_MOCKS_DIR or params.get('MOCKS_PATH'),
             'server_type': params.get(
                 'SERVER_TYPE', self.__default_server_type__,
             ),
-            'gevent': program.config.GEVENT,
-            'threading': program.config.THREADING,
-            'multiprocessing': program.config.MULTIPROCESSING,
         }
 
         program.shared_extension(
-            self.__ex_name__, self,
-            kwargs=ex_kwargs,
-            singleton=params.get('SINGLETON', False),
+            self.__ex_name__, self, singleton=True, kwargs=ex_kwargs,
         )
 
     def __call__(self,
@@ -49,10 +75,7 @@ class MockServerExtension(BaseExtension):
                  port=None,
                  mocks=None,
                  debug=False,
-                 gevent=False,
                  mocks_path=None,
-                 threading=False,
-                 multiprocessing=False,
                  server_type=__default_server_type__):
         try:
             mock_server_class = SERVER_TYPES[server_type]
@@ -67,9 +90,6 @@ class MockServerExtension(BaseExtension):
             port=port,
             mocks=mocks,
             debug=debug,
-            gevent=gevent,
-            threading=threading,
-            multiprocessing=multiprocessing,
         )
 
 

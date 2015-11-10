@@ -4,6 +4,7 @@ from functools import wraps
 from contextlib import contextmanager
 
 from .utils import pyv
+from .utils.common import MPSupportedValue
 
 
 def reason(runnable):
@@ -78,7 +79,9 @@ class RunnableObject(object):
 
     def __init__(self):
         self.__id = id(self)
-        self.__stopped_on = method_name(self)
+        self.__stopped_on = MPSupportedValue(
+            method_name(self),
+        )
 
     def __call__(self, *args, **kwargs):
         return self.run(*args, **kwargs)
@@ -97,15 +100,11 @@ class RunnableObject(object):
 
     @property
     def _stopped_on(self):
-        if hasattr(self.__stopped_on, 'value'):
-            return self.__stopped_on.value
+        return self.__stopped_on.value
 
     @_stopped_on.setter
     def _stopped_on(self, value):
-        if hasattr(self.__stopped_on, 'value'):
-            self.__stopped_on.value = value
-        else:
-            self.__stopped_on = value
+        self.__stopped_on.value = value
 
     def __is_run__(self):
         raise NotImplementedError(
@@ -129,6 +128,10 @@ class RunnableObject(object):
         return 'Your reason can be here. This is from "{}.{}.__reason__" method.\n'.format(
             self.__class__.__module__, self.__class__.__name__,
         )
+
+    def support_mp(self, stopped_on=None):
+        if stopped_on:
+            self.__stopped_on.set_mp(stopped_on)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError(
@@ -221,6 +224,11 @@ class RunnableGroup(RunnableObject):
 
         self.__objects = objects
         self.__config = config
+
+        self._is_run = False
+
+    def __is_run__(self):
+        return self._is_run
 
     @property
     def config(self):

@@ -188,20 +188,20 @@ class SuiteContext(runnable.ContextOfRunnableObject):
 
     def start_context(self, suite):
         try:
-            call_to_chain(self.__setup_callbacks, None)
             call_to_chain(
                 with_match_layers(self, suite), 'on_setup', suite,
             )
+            call_to_chain(self.__setup_callbacks, None)
         except BaseException:
             runnable.stopped_on(suite, 'start_context')
             raise
 
     def stop_context(self, suite):
         try:
-            call_to_chain(self.__teardown_callbacks, None)
             call_to_chain(
                 with_match_layers(self, suite), 'on_teardown', suite,
             )
+            call_to_chain(self.__teardown_callbacks, None)
         except BaseException:
             runnable.stopped_on(suite, 'stop_context')
             raise
@@ -329,7 +329,6 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     config=self.config,
                     method_name=test_name,
                     box_class=case.CaseBox,
-                    extensions=self.__context.extensions,
                 ),
             )
         else:
@@ -339,7 +338,6 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                         cls,
                         config=self.config,
                         box_class=case.CaseBox,
-                        extensions=self.__context.extensions,
                     ),
                 )
 
@@ -386,10 +384,10 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             self.__case_instances, self.config,
         )
 
-    def setup(self):
+    def setup(self, *args, **kwargs):
         pass
 
-    def teardown(self):
+    def teardown(self, *args, **kwargs):
         pass
 
     def add_setup(self, f):
@@ -461,13 +459,14 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 flows=None,
                 static=False,
                 require=None,
+                case_class=None,
                 always_success=False,
                 assertion_class=None):
             if type(_class) == FunctionType:
                 _class = case.make_case_class_from_function(
                     _class,
                     static=static,
-                    base_class=self.__case_class__,
+                    base_class=case_class or self.__case_class__,
                 )
 
             if skip:

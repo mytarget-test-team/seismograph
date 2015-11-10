@@ -42,6 +42,7 @@ def set_default_program_layers(*layers):
 
 def configure(
         wait_sleep=None,
+        reason_class=None,
         wait_timeout=None,
         config_class=None,
         result_class=None,
@@ -52,7 +53,6 @@ def configure(
         suite_group_class=None,
         default_test_name=None,
         case_context_class=None,
-        crash_reason_class=None,
         suite_context_class=None,
         skip_attribute_name=None,
         result_marker_class=None,
@@ -109,9 +109,9 @@ def configure(
         assert issubclass(case_context_class, _case.CaseContext)
         _case.CaseContext = case_context_class
 
-    if crash_reason_class:
-        assert issubclass(crash_reason_class, _reason.CrashReason)
-        _reason.CrashReason = crash_reason_class
+    if reason_class:
+        assert issubclass(reason_class, _reason.Reason)
+        _reason.Reason = reason_class
 
     if suite_context_class:
         assert issubclass(suite_context_class, _suite.SuiteContext)

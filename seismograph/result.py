@@ -9,6 +9,7 @@ from . import reason
 from . import runnable
 from .utils import pyv
 from .utils import colors
+from .utils.common import MPSupportedValue
 
 
 DEFAULT_NAME = 'seismograph'
@@ -63,8 +64,12 @@ class ResultConsole(object):
 
     class ChildConsole(object):
 
+        TAB = 2  # tab to spaces
+        DEFAULT_TABS = 1
+
         def __init__(self):
             self.__buffer = []
+            self.__tabs = self.DEFAULT_TABS * self.TAB
 
         def __call__(self, *strings):
             string = []
@@ -74,7 +79,9 @@ class ResultConsole(object):
                     s = pyv.unicode_string(s)
                 string.append(s)
 
-            self.__buffer.append('  ' + u''.join(string) + '\n')
+            self.__buffer.append(
+                ''.join(' ' for _ in pyv.xrange(self.__tabs)) + u''.join(string) + '\n',
+            )
 
         @property
         def set_trace(self):
@@ -98,10 +105,18 @@ class ResultConsole(object):
                 self(u'{}:'.format(title))
             for l in li:
                 self(
-                    u'  {} {}'.format(
+                    u'{}{} {}'.format(
+                        ''.join(' ' for _ in pyv.xrange(self.__tabs)),
                         '{}.'.format(li.index(l) + 1) if numerate else '*', l,
                     ),
                 )
+
+        @contextmanager
+        def tab(self):
+            current_tabs = self.__tabs
+            self.__tabs = current_tabs + self.TAB
+            yield
+            self.__tabs = current_tabs
 
         def flush(self, stdout):
             stdout.write(
@@ -203,15 +218,19 @@ class State(object):
 
     def __init__(self, result, should_stop=False):
         self.__result = result
-        self._should_stop = should_stop
+        self.__should_stop = MPSupportedValue(should_stop)
+
+    def support_mp(self, should_stop=None):
+        if should_stop:
+            self.__should_stop.set_mp(should_stop)
 
     @property
     def should_stop(self):
-        return self._should_stop
+        return self.__should_stop.value
 
     @should_stop.setter
     def should_stop(self, value):
-        self._should_stop = value
+        self.__should_stop.value = value
 
     @property
     def runtime(self):
@@ -277,18 +296,18 @@ class Result(object):
         )
 
         if not is_proxy:
+            global lock
+
             if self.__config.GEVENT:
                 pyv.check_gevent_supported()
 
                 from gevent.lock import Semaphore
 
-                global lock
                 lock = Semaphore()
 
             if self.__config.MULTIPROCESSING:
                 from multiprocessing import Lock
 
-                global lock
                 lock = Lock()
 
     def __enter__(self):
@@ -331,17 +350,12 @@ class Result(object):
     def current_state(self):
         return self.__current_state
 
-    @current_state.setter
-    def current_state(self, value):
-        assert isinstance(value, State)
-
-        self.__current_state = value
-
     def create_proxy(self, **kwargs):
         return self.__class__(
             self.__config,
             is_proxy=True,
             stdout=self._stdout,
+            current_state=self.__current_state,
             **kwargs
         )
 
@@ -356,7 +370,6 @@ class Result(object):
     @contextmanager
     def proxy(self, runnable_object=None):
         proxy = self.create_proxy(
-            current_state=self.__current_state,
             name=runnable.class_name(runnable_object) if runnable_object else None,
         )
         if runnable_object:
@@ -398,8 +411,8 @@ class Result(object):
         return reset_item_of_storage(self.successes, runnable_object, xunit_data)
 
     def add_error(self, runnable_object, traceback, runtime, exc):
-        error_reason = reason.CrashReason(
-            runnable_object, traceback, self.__config,
+        error_reason = reason.create(
+            runnable_object, traceback, config=self.__config,
         )
 
         xunit_data = xunit.XUnitData(
@@ -417,8 +430,8 @@ class Result(object):
             self.__current_state.should_stop = True
 
     def add_fail(self, runnable_object, traceback, runtime, exc):
-        fail_reason = reason.CrashReason(
-            runnable_object, traceback, self.__config,
+        fail_reason = reason.create(
+            runnable_object, traceback, config=self.__config,
         )
 
         xunit_data = xunit.XUnitData(
@@ -496,8 +509,8 @@ class Result(object):
                 for storage_item in storage:
                     runnable_object, xunit_data = storage_item
                     if xunit_data.reason:
-                        crash_reason = reason.CrashReason(
-                            runnable_object, xunit_data.reason, self.__config,
+                        crash_reason = reason.create(
+                            runnable_object, xunit_data.reason, config=self.__config,
                         )
                         self.__console.writeln(
                             reason.format_reason_to_output(crash_reason),

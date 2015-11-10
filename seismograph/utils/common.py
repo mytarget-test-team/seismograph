@@ -7,7 +7,6 @@ from contextlib import contextmanager
 from ..exceptions import TimeoutException
 
 
-WAITING_FOR_SLEEP = 0.5
 WAITING_FOR_TIMEOUT = 30
 
 
@@ -15,7 +14,6 @@ def waiting_for(func, timeout=None, sleep=None, args=None, kwargs=None):
     args = args or tuple()
     kwargs = kwargs or {}
 
-    sleep = sleep or WAITING_FOR_SLEEP
     timeout = timeout or WAITING_FOR_TIMEOUT
 
     t_start = time.time()
@@ -26,7 +24,8 @@ def waiting_for(func, timeout=None, sleep=None, args=None, kwargs=None):
         if result:
             return result
 
-        time.sleep(sleep)
+        if sleep:
+            time.sleep(sleep)
     else:
         raise TimeoutException(
             'Timeout {} exceeded'.format(timeout),
@@ -61,3 +60,25 @@ def dev_null():
         yield
     finally:
         sys.stdout = stdout
+
+
+class MPSupportedValue(object):
+
+    def __init__(self, value=None):
+        self._value = value
+
+    @property
+    def value(self):
+        if hasattr(self._value, 'value'):
+            return self._value.value
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        if hasattr(self._value, 'value'):
+            self._value.value = value
+        else:
+            self._value = value
+
+    def set_mp(self, value):
+        self._value = value
