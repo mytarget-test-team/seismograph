@@ -92,16 +92,17 @@ class SeleniumExtension(BaseExtension):
 
 __all__ = (
     'Case',
+    'Page',
     'forms',
     'query',
     'Suite',
-    'Router',
     'Selenium',
     'add_route',
     'assertion',
+    'PageObject',
     'QueryObject',
-    'SeleniumCase',
     'inject_driver',
+    'PageObjectProxy',
     'case_of_browsers',
     'SeleniumAssertion',
 )
