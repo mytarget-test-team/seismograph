@@ -4,6 +4,7 @@ import re
 import sys
 import traceback
 
+from . import ext
 from . import config
 from . import loader
 from . import runnable
@@ -12,7 +13,6 @@ from . import collector
 from . import extensions
 from .suite import Suite
 from .result import Result
-from .ext import EXTENSIONS
 from .utils.common import measure_time
 from .utils.common import call_to_chain
 from .groups.default import DefaultSuiteGroup
@@ -190,8 +190,10 @@ class Program(runnable.RunnableObject):
 
         parser = config.create_option_parser()
         self.__context.on_option_parser(parser)
-        for ext in EXTENSIONS:
-            extensions.add_options(ext, parser)
+
+        for extension in ext.TO_INIT:
+            extensions.add_options(extension, parser)
+
         options, _ = parser.parse_args()
 
         self.__config = self.__config_class__(
@@ -215,8 +217,8 @@ class Program(runnable.RunnableObject):
                 s(self) for s in (scripts or [])
             ] if scripts else []
 
-        for ext in EXTENSIONS:
-            extensions.install(ext(), self)
+        for extension in ext.TO_INIT:
+            extensions.install(extension, self)
 
         if suites:
             self.register_suites(suites)

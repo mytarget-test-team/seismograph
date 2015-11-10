@@ -9,36 +9,13 @@ _TMP = {}
 
 
 def install(ext, program):
-    assert isinstance(ext, BaseExtension), \
-        '"{}" is not instance of "BaseExtension"'.format(
-            ext.__class__.__name__,
-        )
-    ext.__install__(program)
+    if hasattr(ext, '__install__'):
+        ext.__install__(program)
 
 
 def add_options(ext, parser):
-    ext.__add_options__(parser)
-
-
-class BaseExtension(object):
-
-    def __call__(self, *args, **kwargs):
-        raise NotImplementedError(
-            'Method "__call__" not implemented in "{}.{}"'.format(
-                self.__class__.__module__, self.__class__.__name__,
-            ),
-        )
-
-    def __install__(self, program):
-        raise NotImplementedError(
-            'Method "__install__" not implemented in "{}.{}"'.format(
-                self.__class__.__module__, self.__class__.__name__,
-            ),
-        )
-
-    @staticmethod
-    def __add_options__(parser):
-        pass
+    if hasattr(ext, '__add_options__'):
+        ext.__add_options__(parser)
 
 
 class ExtensionContainer(object):

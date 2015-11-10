@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from .selenium import SeleniumExtension
-from .mock_server import MockServerExtension
+from . import selenium
+from . import mock_server
 
 
-EXTENSIONS = (
-    SeleniumExtension,
-    MockServerExtension,
+TO_INIT = (
+    selenium,
+    mock_server,
 )

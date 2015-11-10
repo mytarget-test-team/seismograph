@@ -1,25 +1,31 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-
 from types import MethodType
 from contextlib import contextmanager
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 
 from .router import Router
 from .tools import polling
-from .tools import make_object
-from .tools import ActionChains
 from .query import QueryProcessor
+from ...utils.common import waiting_for
+from ...exceptions import TimeoutException
+from .utils import change_name_from_python_to_html
 
 
 METHOD_ALIASES = {
     'go_to': 'get',
     'set': 'send_keys',
 }
+
+
+def _check_equal(we, attr, value):
+    if attr == 'text':
+        return we.text == value
+
+    return getattr(we.attr, attr) == value
 
 
 def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
@@ -35,7 +41,7 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
                 reason_storage=reason_storage,
             )
 
-        if isinstance(result, list):
+        if isinstance(result, (list, tuple)):
             we_list = WebElementList()
 
             for obj in result:
@@ -60,37 +66,24 @@ class WebElementList(list):
 
     def get_by(self, **kwargs):
         for we in self:
-            if all(getattr(we.attr, k) == v for k, v in kwargs.items()):
+            if all(_check_equal(we, k, v) for k, v in kwargs.items()):
                 return we
-        else:
-            raise NoSuchElementException(
-                u'by filters "{}" of list {}'.format(
-                    u', '.join(
-                        u'{}={}'.format(k, v) for k, v in kwargs.items()
-                    ),
-                    repr(self),
-                ),
-            )
 
     def filter(self, **kwargs):
-        result = []
-
         for we in self:
-            if all(getattr(we.attr, k) == v for k, v in kwargs.items()):
-                result.append(we)
-
-        return result
+            if all(_check_equal(we, k, v) for k, v in kwargs.items()):
+                yield we
 
 
 class BaseProxy(object):
 
     def __init__(self, wrapped, config=None, driver=None, reason_storage=None, allow_polling=True):
-        self.__dict__['__driver__'] = driver
-        self.__dict__['__config__'] = config
-        self.__dict__['__wrapped__'] = wrapped
-        self.__dict__['__query__'] = QueryProcessor(self)
-        self.__dict__['__allow_polling__'] = allow_polling
-        self.__dict__['__reason_storage__'] = reason_storage or dict()
+        self.__driver = driver
+        self.__config = config
+        self.__wrapped = wrapped
+        self.__query = QueryProcessor(self)
+        self.__allow_polling = allow_polling
+        self.__reason_storage = reason_storage or dict()
 
         assert self.__class__ != BaseProxy, 'This is base class only. Can not be instanced.'
 
@@ -130,29 +123,29 @@ class BaseProxy(object):
 
     @property
     def _wrapped(self):
-        return self.__dict__['__wrapped__']
+        return self.__wrapped
 
     @property
     def config(self):
-        return self.__dict__['__config__']
+        return self.__config
 
     @property
     def query(self):
-        return self.__dict__['__query__']
+        return self.__query
 
     @property
     def driver(self):
-        return self.__dict__['__driver__']
+        return self.__driver
 
     @property
     def allow_polling(self):
         return (
-            bool(self.config.POLLING_TIMEOUT) and self.__dict__['__allow_polling__']
+            bool(self.config.POLLING_TIMEOUT) and self.__allow_polling
         )
 
     @property
     def reason_storage(self):
-        return self.__dict__['__reason_storage__']
+        return self.__reason_storage
 
     @property
     def text(self):
@@ -171,12 +164,32 @@ class BaseProxy(object):
         return get_text()
 
     @contextmanager
-    def disable_polling(self):
+    def polling(self, func=None, exc=None, message=None, args=None, kwargs=None):
+        need_restore = not self.__allow_polling
+        self.__allow_polling = True
+
+        if func:
+            waiting_for(
+                func,
+                exc=exc,
+                args=args,
+                kwargs=kwargs,
+                message=message,
+                timeout=self.config.POLLING_TIMEOUT or 0.5,
+            )
         try:
-            self.__dict__['__allow_polling__'] = False
             yield
         finally:
-            self.__dict__['__allow_polling__'] = True
+            if need_restore:
+                self.__allow_polling = False
+
+    @contextmanager
+    def disable_polling(self):
+        try:
+            self.__allow_polling = False
+            yield
+        finally:
+            self.__allow_polling = True
 
 
 class WebElementProxy(BaseProxy):
@@ -187,8 +200,12 @@ class WebElementProxy(BaseProxy):
         assert isinstance(self._wrapped, WebElement), 'This is proxy to WebElement only'
 
     @property
+    def css(self):
+        return WebElementCssToObject(self)
+
+    @property
     def attr(self):
-        return make_object(self, allow_raise=False)
+        return WebElementToObject(self, allow_raise=False)
 
 
 class WebDriverProxy(BaseProxy):
@@ -198,8 +215,8 @@ class WebDriverProxy(BaseProxy):
 
         assert isinstance(self._wrapped, WebDriver), 'This is proxy to WebDriver only'
 
-        self.__dict__['__router__'] = Router(self)
-        self.__dict__['__action_chains__'] = ActionChains(self)
+        self.__router = Router(self)
+        self.__action_chains = ActionChainsProxy(self)
 
     @property
     def driver(self):
@@ -207,11 +224,11 @@ class WebDriverProxy(BaseProxy):
 
     @property
     def router(self):
-        return self.__dict__['__router__']
+        return self.__router
 
     @property
     def action_chains(self):
-        return self.__dict__['__action_chains__']
+        return self.__action_chains
 
     @property
     def current_url(self):
@@ -223,3 +240,72 @@ class WebDriverProxy(BaseProxy):
             return func()
 
         return self._wrapped.current_url
+
+
+class ActionChainsProxy(object):
+
+    def __init__(self, proxy):
+        self.__action_chans = ActionChains(proxy.driver)
+
+    def __call__(self, proxy):
+        return self.__class__(proxy.driver)
+
+    def __getattr__(self, item):
+        return getattr(self.__action_chans, item)
+
+    def __repr__(self):
+        return repr(self.__action_chans)
+
+    def reset(self):
+        self.__action_chans._actions = []
+
+    def perform(self, reset=True):
+        self.__action_chans.perform()
+
+        if reset:
+            self.reset()
+
+
+class WebElementToObject(object):
+
+    def __init__(self, proxy, allow_raise=True):
+        self.__dict__['__proxy__'] = proxy
+        self.__dict__['__allow_raise__'] = allow_raise
+
+    def __getattr__(self, item):
+        atr = self.__dict__['__proxy__'].get_attribute(
+            change_name_from_python_to_html(item),
+        )
+
+        if atr:
+            return atr
+
+        if self.__dict__['__allow_raise__']:
+            raise AttributeError(item)
+
+    def __setattr__(self, key, value):
+        self.__dict__['__proxy__'].parent.execute_script(
+            'arguments[0].setAttribute(arguments[1], arguments[2]);',
+            self.__dict__['__proxy__'],
+            change_name_from_python_to_html(key),
+            value
+        )
+
+
+class WebElementCssToObject(object):
+
+    def __init__(self, proxy):
+        self.__dict__['__proxy__'] = proxy
+
+    def __getattr__(self, item):
+        return self.__dict__['__proxy__'].value_of_css_property(
+            change_name_from_python_to_html(item),
+        )
+
+    def __setattr__(self, key, value):
+        self.__dict__['__proxy__'].parent.execute_script(
+            'arguments[0].style[arguments[1]] = arguments[2];',
+            self.__dict__['__proxy__'],
+            change_name_from_python_to_html(key),
+            value
+        )

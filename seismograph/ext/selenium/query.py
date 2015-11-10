@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-
 import logging
 
 from selenium.common.exceptions import WebDriverException
@@ -92,23 +90,28 @@ def make_result(proxy, tag):
     return handle
 
 
-def execute(proxy, css, get_all=False, disable_polling=False):
-    logger.debug(u'CSS: {} Get all: {}'.format(css, 'Yes' if get_all else 'No'))
-
-    proxy.reason_storage['last css query'] = css
-
+def get_execute_method(proxy, can_many):
     css_executors = {
         True: 'find_elements_by_css_selector',
         False: 'find_element_by_css_selector',
     }
+    method_name = css_executors[bool(can_many)]
+
+    return getattr(proxy, method_name)
+
+
+def execute(proxy, css, can_many=False, disable_polling=False):
+    logger.debug(u'CSS: {} Can many: {}'.format(css, 'Yes' if can_many else 'No'))
+
+    proxy.reason_storage['last css query'] = css
 
     if disable_polling:
         with proxy.disable_polling():
-            result = getattr(proxy, css_executors[bool(get_all)])(css)
-    else:
-        result = getattr(proxy, css_executors[bool(get_all)])(css)
+            method = get_execute_method(proxy, can_many)
+            return method(css)
 
-    return result
+    method = get_execute_method(proxy, can_many)
+    return method(css)
 
 
 class QueryResult(object):
@@ -118,9 +121,8 @@ class QueryResult(object):
         self.__css = css
 
     def __getattr__(self, item):
-        return getattr(
-            self.__proxy.query.__class__(self.first()), item,
-        )
+        obj = self.first()
+        return getattr(obj.query, item)
 
     @property
     def exist(self):
@@ -132,8 +134,6 @@ class QueryResult(object):
             return False
         except WebDriverException:
             return False
-        except BaseException:
-            raise
 
     def wait(self, timeout=None):
         try:
@@ -148,7 +148,7 @@ class QueryResult(object):
 
     def get(self, index):
         try:
-            return execute(self.__proxy, self.__css, get_all=True)[index]
+            return execute(self.__proxy, self.__css, can_many=True)[index]
         except IndexError:
             raise NoSuchElementException(
                 'Result does not have element with index "{}". Css: "{}".'.format(
@@ -160,7 +160,7 @@ class QueryResult(object):
         return execute(self.__proxy, self.__css)
 
     def all(self):
-        return execute(self.__proxy, self.__css, get_all=True)
+        return execute(self.__proxy, self.__css, can_many=True)
 
 
 class QueryProcessor(object):

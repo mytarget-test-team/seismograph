@@ -97,7 +97,7 @@ class PageObject(object):
         assert issubclass(cls, PageObjectProxy), \
             '"{}" is not "PageObjectProxy" subclass'.format(
                 cls.__name__,
-            )
+        )
         self.__proxy_class = cls
 
     @property
@@ -157,6 +157,9 @@ class Forms(object):
         inst = self.__class__(**self.__classes)
         inst.change_area(proxy)
         return inst
+
+    def add(self, name, cls):
+        self.__classes[name] = cls
 
     def change_area(self, proxy):
         self.__area = proxy

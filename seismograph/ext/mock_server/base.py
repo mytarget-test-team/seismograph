@@ -85,7 +85,6 @@ class MockServerClient(object):
         return method_wrapper
 
 
-
 class BaseMockServer(object):
 
     __mock_class__ = _mock.BaseMock

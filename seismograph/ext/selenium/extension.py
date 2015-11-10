@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-
 import os
 import logging
 from functools import wraps
@@ -22,10 +20,10 @@ from ... import suite
 from ... import runnable
 from .proxy import WebDriverProxy
 from ...tools import create_reason
+from .utils import random_file_name
 from ...utils.common import waiting_for
 from .exceptions import SeleniumExError
 from ...exceptions import TimeoutException
-from .tools import create_screen_file_name
 
 
 logger = logging.getLogger(__name__)
@@ -64,31 +62,14 @@ def get_capabilities(driver_name):
         )
 
 
-def patch(f):
-    """
-    Setup config to driver and apply settings.
-    Wrap driver in proxy object.
-    """
-    @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        driver = f(self, *args, **kwargs)
-
-        browser = WebDriverProxy(
-            driver,
-            config=BrowserConfig(self, driver),
-        )
-
-        self._Selenium__browser = browser
-
-        return browser
-
-    return wrapper
+def create_browser(selenium, driver):
+    return WebDriverProxy(
+        driver,
+        config=BrowserConfig(selenium, driver),
+    )
 
 
 class BrowserConfig(object):
-    """
-    Configuration for WerDriver instance
-    """
 
     def __init__(self, selenium, browser):
         self.__browser = browser
@@ -165,7 +146,6 @@ class Selenium(object):
         self.__browser.quit()
         self.__browser = None
 
-    @patch
     def remote(self, driver_name):
         remote_config = self.__config.get('REMOTE')
 
@@ -180,14 +160,14 @@ class Selenium(object):
             remote_config['CAPABILITIES'][driver_name],
         )
 
-        self.__browser = drivers.RemoteWebDriver(
+        driver = drivers.RemoteWebDriver(
             desired_capabilities=capabilities,
             **options
         )
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    @patch
     def ie(self):
         ie_config = self.__config.get('IE')
 
@@ -196,11 +176,11 @@ class Selenium(object):
 
         logger.debug('Ie config: {}'.format(str(ie_config)))
 
-        self.__browser = drivers.IeWebDriver(**ie_config)
+        driver = drivers.IeWebDriver(**ie_config)
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    @patch
     def chrome(self):
         """
         :rtype: selenium.webdriver.chrome.webdriver.WebDriver
@@ -212,21 +192,21 @@ class Selenium(object):
 
         logger.debug('Chrome config: {}'.format(str(chrome_config)))
 
-        self.__browser = drivers.ChromeWebDriver(**chrome_config)
+        driver = drivers.ChromeWebDriver(**chrome_config)
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    @patch
     def firefox(self):
         firefox_config = self.__config.get('FIREFOX', {})
 
         logger.debug('Firefox config: {}'.format(str(firefox_config)))
 
-        self.__browser = drivers.FirefoxWebDriver(**firefox_config)
+        driver = drivers.FirefoxWebDriver(**firefox_config)
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    @patch
     def phantomjs(self):
         phantom_config = self.__config.get('PHANTOMJS')
 
@@ -235,11 +215,11 @@ class Selenium(object):
 
         logger.debug('PhantomJS config: {}'.format(str(phantom_config)))
 
-        self.__browser = drivers.PhantomJSWebDriver(**phantom_config)
+        driver = drivers.PhantomJSWebDriver(**phantom_config)
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    @patch
     def opera(self):
         opera_config = self.__config.get('OPERA')
 
@@ -248,7 +228,8 @@ class Selenium(object):
 
         logger.debug('Opera config: {}'.format(str(opera_config)))
 
-        self.__browser = drivers.OperaWebDriver(**opera_config)
+        driver = drivers.OperaWebDriver(**opera_config)
+        self.__browser = create_browser(self, driver)
 
         return self.__browser
 
@@ -452,7 +433,7 @@ class SeleniumCase(case.Case):
         screen_path = self.__selenium.config.get('SCREEN_PATH', None)
 
         if screen_path:
-            file_name = create_screen_file_name()
+            file_name = random_file_name('.png')
             screen_path = os.path.join(screen_path, file_name)
 
             self.__selenium.browser.save_screenshot(screen_path)

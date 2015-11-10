@@ -1,9 +1,6 @@
 # -*- coding: utf8 -*-
 
-from __future__ import absolute_import
-
 import time
-from random import randint
 from functools import wraps
 
 try:
@@ -12,103 +9,19 @@ except ImportError:  # please python 3
     from http.client import HTTPException
 
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.common.action_chains import ActionChains as __ActionChains
 
 from ...utils import pyv
 from ...exceptions import TimeoutException
 from .exceptions import ReRaiseWebDriverException
-from .utils import change_name_from_python_to_html
 
 
-DEFAULT_POLLING_TIMEOUT = 30
 POLLING_EXCEPTIONS = (
     IOError,
     OSError,
     HTTPException,
     WebDriverException,
 )
-
-
-class ActionChains(__ActionChains):
-
-    def __init__(self, proxy):
-        super(ActionChains, self).__init__(proxy.driver)
-
-    def __call__(self, proxy):
-        return self.__class__(proxy)
-
-    def reset(self):
-        self._actions = []
-
-    def perform(self, reset=True):
-        super(ActionChains, self).perform()
-
-        if reset:
-            self.reset()
-
-
-def create_screen_file_name():
-    file_ex = '.png'
-    file_name = str(
-        int(time.time() + randint(0, 1000)),
-    )
-    file_name += file_ex
-    return file_name
-
-
-class WebElementToObject(object):
-
-    def __init__(self, proxy, allow_raise=True):
-        self.__dict__['__proxy__'] = proxy
-        self.__dict__['__allow_raise__'] = allow_raise
-
-    @property
-    def css(self):
-        return WebElementCssToObject(
-            self.__dict__['__proxy__'],
-        )
-
-    def __getattr__(self, item):
-        atr = self.__dict__['__proxy__'].get_attribute(
-            change_name_from_python_to_html(item),
-        )
-
-        if atr:
-            return atr
-
-        if self.__dict__['__allow_raise__']:
-            raise AttributeError(item)
-
-    def __setattr__(self, key, value):
-        self.__dict__['__proxy__'].parent.execute_script(
-            'arguments[0].setAttribute(arguments[1], arguments[2]);',
-            self.__dict__['__proxy__'],
-            change_name_from_python_to_html(key),
-            value
-        )
-
-
-class WebElementCssToObject(object):
-
-    def __init__(self, proxy):
-        self.__dict__['__proxy__'] = proxy
-
-    def __getattr__(self, item):
-        return self.__dict__['__proxy__'].value_of_css_property(
-            change_name_from_python_to_html(item),
-        )
-
-    def __setattr__(self, key, value):
-        self.__dict__['__proxy__'].parent.execute_script(
-            'arguments[0].style[arguments[1]] = arguments[2];',
-            self.__dict__['__proxy__'],
-            change_name_from_python_to_html(key),
-            value
-        )
-
-
-def make_object(web_element, allow_raise=True):
-    return WebElementToObject(web_element, allow_raise=allow_raise)
+DEFAULT_POLLING_TIMEOUT = 30
 
 
 def polling(callback=None, timeout=DEFAULT_POLLING_TIMEOUT):
@@ -144,7 +57,16 @@ def re_raise_wd_exc(callback=None, exc_cls=ReRaiseWebDriverException, message=No
             try:
                 return f(*args, **kwargs)
             except (TimeoutException, WebDriverException) as e:
-                raise exc_cls(message or pyv.get_exc_message(e))
+                orig_message = pyv.get_exc_message(e)
+
+                if message:
+                    new_message = u'{}{}'.format(
+                        message, u' ({})'.format(orig_message) if orig_message else ''
+                    )
+                else:
+                    new_message = orig_message
+
+                raise exc_cls(new_message)
 
         return wrapped
 

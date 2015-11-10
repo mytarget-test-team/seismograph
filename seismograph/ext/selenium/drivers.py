@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-
 from selenium.webdriver.ie.webdriver import WebDriver as IeWebDriver
 from selenium.webdriver.opera.webdriver import WebDriver as OperaWebDriver
 from selenium.webdriver.remote.webdriver import WebDriver as RemoteWebDriver

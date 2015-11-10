@@ -15,25 +15,25 @@ def get_parser():
         type=int,
         dest='PORT',
         default=DEFAULT_PORT,
-        help='server port'
+        help='Server port'
     )
     parser.add_option(
         '-i', '--host',
         dest='HOST',
         default=DEFAULT_HOST,
-        help='server host'
+        help='Server host'
     )
     parser.add_option(
         '-m', '--mocks-dir',
         dest='MOCKS_DIR',
         default=None,
-        help='path to dir within mock files'
+        help='Path to dir within mock files'
     )
     parser.add_option(
         '-t', '--type',
         dest='SERVER_TYPE',
         default='json_api',
-        help='server type. can be in ({}). "json_api" by default'.format(
+        help='Server type. Can be in ({}). "json_api" by default'.format(
             ', '.join(('"simple"', '"json_api"')),
         )
     )
@@ -43,28 +43,28 @@ def get_parser():
         dest='NO_DEBUG',
         action='store_false',
         default=True,
-        help='no use debug for output',
+        help='No use debug for output',
     )
     parser.add_option(
         '--multiprocessing',
         dest='MULTIPROCESSING',
         action='store_true',
         default=False,
-        help='use fork server',
+        help='Use fork server',
     )
     parser.add_option(
         '--threading',
         dest='THREADING',
         action='store_true',
         default=False,
-        help='use thread server',
+        help='Use thread server',
     )
     parser.add_option(
         '--gevent',
         dest='GEVENT',
         action='store_true',
         default=False,
-        help='use gevent wsgi server',
+        help='Use gevent wsgi server',
     )
 
     return parser
@@ -84,18 +84,20 @@ def main():
     from seismograph.ext.mock_server import SERVER_TYPES
 
     try:
-        server = SERVER_TYPES[options.SERVER_TYPE](
-            options.MOCKS_DIR,
-            host=options.HOST,
-            port=options.PORT,
-            debug=options.NO_DEBUG,
-            gevent=options.GEVENT,
-            threading=options.THREADING,
-            multiprocessing=options.MULTIPROCESSING,
-        )
-        server.serve_forever()
+        mock_server_class = SERVER_TYPES[options.SERVER_TYPE]
     except KeyError:
         raise ValueError('Incorrect server type')
+
+    server = mock_server_class(
+        options.MOCKS_DIR,
+        host=options.HOST,
+        port=options.PORT,
+        debug=options.NO_DEBUG,
+        gevent=options.GEVENT,
+        threading=options.THREADING,
+        multiprocessing=options.MULTIPROCESSING,
+    )
+    server.serve_forever()
 
 
 if __name__ == '__main__':
