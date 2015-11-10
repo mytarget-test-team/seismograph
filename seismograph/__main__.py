@@ -12,10 +12,10 @@ from importlib import import_module
 def apply_gevent_patch():
     try:
         from gevent.monkey import patch_all
-    except ImportError:
+    except ImportError as e:
         from seismograph.utils import pyv
         pyv.check_gevent_supported()
-        raise
+        raise e
 
     patch_all(thread=False)
 
@@ -45,10 +45,10 @@ def get_user_main():
 
 
 def main():
-    if '--gevent' in sys.argv:
-        apply_gevent_patch()
-
     user_main = get_user_main()
+
+    if not user_main and '--gevent' in sys.argv:
+        apply_gevent_patch()
 
     if user_main:
         user_main()

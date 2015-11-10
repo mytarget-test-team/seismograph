@@ -643,6 +643,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
     def run(self, result):
         self.__is_run = True
+
         if result.current_state.should_stop:
             return
 

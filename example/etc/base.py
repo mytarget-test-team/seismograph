@@ -53,7 +53,7 @@ SELENIUM_EX = {
         },
         'OPTIONS': {
             'keep_alive': True,
-            'command_executor': 'http://selenium.trgqa.devmail.ru:4444/wd/hub',
+            'command_executor': 'http://localhost:4444/wd/hub',
         },
     },
 }
