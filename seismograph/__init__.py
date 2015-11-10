@@ -56,7 +56,3 @@ from .utils.pyv import check_py_version
 check_py_version()
 
 del check_py_version
-
-
-import unittest
-unittest.main
