@@ -43,20 +43,27 @@ class ExtensionContainer(object):
 
 class SingletonExtensionContainer(ExtensionContainer):
 
+    def __init__(self, *args, **kwargs):
+        super(SingletonExtensionContainer, self).__init__(*args, **kwargs)
+
+        self.__instance = None
+
     def __call__(self):
-        return self.ext
+        if self.__instance is None:
+            self.__instance = super(SingletonExtensionContainer, self).__call__()
+        return self.__instance
 
 
 def get(name):
     try:
-        ext = _TMP[name]
+        container = _TMP[name]
     except KeyError:
         raise ExtensionNotFound(name)
 
-    if isinstance(ext, ExtensionContainer):
-        return ext()
+    if isinstance(container, ExtensionContainer):
+        return container()
 
-    return deepcopy(ext)
+    return deepcopy(container)
 
 
 def set(ext, name, is_data=False, singleton=False, args=None, kwargs=None):
@@ -65,10 +72,12 @@ def set(ext, name, is_data=False, singleton=False, args=None, kwargs=None):
     else:
         if singleton:
             _TMP[name] = SingletonExtensionContainer(
-                ext(*(args or tuple()), **(kwargs or dict())),
+                ext, args=args, kwargs=kwargs,
             )
         else:
-            _TMP[name] = ExtensionContainer(ext, args=args, kwargs=kwargs)
+            _TMP[name] = ExtensionContainer(
+                ext, args=args, kwargs=kwargs,
+            )
 
 
 def clear():

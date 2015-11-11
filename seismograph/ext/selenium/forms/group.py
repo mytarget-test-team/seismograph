@@ -128,8 +128,7 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
     __allow_raises__ = True
 
     def __init__(self, proxy, weight=None, name=None, parent=None):
-        if not hasattr(self, 'name'):
-            self.name = name
+        self.name = name or self.__class__.__name__
 
         self.__fields = []
         self.__parent = parent
@@ -137,6 +136,9 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
         self.__fill_memo = set()
         self.__memento = GroupMemento()
         self.__proxy = proxy
+
+    def __getattr__(self, item):
+        return getattr(self.area, item)
 
     @property
     def driver(self):

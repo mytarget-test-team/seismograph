@@ -74,6 +74,9 @@ class BrowserConfig(object):
     def __init__(self, selenium, browser):
         self.__browser = browser
 
+        self.__IMPLICITLY_WAIT = None
+        self.IMPLICITLY_WAIT = selenium.config.get('IMPLICITLY_WAIT')
+
         self.__WINDOW_SIZE = None
         self.WINDOW_SIZE = selenium.config.get('WINDOW_SIZE')
 
@@ -82,6 +85,15 @@ class BrowserConfig(object):
 
         self.PROJECT_URL = selenium.config.get('PROJECT_URL')
         self.POLLING_TIMEOUT = selenium.config.get('POLLING_TIMEOUT')
+
+    @property
+    def IMPLICITLY_WAIT(self):
+        return self.__IMPLICITLY_WAIT
+
+    @IMPLICITLY_WAIT.setter
+    def IMPLICITLY_WAIT(self, value):
+        if value is not None:
+            self.__browser.implicitly_wait(value)
 
     @property
     def WINDOW_SIZE(self):

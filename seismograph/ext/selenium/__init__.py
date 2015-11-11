@@ -8,6 +8,7 @@ from .pageobject import Page
 from .router import add_route
 from .query import QueryObject
 from .extension import assertion
+from .tools import re_raise_wd_exc
 from .pageobject import PageObject
 from .extension import inject_driver
 from .pageobject import PageObjectProxy
@@ -99,6 +100,7 @@ __all__ = (
     'PageObject',
     'QueryObject',
     'inject_driver',
+    're_raise_wd_exc',
     'PageObjectProxy',
     'case_of_browsers',
     'SeleniumAssertion',

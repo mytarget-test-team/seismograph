@@ -47,14 +47,14 @@ def page_object_factory(page_element):
 
 class PageObjectProxy(object):
 
-    def __init__(self, obj):
-        self.__obj = obj
+    def __init__(self, proxy):
+        self.__obj = proxy
 
     def __getattr__(self, item):
         return getattr(self.__obj, item)
 
     def __repr__(self):
-        return repr(self.result)
+        return repr(self.__obj)
 
     @property
     def obj(self):
@@ -178,6 +178,9 @@ class Page(with_metaclass(PageMeta, object)):
         self.__proxy = proxy
         self.__api = self.__api_class__(self)
         self.__forms = self.__forms__(self.area)
+
+    def __getattr__(self, item):
+        return getattr(self.area, item)
 
     @property
     def api(self):

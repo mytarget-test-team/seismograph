@@ -96,6 +96,9 @@ class FormField(object):
         self.__weight = weight
         self.__selector = selector
 
+    def __getattr__(self, item):
+        return getattr(self.we, item)
+
     @property
     def query(self):
         return self.we.query

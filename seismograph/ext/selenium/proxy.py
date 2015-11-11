@@ -11,7 +11,6 @@ from .router import Router
 from .tools import polling
 from .query import QueryProcessor
 from ...utils.common import waiting_for
-from ...exceptions import TimeoutException
 from .utils import change_name_from_python_to_html
 
 
@@ -165,7 +164,7 @@ class BaseProxy(object):
 
     @contextmanager
     def polling(self, func=None, exc=None, message=None, args=None, kwargs=None):
-        need_restore = not self.__allow_polling
+        to_restore = self.__allow_polling
         self.__allow_polling = True
 
         if func:
@@ -177,19 +176,24 @@ class BaseProxy(object):
                 message=message,
                 timeout=self.config.POLLING_TIMEOUT or 0.5,
             )
+
         try:
             yield
         finally:
-            if need_restore:
-                self.__allow_polling = False
+            self.__allow_polling = to_restore
 
     @contextmanager
     def disable_polling(self):
+        implicitly_wait = self.driver.config.IMPLICITLY_WAIT
+
         try:
             self.__allow_polling = False
+            if implicitly_wait:
+                self.driver.config.IMPLICITLY_WAIT = 0
             yield
         finally:
             self.__allow_polling = True
+            self.driver.config.IMPLICITLY_WAIT = implicitly_wait
 
 
 class WebElementProxy(BaseProxy):
