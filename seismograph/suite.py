@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import traceback
 from types import FunctionType
 
@@ -13,6 +14,9 @@ from .utils.common import call_to_chain
 from .groups.default import DefaultCaseGroup
 from .exceptions import ExtensionNotRequired
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
+
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_LAYERS = []
@@ -187,6 +191,12 @@ class SuiteContext(runnable.ContextOfRunnableObject):
                 self.__extensions[ext_name] = extensions.get(ext_name)
 
     def start_context(self, suite):
+        logger.debug(
+            'Start context of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, suite), 'on_setup', suite,
@@ -197,6 +207,12 @@ class SuiteContext(runnable.ContextOfRunnableObject):
             raise
 
     def stop_context(self, suite):
+        logger.debug(
+            'Stop context of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, suite), 'on_teardown', suite,
@@ -207,26 +223,56 @@ class SuiteContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_init(self, suite):
+        logger.debug(
+            'Call to chain callbacks "on_init" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, suite), 'on_init', suite,
         )
 
     def on_require(self, suite):
+        logger.debug(
+            'Call to chain callbacks "on_require" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, suite), 'on_require', self.__require,
         )
 
     def on_build_rule(self, suite):
+        logger.debug(
+            'Call to chain callbacks "on_build_rule" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, suite), 'on_build_rule', self.__build_rules,
         )
 
     def on_mount(self, suite, program):
+        logger.debug(
+            'Call to chain callbacks "on_mount" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, suite), 'on_mount', suite, program,
         )
 
     def on_run(self, suite):
+        logger.debug(
+            'Call to chain callbacks "on_run" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, suite), 'on_run', suite,
@@ -236,6 +282,12 @@ class SuiteContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_error(self, error, suite, result):
+        logger.debug(
+            'Call to chain callbacks "on_error" of suite "{}"'.format(
+                runnable.class_name(suite),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, suite), 'on_error', error, suite, result,
@@ -318,6 +370,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
         self.__context.on_build_rule(self)
 
     def __build__(self, case_name=None, test_name=None):
+        logger.debug(
+            'Build suite "{}". case=name={} test_name={}'.format(
+                runnable.class_name(self), case_name, test_name,
+            ),
+        )
+
         if case_name:
             cls = loader.load_case_from_suite(
                 case_name, self,
@@ -360,11 +418,19 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
     def _make_group(self):
         if self.__case_group_class__:
+            logger.debug(
+                'Use "__case_group_class__" to making case group',
+            )
+
             return self.__case_group_class__(
                 self.__case_instances, self.config,
             )
 
         if self.config.GEVENT:
+            logger.debug(
+                'Use "GeventCaseGroup" to making case group',
+            )
+
             pyv.check_gevent_supported()
 
             from .groups.gevent import GeventCaseGroup
@@ -374,11 +440,19 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             )
 
         if self.config.THREADING or self.config.MULTIPROCESSING:
+            logger.debug(
+                'Use "ThreadingCaseGroup" to making case group',
+            )
+
             from .groups.threading import ThreadingCaseGroup
 
             return ThreadingCaseGroup(
                 self.__case_instances, self.config,
             )
+
+        logger.debug(
+            'Use "DefaultCaseGroup" to making case group',
+        )
 
         return DefaultCaseGroup(
             self.__case_instances, self.config,
@@ -402,7 +476,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
         """
         :type rule: BuildRule
         """
-        assert rule.is_of(self), 'Build rule is not of this suite {}'.format(
+        assert rule.is_of(self), 'Build rule "{}" is not of this suite'.format(
             str(rule),
         )
 
@@ -417,6 +491,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
         return self.__context.extensions.get(name)
 
     def mount_to(self, program):
+        logger.debug(
+            'Mount suite to program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         if runnable.is_mount(self):
             raise RuntimeError(
                 'Suite "{}" already mount'.format(self.__name),
@@ -462,6 +542,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 case_class=None,
                 always_success=False,
                 assertion_class=None):
+            logger.debug(
+                'Register case "{}.{}" on suite "{}"'.format(
+                    _class.__module__, _class.__name__, self.name,
+                ),
+            )
+
             if type(_class) == FunctionType:
                 _class = case.make_case_class_from_function(
                     _class,
@@ -506,6 +592,10 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     self.__class__.__name__,
                 ),
             )
+
+        logger.debug(
+            'Install extensions on context of suite "{}"'.format(self.name),
+        )
 
         self.__context.install_extensions()
 

@@ -6,7 +6,6 @@ from .. import runnable
 from ..case import CaseBox
 from ..xunit import XUnitData
 from ..utils.common import waiting_for
-from ..exceptions import TimeoutException
 from ..tools import get_pool_size_of_value
 
 
@@ -171,17 +170,13 @@ class Multiprocessing(object):
         return len(self.stack) < self.max_processes
 
     def wait_release(self):
-        try:
-            waiting_for(
-                self.is_release,
-                timeout=self.release_timeout,
+        waiting_for(
+            self.is_release,
+            timeout=self.release_timeout,
+            message='Process list have not been release for "{}" sec.'.format(
+                self.release_timeout,
             )
-        except TimeoutException:
-            raise TimeoutException(
-                'Process list have not been release for "{}" sec.'.format(
-                    self.release_timeout,
-                ),
-            )
+        )
 
     def join_all(self):
         for process in self.stack:

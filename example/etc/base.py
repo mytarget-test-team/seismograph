@@ -4,6 +4,24 @@ import os
 import sys
 from codecs import getwriter
 
+from seismograph.utils import pyv
+
+
+TMP_FOLDER = os.path.join(
+    os.path.dirname(
+        __file__,
+    ),
+    'tmp',
+)
+
+BIN_FOLDER = os.path.join(
+    os.path.dirname(
+        __file__,
+    ),
+    '..',
+    'bin',
+)
+
 
 MOCK_SERVER_EX = {
     'PORT': 5000,
@@ -23,28 +41,29 @@ MOCK_SERVER_EX = {
 
 SELENIUM_EX = {
     'USE_REMOTE': False,
-    'POLLING_TIMEOUT': 10,
+    'IMPLICITLY_WAIT': 7,
+    'POLLING_TIMEOUT': 30,
+    'POLLING_DELAY': None,
+    'SCRIPT_TIMEOUT': None,
+    'WINDOW_SIZE': None,
     'MAXIMIZE_WINDOW': True,
-    'DEFAULT_BROWSER': 'chrome',
-    'PROJECT_URL': 'http://google.com',
-    'SCREEN_PATH': os.path.abspath(
-        os.path.join(
-            os.path.dirname(
-                __file__,
-            ),
-            'tmp',
-        ),
-    ),
-    'CHROME': {
-        'executable_path': os.path.join(
-            os.path.dirname(
-                __file__,
-            ),
-            '..',
-            'bin',
-            'chromedriver',
-        ),
+    'DEFAULT_BROWSER': 'phantomjs',
+    'PROJECT_URL': 'https://www.google.ru/',
+    'SCREEN_PATH': TMP_FOLDER,
+    'LOGS_PATH': TMP_FOLDER,
+
+    'IE': {},
+    'OPERA': {},
+    'FIREFOX': {},
+    'PHANTOMJS': {
+        'executable_path': os.path.join(BIN_FOLDER, 'phantomjs'),
+        'service_log_path': os.path.join(TMP_FOLDER, 'phantomjs.log'),
     },
+    'CHROME': {
+        'executable_path': os.path.join(BIN_FOLDER, 'chromedriver'),
+        'service_log_path': os.path.join(TMP_FOLDER, 'chromedriver.log'),
+    },
+
     'REMOTE': {
         'CAPABILITIES': {
             'chrome': {
@@ -70,7 +89,6 @@ LOGGING_SETTINGS = {
         'console': {
             'class': 'logging.StreamHandler',
             'level': 'DEBUG',
-            'stream': getwriter('utf-8')(sys.stderr),
             'formatter': 'basic'
         },
         'null': {
@@ -84,10 +102,13 @@ LOGGING_SETTINGS = {
             'level': 'INFO',
             'propagate': False,
         },
-    },
-    'root': {
-        'propagate': False,
-        'handlers': ['console'],
-        'level': 'DEBUG',
+        'seismograph': {
+            'propagate': False,
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
     },
 }
+
+if pyv.IS_PYTHON_2:
+    LOGGING_SETTINGS['handlers']['console']['stream'] = getwriter('utf-8')(sys.stderr)

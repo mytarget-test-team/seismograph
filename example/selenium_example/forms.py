@@ -14,16 +14,24 @@ class SearchForm(selenium.forms.UIForm):
         selector=selenium.forms.fields.selector(name='q'),
     )
 
-    def submit(self):
-        button = self.query.button(name='btnG').first()
-        button.click()
+    submit = selenium.PageObject(
+        selenium.query('button', name='btnG'),
+        proxy=lambda b: b.click(),
+    )
+
+
+class SearchPage(selenium.Page):
+
+    search = selenium.PageObject(
+        SearchForm,
+    )
 
 
 @suite.register
 def test_search_form(case, browser):
     browser.router.go_to('/')
-    form = SearchForm(browser)
-    form.fill()
-    form.submit()
+    page = SearchPage(browser)
+    page.search.fill()
+    page.search.submit()
 
-    case.assertion.text_in_page(browser, form.search_field.value)
+    case.assertion.text_in_page(browser, page.search.search_field.value + 'qwewer')

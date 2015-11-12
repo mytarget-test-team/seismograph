@@ -10,7 +10,7 @@ from ..exceptions import TimeoutException
 WAITING_FOR_TIMEOUT = 30
 
 
-def waiting_for(func, timeout=None, exc=None, message=None, sleep=None, args=None, kwargs=None):
+def waiting_for(func, timeout=None, exc_cls=None, message=None, delay=None, args=None, kwargs=None):
     args = args or tuple()
     kwargs = kwargs or {}
 
@@ -24,12 +24,12 @@ def waiting_for(func, timeout=None, exc=None, message=None, sleep=None, args=Non
         if result:
             return result
 
-        if sleep:
-            time.sleep(sleep)
+        if delay:
+            time.sleep(delay)
     else:
         message = message or 'Timeout {} exceeded'.format(timeout)
-        if exc:
-            raise exc(message)
+        if exc_cls:
+            raise exc_cls(message)
         raise TimeoutException(message)
 
 

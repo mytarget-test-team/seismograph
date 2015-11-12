@@ -2,6 +2,7 @@
 
 import re
 import sys
+import logging
 import traceback
 
 from . import ext
@@ -17,6 +18,9 @@ from .utils.common import measure_time
 from .utils.common import call_to_chain
 from .groups.default import DefaultSuiteGroup
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
+
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_LAYERS = []
@@ -100,6 +104,12 @@ class ProgramContext(runnable.ContextOfRunnableObject):
         self.__layers.extend(layers)
 
     def start_context(self, program):
+        logger.debug(
+            'Start context of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         try:
             call_to_chain(self.layers, 'on_setup', program)
             call_to_chain(self.__setup_callbacks, None)
@@ -108,6 +118,12 @@ class ProgramContext(runnable.ContextOfRunnableObject):
             raise
 
     def stop_context(self, program):
+        logger.debug(
+            'Stop context of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         try:
             call_to_chain(self.layers, 'on_teardown', program)
             call_to_chain(self.__teardown_callbacks, None)
@@ -116,12 +132,30 @@ class ProgramContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_init(self, program):
+        logger.debug(
+            'Call to chain callbacks "on_init" of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         call_to_chain(self.layers, 'on_init', program)
 
     def on_config(self, program, config):
+        logger.debug(
+            'Call to chain callbacks "on_config" of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         call_to_chain(self.layers, 'on_config', config)
 
     def on_error(self, error, program, result):
+        logger.debug(
+            'Call to chain callbacks "on_error" of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         try:
             call_to_chain(self.layers, 'on_error', error, program, result)
         except BaseException:
@@ -129,9 +163,19 @@ class ProgramContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_option_parser(self, parser):
+        logger.debug(
+            'Call to chain callbacks "on_option_parser" of program',
+        )
+
         call_to_chain(self.layers, 'on_option_parser', parser)
 
     def on_run(self, program):
+        logger.debug(
+            'Call to chain callbacks "on_run" of program "{}"'.format(
+                runnable.class_name(program),
+            ),
+        )
+
         try:
             call_to_chain(self.layers, 'on_run', program)
         except BaseException:
@@ -251,11 +295,19 @@ class Program(runnable.RunnableObject):
 
     def _make_group(self):
         if self.__suite_group_class__:
+            logger.debug(
+                'Use "__suite_group_class__" to making suite group',
+            )
+
             return self.__suite_group_class__(
                 self.__suites, self.__config,
             )
 
         if self.config.GEVENT:
+            logger.debug(
+                'Use "GeventSuiteGroup" to making suite group',
+            )
+
             pyv.check_gevent_supported()
 
             from .groups.gevent import GeventSuiteGroup
@@ -265,6 +317,10 @@ class Program(runnable.RunnableObject):
             )
 
         if self.config.THREADING:
+            logger.debug(
+                'Use "ThreadingSuiteGroup" to making suite group',
+            )
+
             from .groups.threading import ThreadingSuiteGroup
 
             return ThreadingSuiteGroup(
@@ -272,11 +328,19 @@ class Program(runnable.RunnableObject):
             )
 
         if self.config.MULTIPROCESSING:
+            logger.debug(
+                'Use "MultiprocessingSuiteGroup" to making suite group',
+            )
+
             from .groups.multiprocessing import MultiprocessingSuiteGroup
 
             return MultiprocessingSuiteGroup(
                 self.__suites, self.__config,
             )
+
+        logger.debug(
+            'Use "DefaultSuiteGroup" to making suite group',
+        )
 
         return DefaultSuiteGroup(
             self.__suites, self.__config,
@@ -284,6 +348,11 @@ class Program(runnable.RunnableObject):
 
     def _make_result(self):
         if self.__config.OUTPUT:
+            logger.debug(
+                'Sdtout for result object will be redirected to "{}"'.format(
+                    self.__config.OUTPUT,
+                ),
+            )
             stdout = open(self.__config.OUTPUT, 'w')
         else:
             stdout = sys.stdout
@@ -342,6 +411,11 @@ class Program(runnable.RunnableObject):
 
     def register_suite(self, suite):
         if self.suite_is_valid(suite):
+            logger.debug(
+                'Register suite "{}" on program "{}"'.format(
+                    suite.name, runnable.class_name(self),
+                ),
+            )
             suite.mount_to(self)
 
     def register_suites(self, suites):

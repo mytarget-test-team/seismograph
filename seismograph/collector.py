@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from random import Random
 
 from . import loader
@@ -7,6 +8,9 @@ from . import extensions
 from .suite import BuildRule
 from .exceptions import CollectError
 from .utils.common import call_to_chain
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_shuffle(config):
@@ -96,6 +100,8 @@ def generator_by_commands(suites, rules, shuffle=None):
 
 def create_generator(suites, config):
     if config.TESTS:
+        logger.debug('Create suite generator by commands')
+
         rules = [
             BuildRule(
                 suite_name=get_suite_name_from_command(c),
@@ -107,6 +113,8 @@ def create_generator(suites, config):
         return generator_by_commands(
             suites, rules, shuffle=get_shuffle(config),
         )
+
+    logger.debug('Create base suite generator')
 
     return base_generator(
         suites, shuffle=get_shuffle(config),

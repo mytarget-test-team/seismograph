@@ -75,11 +75,12 @@ class FormField(object):
     def __init__(self,
                  name,
                  value=None,
-                 required=False,
+                 group=None,
+                 weight=None,
                  selector=None,
+                 required=False,
                  error_mess=None,
-                 invalid_value=None,
-                 weight=None):
+                 invalid_value=None):
 
         self.name = name
 
@@ -91,7 +92,7 @@ class FormField(object):
         self.error_mess = error_mess
         self.invalid_value = invalid_value
 
-        self.__group = None
+        self.__group = group
 
         self.__weight = weight
         self.__selector = selector
@@ -103,14 +104,17 @@ class FormField(object):
     def query(self):
         return self.we.query
 
-    def bind(self, group):
-        self.__group = group
-
-        if callable(self.value):
-            self.value = self.value()
-
-        if callable(self.invalid_value):
-            self.invalid_value = self.invalid_value()
+    def __call__(self, group):
+        return self.__class__(
+            self.name,
+            group=group,
+            weight=self.__weight,
+            selector=self.selector,
+            required=self.required,
+            error_mess=self.error_mess,
+            value=self.value() if callable(self.value) else self.value,
+            invalid_value=self.invalid_value() if callable(self.invalid_value) else self.invalid_value,
+        )
 
     @property
     def driver(self):

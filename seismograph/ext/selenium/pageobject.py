@@ -2,44 +2,50 @@
 
 from six import with_metaclass
 
+from ...utils import pyv
 from .query import QueryObject
 
 
 def page_object_factory(page_element):
     def wrapper(self):
-        we = None
+        if page_element.obj_class:
+            result = page_element.get_instance(self.area)
+        else:
+            we = None
 
-        for query_object in page_element.query_set[:-1]:
+            for query_object in page_element.query_set[:-1]:
+                if we:
+                    we = we.query.from_object(
+                        query_object,
+                    ).first()
+                else:
+                    we = self.query.from_object(
+                        query_object,
+                    ).first()
+
             if we:
-                we = we.query.from_object(
-                    query_object,
-                ).first()
+                result = we.query.from_object(page_element.query_set[-1:][0])
             else:
-                we = self.query.from_object(
-                    query_object,
-                ).first()
+                result = self.query.from_object(page_element.query_set[-1:][0])
 
-        if we:
-            result = we.query.from_object(page_element.query_set[-1:][0])
-        else:
-            result = self.query.from_object(page_element.query_set[-1:][0])
+            if page_element.wait_timeout:
+                result.wait(
+                    page_element.wait_timeout,
+                )
 
-        if page_element.wait_timeout:
-            result.wait(
-                page_element.wait_timeout,
-            )
+            if page_element.is_list:
+                result = result.all()
+            elif page_element.index:
+                result = result.get(
+                    page_element.index,
+                )
+            else:
+                result = result.first()
 
-        if page_element.is_list:
-            result = result.all()
-        elif page_element.index:
-            result = result.get(
-                page_element.index,
-            )
-        else:
-            result = result.first()
-
-        if page_element.proxy_class:
-            return page_element.proxy_class(result)
+        if page_element.proxy:
+            if pyv.is_class_type(page_element.proxy):
+                return page_element.proxy(result)
+            return lambda: page_element.proxy(result)
         return result
 
     return property(wrapper)
@@ -48,33 +54,59 @@ def page_object_factory(page_element):
 class PageObjectProxy(object):
 
     def __init__(self, proxy):
-        self.__obj = proxy
+        self.__wrapped = proxy
 
     def __getattr__(self, item):
-        return getattr(self.__obj, item)
+        return getattr(self.__wrapped, item)
 
     def __repr__(self):
-        return repr(self.__obj)
+        return repr(self.__wrapped)
 
     @property
-    def obj(self):
-        return self.__obj
+    def _wrapped(self):
+        return self.__wrapped
+
+    @property
+    def driver(self):
+        return self.__wrapped.driver
 
 
 class PageObject(object):
 
-    def __init__(self, *query_set, **options):
-        assert bool(query_set), 'Element can not be created without query set'
+    def __init__(self, *args, **options):
+        assert bool(args), 'Element can not be created without args'
 
-        if isinstance(query_set[0], PageObject):
-            self.__query_set = query_set[0].query_set + query_set[1:]
+        self.__query_set = None
+        self.__obj_class = None
+        self.__obj_instance = None
+
+        if pyv.is_class_type(args[0]):
+            self.__obj_class = args[0]
+        if isinstance(args[0], PageObject):
+            self.__query_set = args[0].query_set + args[1:]
         else:
-            self.__query_set = query_set
+            self.__query_set = args
 
         self.__index = options.get('index', None)
+        self.__proxy = options.get('proxy', None)
         self.__is_list = options.get('is_list', False)
-        self.__proxy_class = options.get('proxy_class', None)
         self.__wait_timeout = options.get('wait_timeout', None)
+
+    def __call__(self, *args, **kwargs):
+        return self
+
+    def __getattr__(self, item):
+        # for IDE only
+        raise AttributeError(item)
+
+    @property
+    def obj_class(self):
+        return self.__obj_class
+
+    def get_instance(self, area):
+        if self.__obj_instance is None:
+            self.__obj_instance = self.__obj_class(area)
+        return self.__obj_instance
 
     @property
     def query_set(self):
@@ -89,16 +121,16 @@ class PageObject(object):
         return self.__is_list
 
     @property
-    def proxy_class(self):
-        return self.__proxy_class
+    def proxy(self):
+        return self.__proxy
 
-    @proxy_class.setter
-    def proxy_class(self, cls):
+    @proxy.setter
+    def proxy(self, cls):
         assert issubclass(cls, PageObjectProxy), \
             '"{}" is not "PageObjectProxy" subclass'.format(
                 cls.__name__,
         )
-        self.__proxy_class = cls
+        self.__proxy = cls
 
     @property
     def wait_timeout(self):
@@ -136,48 +168,14 @@ class PageMeta(type):
         return cls
 
 
-class Forms(object):
-
-    def __init__(self, **classes):
-        self.__area = None
-        self.__instances = {}
-
-        self.__classes = classes
-
-    def __getattr__(self, item):
-        if not self.__area:
-            raise RuntimeError('Need area for create instance')
-
-        if item not in self.__instances:
-            self.__instances[item] = self.__classes[item](self.__area)
-
-        return self.__instances[item]
-
-    def __call__(self, proxy):
-        inst = self.__class__(**self.__classes)
-        inst.change_area(proxy)
-        return inst
-
-    def add(self, name, cls):
-        self.__classes[name] = cls
-
-    def change_area(self, proxy):
-        self.__area = proxy
-
-    def refresh(self):
-        self.__instances = {}
-
-
 class Page(with_metaclass(PageMeta, object)):
 
     __wrapper__ = None
-    __forms__ = Forms()
     __api_class__ = PageApi
 
     def __init__(self, proxy):
         self.__proxy = proxy
         self.__api = self.__api_class__(self)
-        self.__forms = self.__forms__(self.area)
 
     def __getattr__(self, item):
         return getattr(self.area, item)
@@ -207,15 +205,8 @@ class Page(with_metaclass(PageMeta, object)):
     def query(self):
         return self.area.query
 
-    @property
-    def forms(self):
-        return self.__forms
-
     def relate_to(self, proxy):
         self.__proxy = proxy
-        self.__forms.change_area(self.area)
 
-    def refresh(self, force=False):
-        if force:
-            self.__proxy.driver.refresh()
-        self.__forms.refresh()
+    def refresh(self):
+        self.__proxy.driver.refresh()

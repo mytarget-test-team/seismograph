@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
+from functools import wraps
 from types import MethodType
+from collections import OrderedDict
 from contextlib import contextmanager
 
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.action_chains import ActionChains
 
+from . import polling
 from .router import Router
-from .tools import polling
 from .query import QueryProcessor
 from ...utils.common import waiting_for
 from .utils import change_name_from_python_to_html
@@ -28,6 +30,7 @@ def _check_equal(we, attr, value):
 
 
 def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
+    @wraps(f)
     def wrapper(*args, **kwargs):
         result = f(*args, **kwargs)
 
@@ -41,7 +44,11 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
             )
 
         if isinstance(result, (list, tuple)):
-            we_list = WebElementList()
+            we_list = WebElementListProxy(
+                driver,
+                config,
+                reason_storage=reason_storage,
+            )
 
             for obj in result:
                 if isinstance(obj, WebElement):
@@ -61,7 +68,30 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
     return wrapper
 
 
-class WebElementList(list):
+class WebElementListProxy(list):
+
+    def __init__(self, driver, config, reason_storage=None):
+        super(WebElementListProxy, self).__init__()
+
+        self.__driver = driver
+        self.__config = config
+        self.__reason_storage = reason_storage or OrderedDict()
+
+    @property
+    def driver(self):
+        return self.__driver
+
+    @property
+    def config(self):
+        return self.__config
+
+    @property
+    def query(self):
+        return self.__driver.query
+
+    @property
+    def reason_storage(self):
+        return self.__reason_storage
 
     def get_by(self, **kwargs):
         for we in self:
@@ -82,7 +112,7 @@ class BaseProxy(object):
         self.__wrapped = wrapped
         self.__query = QueryProcessor(self)
         self.__allow_polling = allow_polling
-        self.__reason_storage = reason_storage or dict()
+        self.__reason_storage = reason_storage or OrderedDict()
 
         assert self.__class__ != BaseProxy, 'This is base class only. Can not be instanced.'
 
@@ -95,11 +125,11 @@ class BaseProxy(object):
         )
 
         if attr is None:
-            attr = getattr(self.query, item)
+            return getattr(self.query, item)
 
         if callable(attr) and type(attr) == MethodType:
             if self.allow_polling:
-                return polling(
+                return polling.do(
                     callback=factory_method(
                         attr,
                         self.driver,
@@ -107,6 +137,7 @@ class BaseProxy(object):
                         allow_polling=self.allow_polling,
                         reason_storage=self.reason_storage,
                     ),
+                    delay=self.config.POLLING_DELAY,
                     timeout=self.config.POLLING_TIMEOUT,
                 )
 
@@ -154,8 +185,9 @@ class BaseProxy(object):
             return self._wrapped.find_element_by_tag_name('body').text
 
         if self.allow_polling:
-            func = polling(
+            func = polling.do(
                 get_text,
+                delay=self.config.POLLING_DELAY,
                 timeout=self.config.POLLING_TIMEOUT,
             )
             return func()
@@ -163,18 +195,19 @@ class BaseProxy(object):
         return get_text()
 
     @contextmanager
-    def polling(self, func=None, exc=None, message=None, args=None, kwargs=None):
+    def polling(self, func=None, exc_cls=None, message=None, timeout=None, args=None, kwargs=None):
         to_restore = self.__allow_polling
         self.__allow_polling = True
 
         if func:
             waiting_for(
                 func,
-                exc=exc,
                 args=args,
                 kwargs=kwargs,
+                exc_cls=exc_cls,
                 message=message,
-                timeout=self.config.POLLING_TIMEOUT or 0.5,
+                delay=self.config.POLLING_DELAY,
+                timeout=timeout or self.config.POLLING_TIMEOUT or 3,
             )
 
         try:
@@ -188,8 +221,7 @@ class BaseProxy(object):
 
         try:
             self.__allow_polling = False
-            if implicitly_wait:
-                self.driver.config.IMPLICITLY_WAIT = 0
+            self.driver.config.IMPLICITLY_WAIT = 0
             yield
         finally:
             self.__allow_polling = True
@@ -237,8 +269,9 @@ class WebDriverProxy(BaseProxy):
     @property
     def current_url(self):
         if self.allow_polling:
-            func = polling(
+            func = polling.do(
                 lambda: self._wrapped.current_url,
+                delay=self.config.POLLING_DELAY,
                 timeout=self.config.POLLING_TIMEOUT,
             )
             return func()
@@ -249,22 +282,22 @@ class WebDriverProxy(BaseProxy):
 class ActionChainsProxy(object):
 
     def __init__(self, proxy):
-        self.__action_chans = ActionChains(proxy.driver)
+        self.__action_chains = ActionChains(proxy.driver)
 
     def __call__(self, proxy):
         return self.__class__(proxy.driver)
 
     def __getattr__(self, item):
-        return getattr(self.__action_chans, item)
+        return getattr(self.__action_chains, item)
 
     def __repr__(self):
-        return repr(self.__action_chans)
+        return repr(self.__action_chains)
 
     def reset(self):
-        self.__action_chans._actions = []
+        self.__action_chains._actions = []
 
     def perform(self, reset=True):
-        self.__action_chans.perform()
+        self.__action_chains.perform()
 
         if reset:
             self.reset()

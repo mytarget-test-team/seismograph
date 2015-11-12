@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from copy import deepcopy
 from contextlib import contextmanager
 
 from six import with_metaclass
 
+from ..utils import pyv
+from .. import pageobject
 from .fields import FormField
 from ..query import QueryObject
 from .iterators import FieldsIterator
@@ -99,23 +100,23 @@ class GroupMemento(dict):
                 continue
 
 
-class FieldsGroupMeta(type):
+class FieldsGroupMeta(pageobject.PageMeta):
 
     def __call__(self, *args, **kwargs):
         instance = super(FieldsGroupMeta, self).__call__(*args, **kwargs)
 
-        for atr in (a for a in dir(instance) if not a.startswith('_') and a != 'query'):
-            maybe_field = getattr(instance, atr, None)
+        for attr_name in (a for a in dir(instance.__class__) if not a.startswith('_')):
+            attr_value = getattr(instance.__class__, attr_name, None)
 
-            if isinstance(maybe_field, (FormField, GroupContainer)):
-                if maybe_field.name in instance.__exclude__:
+            if isinstance(attr_value, (FormField, GroupContainer)):
+                if attr_value.name in instance.__exclude__:
                     try:
-                        delattr(instance, atr)
+                        delattr(instance, attr_name)
                     except AttributeError:
                         pass
                     continue
 
-                instance.add_field(atr, deepcopy(maybe_field))
+                instance.add_field(attr_name, attr_value)
 
         return instance
 
@@ -181,8 +182,8 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
             field = field(self)
             setattr(self, name, field)
         elif isinstance(field, FormField):
+            field = field(self)
             setattr(self, name, field)
-            field.bind(self)
             self.__memento.add_field(field)
         else:
             raise TypeError('Unknown field type')

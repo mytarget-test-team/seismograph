@@ -15,7 +15,7 @@ class RouteNotFound(RouterError):
     pass
 
 
-class ReRaiseWebDriverException(SeleniumExError):
+class ReRaiseException(SeleniumExError):
     pass
 
 

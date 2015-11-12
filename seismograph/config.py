@@ -255,7 +255,9 @@ class Config(DictObject):
             )
 
     def from_module(self, module):
-        logger.debug('Init config from module "%s"', module)
+        logger.debug(
+            'Init config from module "{}"'.format(module),
+        )
 
         try:
             obj = import_module(module)
@@ -267,13 +269,19 @@ class Config(DictObject):
         return self
 
     def from_py_file(self, file_path):
-        logger.debug('Init config from py file "%s"', file_path)
+        logger.debug(
+            'Init config from py file "{}"'.format(file_path),
+        )
 
         if not os.path.isfile(file_path):
-            raise ConfigError('config file does not exist at path "{}"'.format(file_path))
+            raise ConfigError(
+                'config file does not exist at path "{}"'.format(file_path),
+            )
 
         elif not file_path.endswith('.py'):
-            raise ConfigError('config file is not python file')
+            raise ConfigError(
+                'config file is not python file',
+            )
 
         module = imp.new_module(file_path.rstrip('.py'))
         module.__file__ = file_path

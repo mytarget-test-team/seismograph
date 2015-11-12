@@ -38,6 +38,8 @@ def load_module(module_name, package=None):
         package + '.' if package else '', module_name,
     )
 
+    logger.debug('Load module "{}"'.format(module_name))
+
     # Can be conflict with global name
     # We're obliged to talk about this
     if module_name in sys.modules:
@@ -69,21 +71,30 @@ def load_test_names_from_case(
 
     for name in sorted(dir(cls)):
         if is_test_name(name):
+            logger.debug(
+                'Load test "{}" from case "{}.{}"'.format(
+                    name, cls.__module__, cls.__name__,
+                ),
+            )
             yield name
 
 
 def load_tests_from_case(
-        test_case_class,
+        cls,
         config=None,
         box_class=None,
         method_name=None,
         test_name_prefix=None,
         default_test_name=None):
-    logger.debug('Load test from test case: "%s"', test_case_class.__name__)
+    logger.debug(
+        'Load test from case "{}.{}"'.format(
+            cls.__module__, cls.__name__,
+        ),
+    )
 
     if method_name:
-        for name in filter(lambda n: n == method_name, dir(test_case_class)):
-            case = test_case_class(name, config=config)
+        for name in filter(lambda n: n == method_name, dir(cls)):
+            case = cls(name, config=config)
             if box_class:
                 yield box_class((case, ))
             else:
@@ -91,13 +102,13 @@ def load_tests_from_case(
             raise StopIteration
         else:
             raise LoaderError(
-                'Test "{}" is not found on "{}"'.format(
-                    method_name, test_case_class.__name__,
+                'Test "{}" not found in "{}"'.format(
+                    method_name, cls.__name__,
                 ),
             )
     else:
         names = load_test_names_from_case(
-            test_case_class,
+            cls,
             test_name_prefix=(test_name_prefix or TEST_NAME_PREFIX),
             default_test_name=(default_test_name or DEFAULT_TEST_NAME),
         )
@@ -107,38 +118,50 @@ def load_tests_from_case(
 
             for name in names:
                 cases.append(
-                    test_case_class(name, config=config)
+                    cls(name, config=config)
                 )
 
             yield box_class(cases)
         else:
             for name in names:
-                yield test_case_class(name, config=config)
+                yield cls(name, config=config)
 
 
 def load_suite_by_name(name, suites):
-    logger.debug('Load suite "%s" from list', name)
+    logger.debug(
+        'Load suite "{}" from list'.format(name),
+    )
 
     for suite in filter(lambda s: s.name == name, suites):
         return suite
     else:
         raise LoaderError(
-            'Suite "{}" is not found'.format(name),
+            'Suite "{}" not found'.format(name),
         )
 
 
 def load_case_from_suite(class_name, suite):
-    logger.debug('Load test case "%s" from suite "%s"', class_name, suite.name)
+    logger.debug(
+        'Load case "{}" from suite "{}"'.format(
+            class_name, suite.name,
+        ),
+    )
 
     for case_cls in filter(lambda c: c.__name__ == class_name, suite.cases):
         return case_cls
     else:
         raise LoaderError(
-            'Test case "{}" is not found'.format(class_name),
+            'Test case "{}" not found'.format(class_name),
         )
 
 
 def load_suites_from_module(module, suite_class):
+    logger.debug(
+        'Load suite from module {} by class "{}.{}"'.format(
+            module, suite_class.__module__, suite_class.__name__,
+        ),
+    )
+
     for attribute in dir(module):
         value = getattr(module, attribute, None)
         if isinstance(value, suite_class):
@@ -146,6 +169,10 @@ def load_suites_from_module(module, suite_class):
 
 
 def load_suites_from_path(path_to_dir, suite_class, package=None, recursive=True):
+    logger.debug(
+        'Load suites from path "{}"'.format(path_to_dir),
+    )
+
     check_path_is_exist(path_to_dir)
 
     lst_dir = os.listdir(path_to_dir)
@@ -167,5 +194,5 @@ def load_suites_from_path(path_to_dir, suite_class, package=None, recursive=True
                 pack = '{}.{}'.format(package, pack)
 
             for suite in load_suites_from_path(
-                    full_path(pack), suite_class, package=pack):
+                    full_path(pack), suite_class, package=pack, recursive=recursive):
                 yield suite

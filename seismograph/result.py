@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import logging
 from threading import Lock
 from contextlib import contextmanager
 
@@ -12,10 +13,11 @@ from .utils import colors
 from .utils.common import MPSupportedValue
 
 
-DEFAULT_NAME = 'seismograph'
-
-
 lock = Lock()
+logger = logging.getLogger(__name__)
+
+
+DEFAULT_NAME = 'seismograph'
 
 
 def get_runnable_from_storage_item(item):
@@ -230,6 +232,10 @@ class State(object):
 
     @should_stop.setter
     def should_stop(self, value):
+        logger.debug(
+            'should_stop on result state did changed. value={}'.format(value),
+        )
+
         self.__should_stop.value = value
 
     @property
@@ -351,6 +357,8 @@ class Result(object):
         return self.__current_state
 
     def create_proxy(self, **kwargs):
+        logger.debug('Create proxy to result')
+
         return self.__class__(
             self.__config,
             is_proxy=True,
@@ -361,6 +369,12 @@ class Result(object):
 
     def extend(self, result):
         assert result.is_proxy, 'result can not be extended from no proxy'
+
+        logger.debug(
+            'Extend result "{}" from proxy "{}"'.format(
+                self.name, result.name
+            ),
+        )
 
         self.errors.extend(result.errors)
         self.skipped.extend(result.skipped)
@@ -373,6 +387,12 @@ class Result(object):
             name=runnable.class_name(runnable_object) if runnable_object else None,
         )
         if runnable_object:
+            logger.debug(
+                'Result proxy will work on runnable object "{}"'.format(
+                    runnable.class_name(runnable_object),
+                ),
+            )
+
             self.proxies.append(proxy)
 
         try:

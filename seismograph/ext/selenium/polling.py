@@ -1,6 +1,8 @@
 # -*- coding: utf8 -*-
 
 import time
+import socket
+import logging
 from functools import wraps
 
 try:
@@ -11,8 +13,10 @@ except ImportError:  # please python 3
 from selenium.common.exceptions import WebDriverException
 
 from ...utils import pyv
-from ...exceptions import TimeoutException
-from .exceptions import ReRaiseWebDriverException
+from .exceptions import SeleniumExError
+
+
+logger = logging.getLogger(__name__)
 
 
 POLLING_EXCEPTIONS = (
@@ -24,7 +28,7 @@ POLLING_EXCEPTIONS = (
 DEFAULT_POLLING_TIMEOUT = 30
 
 
-def polling(callback=None, timeout=DEFAULT_POLLING_TIMEOUT):
+def do(callback=None, timeout=DEFAULT_POLLING_TIMEOUT, delay=None):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
@@ -33,44 +37,30 @@ def polling(callback=None, timeout=DEFAULT_POLLING_TIMEOUT):
 
             while time.time() <= t_start + timeout:
                 try:
+                    logger.debug(
+                        u'Do polling, try to call "{}", args={}, kwargs={}'.format(
+                            pyv.get_func_name(f), pyv.unicode(args), pyv.unicode(kwargs),
+                        ),
+                    )
                     return f(*args, **kwargs)
+                except socket.error as error:  # if connection will be refused,
+                    # that we not need to continue polling
+                    raise error
                 except POLLING_EXCEPTIONS as error:
                     exc = error
+                    if delay:
+                        time.sleep(delay)
                     continue
             else:
                 if exc:
                     raise exc
-                raise
+                raise SeleniumExError(
+                    'Timeout {} exceeded'.format(timeout),
+                )
 
         return wrapped
 
     if callback is not None:
-        return wrapper(callback)
-
-    return wrapper
-
-
-def re_raise_wd_exc(callback=None, exc_cls=ReRaiseWebDriverException, message=None):
-    def wrapper(f):
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except (TimeoutException, WebDriverException) as e:
-                orig_message = pyv.get_exc_message(e)
-
-                if message:
-                    new_message = u'{}{}'.format(
-                        message, u' ({})'.format(orig_message) if orig_message else ''
-                    )
-                else:
-                    new_message = orig_message
-
-                raise exc_cls(new_message)
-
-        return wrapped
-
-    if callable(callback):
         return wrapper(callback)
 
     return wrapper

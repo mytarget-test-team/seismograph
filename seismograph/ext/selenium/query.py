@@ -6,7 +6,6 @@ from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
 from ...utils.common import waiting_for
-from ...exceptions import TimeoutException
 from .utils import change_name_from_python_to_html
 
 
@@ -90,27 +89,31 @@ def make_result(proxy, tag):
     return handle
 
 
-def get_execute_method(proxy, can_many):
+def get_execute_method(proxy, list_result):
     css_executors = {
         True: 'find_elements_by_css_selector',
         False: 'find_element_by_css_selector',
     }
-    method_name = css_executors[bool(can_many)]
+    method_name = css_executors[bool(list_result)]
 
     return getattr(proxy, method_name)
 
 
-def execute(proxy, css, can_many=False, disable_polling=False):
-    logger.debug(u'CSS: {} Can many: {}'.format(css, 'Yes' if can_many else 'No'))
+def execute(proxy, css, list_result=False, disable_polling=False):
+    logger.debug(
+        u'Execute css query "{}", list result "{}"'.format(
+            css, 'Yes' if list_result else 'No',
+        ),
+    )
 
     proxy.reason_storage['last css query'] = css
 
     if disable_polling:
         with proxy.disable_polling():
-            method = get_execute_method(proxy, can_many)
+            method = get_execute_method(proxy, list_result)
             return method(css)
 
-    method = get_execute_method(proxy, can_many)
+    method = get_execute_method(proxy, list_result)
     return method(css)
 
 
@@ -136,22 +139,18 @@ class QueryResult(object):
             return False
 
     def wait(self, timeout=None):
-        try:
-            return waiting_for(
-                lambda: self.exist,
-                timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
-            )
-        except TimeoutException:
-            raise TimeoutException(
-                'Could not wait web element with css "{}"'.format(self.__css),
-            )
+        return waiting_for(
+            lambda: self.exist,
+            timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
+            message='Could not wait web element by css "{}"'.format(self.__css),
+        )
 
     def get(self, index):
         try:
-            return execute(self.__proxy, self.__css, can_many=True)[index]
+            return execute(self.__proxy, self.__css, list_result=True)[index]
         except IndexError:
             raise NoSuchElementException(
-                'Result does not have element with index "{}". Css: "{}".'.format(
+                'Result does not have element with index "{}". Css query: "{}".'.format(
                     index, self.__css,
                 ),
             )
@@ -160,7 +159,7 @@ class QueryResult(object):
         return execute(self.__proxy, self.__css)
 
     def all(self):
-        return execute(self.__proxy, self.__css, can_many=True)
+        return execute(self.__proxy, self.__css, list_result=True)
 
 
 class QueryProcessor(object):

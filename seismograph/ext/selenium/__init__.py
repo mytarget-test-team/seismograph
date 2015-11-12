@@ -7,8 +7,8 @@ from .query import contains
 from .pageobject import Page
 from .router import add_route
 from .query import QueryObject
+from .utils import re_raise_exc
 from .extension import assertion
-from .tools import re_raise_wd_exc
 from .pageobject import PageObject
 from .extension import inject_driver
 from .pageobject import PageObjectProxy
@@ -86,6 +86,7 @@ def __install__(program):
 
 
 query = QueryObject
+wrapper = QueryObject
 
 
 __all__ = (
@@ -94,13 +95,14 @@ __all__ = (
     'forms',
     'query',
     'Suite',
+    'wrapper',
     'contains',
     'add_route',
     'assertion',
     'PageObject',
     'QueryObject',
+    're_raise_exc',
     'inject_driver',
-    're_raise_wd_exc',
     'PageObjectProxy',
     'case_of_browsers',
     'SeleniumAssertion',

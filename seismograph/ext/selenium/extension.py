@@ -9,7 +9,6 @@ try:
 except ImportError:  # please python 3
     from http.client import HTTPException
 
-from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
@@ -21,9 +20,9 @@ from ... import runnable
 from .proxy import WebDriverProxy
 from ...tools import create_reason
 from .utils import random_file_name
+from .polling import POLLING_EXCEPTIONS
 from ...utils.common import waiting_for
 from .exceptions import SeleniumExError
-from ...exceptions import TimeoutException
 
 
 logger = logging.getLogger(__name__)
@@ -32,11 +31,10 @@ logger = logging.getLogger(__name__)
 EX_NAME = 'selenium'
 
 GET_DRIVER_TIMEOUT = 10
-
-DEFAULT_WINDOW_SIZE = None
-DEFAULT_POLLING_TIMEOUT = 30
+DEFAULT_POLLING_TIMEOUT = 10
+DEFAULt_POLLING_DELAY = None
 DEFAULT_MAXIMIZE_WINDOW = True
-DEFAULT_DRIVER = drivers.CHROME
+DEFAULT_BROWSER = drivers.FIREFOX
 
 DRIVER_TO_CAPABILITIES = {
     drivers.OPERA: DesiredCapabilities.OPERA,
@@ -63,16 +61,47 @@ def get_capabilities(driver_name):
 
 
 def create_browser(selenium, driver):
-    return WebDriverProxy(
+    browser = WebDriverProxy(
         driver,
         config=BrowserConfig(selenium, driver),
     )
+    browser.reason_storage['browser name'] = selenium.browser_name
+    return browser
+
+
+def save_logs(case, selenium):
+    log_file_name = lambda lt: '{}-{}({}:{}).{}'.format(
+        selenium.browser_name,
+        lt,
+        runnable.class_name(case),
+        runnable.method_name(case),
+        'log',
+    )
+
+    with selenium.browser.disable_polling():
+        for log_type in selenium.browser.log_types:
+            log_file_path = os.path.join(
+                selenium.browser.config.LOGS_PATH,
+                log_file_name(log_type),
+            )
+
+            try:
+                with open(log_file_path, 'w') as f:
+                    log = selenium.browser.get_log(log_type)
+                    f.write(u''.join(log))
+            except BaseException as error:
+                logger.error(error, exc_info=True)
 
 
 class BrowserConfig(object):
 
     def __init__(self, selenium, browser):
         self.__browser = browser
+
+        self.LOGS_PATH = selenium.config.get('LOGS_PATH')
+
+        self.__SCRIPT_TIMEOUT = None
+        self.SCRIPT_TIMEOUT = selenium.config.get('SCRIPT_TIMEOUT')
 
         self.__IMPLICITLY_WAIT = None
         self.IMPLICITLY_WAIT = selenium.config.get('IMPLICITLY_WAIT')
@@ -81,10 +110,26 @@ class BrowserConfig(object):
         self.WINDOW_SIZE = selenium.config.get('WINDOW_SIZE')
 
         self.__MAXIMIZE_WINDOW = False
-        self.MAXIMIZE_WINDOW = selenium.config.get('MAXIMIZE_WINDOW')
+        self.MAXIMIZE_WINDOW = selenium.config.get(
+            'MAXIMIZE_WINDOW', DEFAULT_MAXIMIZE_WINDOW,
+        )
 
         self.PROJECT_URL = selenium.config.get('PROJECT_URL')
-        self.POLLING_TIMEOUT = selenium.config.get('POLLING_TIMEOUT')
+        self.POLLING_DELAY = selenium.config.get(
+            'POLLING_DELAY', DEFAULt_POLLING_DELAY,
+        )
+        self.POLLING_TIMEOUT = selenium.config.get(
+            'POLLING_TIMEOUT', DEFAULT_POLLING_TIMEOUT,
+        )
+
+    @property
+    def SCRIPT_TIMEOUT(self):
+        return self.__SCRIPT_TIMEOUT
+
+    @SCRIPT_TIMEOUT.setter
+    def SCRIPT_TIMEOUT(self, value):
+        if value is not None:
+            self.__browser.set_script_timeout(value)
 
     @property
     def IMPLICITLY_WAIT(self):
@@ -152,19 +197,24 @@ class Selenium(object):
         self.get_browser(*args, **kwargs)
 
     def stop(self):
-        if not self.__browser:
+        if self.__browser is None:
             return
 
-        self.__browser.quit()
+        with self.__browser.disable_polling():
+            self.__browser.quit()
+
         self.__browser = None
 
     def remote(self, driver_name):
+        driver_name = driver_name.lower()
         remote_config = self.__config.get('REMOTE')
 
         if not remote_config:
             raise SeleniumExError('settings of remote not found in config')
 
-        logger.debug('Remote config: {}'.format(str(remote_config)))
+        logger.debug(
+            'Remote config: {}'.format(str(remote_config)),
+        )
 
         options = remote_config.get('OPTIONS', {})
         capabilities = get_capabilities(driver_name)
@@ -186,7 +236,9 @@ class Selenium(object):
         if not ie_config:
             raise SeleniumExError('settings of ie browser not found in config')
 
-        logger.debug('Ie config: {}'.format(str(ie_config)))
+        logger.debug(
+            'Ie config: {}'.format(str(ie_config)),
+        )
 
         driver = drivers.IeWebDriver(**ie_config)
         self.__browser = create_browser(self, driver)
@@ -202,7 +254,9 @@ class Selenium(object):
         if not chrome_config:
             raise SeleniumExError('settings of chrome browser not found in config')
 
-        logger.debug('Chrome config: {}'.format(str(chrome_config)))
+        logger.debug(
+            'Chrome config: {}'.format(str(chrome_config)),
+        )
 
         driver = drivers.ChromeWebDriver(**chrome_config)
         self.__browser = create_browser(self, driver)
@@ -212,7 +266,9 @@ class Selenium(object):
     def firefox(self):
         firefox_config = self.__config.get('FIREFOX', {})
 
-        logger.debug('Firefox config: {}'.format(str(firefox_config)))
+        logger.debug(
+            'Firefox config: {}'.format(str(firefox_config)),
+        )
 
         driver = drivers.FirefoxWebDriver(**firefox_config)
         self.__browser = create_browser(self, driver)
@@ -225,7 +281,9 @@ class Selenium(object):
         if not phantom_config:
             raise SeleniumExError('settings of phantom js not found in config')
 
-        logger.debug('PhantomJS config: {}'.format(str(phantom_config)))
+        logger.debug(
+            'PhantomJS config: {}'.format(str(phantom_config)),
+        )
 
         driver = drivers.PhantomJSWebDriver(**phantom_config)
         self.__browser = create_browser(self, driver)
@@ -238,36 +296,38 @@ class Selenium(object):
         if not opera_config:
             raise SeleniumExError('settings of opera browser not found in config')
 
-        logger.debug('Opera config: {}'.format(str(opera_config)))
+        logger.debug(
+            'Opera config: {}'.format(str(opera_config)),
+        )
 
         driver = drivers.OperaWebDriver(**opera_config)
         self.__browser = create_browser(self, driver)
 
         return self.__browser
 
-    def _get_local_driver(self, driver_name):
-        method = getattr(self, driver_name, None)
-
-        if method:
-            return method()
-
-        raise SeleniumExError(
-            'Incorrect browser name "{}"'.format(driver_name),
-        )
-
     def get_browser(self, browser_name=None, timeout=None):
         if self.__browser:
             return self.__browser
 
         self.__browser_name = (
-            browser_name or self.__config.get('DEFAULT_BROWSER', drivers.FIREFOX)
+            browser_name or self.__config.get('DEFAULT_BROWSER', DEFAULT_BROWSER)
         ).lower()
 
         def get_browser(func, *args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except (IOError, OSError, HTTPException, WebDriverException):
+            except POLLING_EXCEPTIONS:
                 return None
+
+        def get_local_browser(browser_name):
+            method = getattr(self, browser_name, None)
+
+            if method:
+                return method()
+
+            raise SeleniumExError(
+                'Incorrect browser name "{}"'.format(browser_name),
+            )
 
         if self.__config.get('USE_REMOTE', False):
             driver = waiting_for(
@@ -276,7 +336,7 @@ class Selenium(object):
             )
         else:
             driver = waiting_for(
-                lambda: get_browser(self._get_local_driver, self.__browser_name),
+                lambda: get_browser(get_local_browser, self.__browser_name),
                 timeout=timeout or GET_DRIVER_TIMEOUT,
             )
 
@@ -287,22 +347,22 @@ class SeleniumAssertion(case.AssertionBase):
 
     DEFAULT_TIMEOUT = 3
 
-    def one_of_texts_in_page(self, browser, texts, msg=None):
+    def any_text_in_page(self, browser, texts, msg=None):
         page_text = browser.text
-        error_message = u'Not of those texts was not found in page "{}". Texts: [{}]'
+        error_message = u'Not of those texts was not found on page "{}". Texts: [{}]'
 
         for text in texts:
             if text in page_text:
                 break
         else:
             error_message = error_message.format(
-                browser.current_url,
+                browser.driver.current_url,
                 u', '.join(texts),
             )
             self.fail(msg or error_message)
 
     def text_in_page(self, browser, text_or_texts, timeout=None, msg=None):
-        error_message = u'Text "{}" not found in page "{}"'
+        error_message = u'Text "{}" not found on page "{}"'
 
         def check_text(txt):
             try:
@@ -312,64 +372,66 @@ class SeleniumAssertion(case.AssertionBase):
 
         if isinstance(text_or_texts, (list, tuple)):
             for t in text_or_texts:
-                try:
-                    waiting_for(
-                        check_text,
-                        timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-                        args=(t,),
-                    )
-                except TimeoutException:
-                    self.fail(
-                        msg or error_message.format(
-                            t, browser.current_url,
-                        ),
-                    )
-        else:
-            try:
                 waiting_for(
                     check_text,
-                    timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-                    args=(text_or_texts,),
-                )
-            except TimeoutException:
-                self.fail(
-                    msg or error_message.format(
-                        text_or_texts, browser.current_url,
+                    args=(t,),
+                    exc_cls=AssertionError,
+                    message=msg or error_message.format(
+                        t, browser.driver.current_url,
                     ),
+                    delay=browser.config.POLLING_DELAY,
+                    timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
                 )
+        else:
+            waiting_for(
+                check_text,
+                args=(text_or_texts,),
+                exc_cls=AssertionError,
+                message=msg or error_message.format(
+                    text_or_texts, browser.driver.current_url,
+                ),
+                delay=browser.config.POLLING_DELAY,
+                timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            )
 
     def web_element_exist(self, browser, query_object, timeout=None, msg=None):
-        try:
-            waiting_for(
-                lambda: browser.query.form_object(query_object).exist,
-                timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-            )
-        except TimeoutException:
-            self.fail(msg or u'Web element was not found')
+        waiting_for(
+            lambda: browser.query.form_object(query_object).exist,
+            exc_cls=AssertionError,
+            message=msg or u'Web element was not found on page "{}"'.format(
+                browser.driver.current_url,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+        )
 
     def web_element_not_exist(self, browser, query_object, timeout=None, msg=None):
-        try:
-            waiting_for(
-                lambda: not browser.query.form_object(query_object).exist,
-                timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-            )
-        except TimeoutException:
-            self.fail(msg or u'Web element was found')
+        waiting_for(
+            lambda: not browser.query.form_object(query_object).exist,
+            exc_cls=AssertionError,
+            message=msg or u'Web element was found on page "{}"'.format(
+                browser.driver.current_url,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+        )
 
     def content_in_web_element_exist(self, browser, query_object, timeout=None, msg=None):
-        try:
-            waiting_for(
-                lambda: len(browser.query.form_object(query_object).first().text) > 0,
-                timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-            )
-        except TimeoutException:
-            self.true(msg or 'Content does not exist in element')
+        waiting_for(
+            lambda: len(browser.query.form_object(query_object).first().text) > 0,
+            exc_cls=AssertionError,
+            message=msg or 'Content does not exist inside element on page "{}"'.format(
+                browser.driver.current_url,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+        )
 
 
 assertion = SeleniumAssertion()
 
 
-def _get_selenium_from_case(self):
+def get_selenium_from_case(self):
     return self._SeleniumCase__selenium
 
 
@@ -384,7 +446,7 @@ def inject_driver(f):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
         return f(
-            self, _get_selenium_from_case(self).browser, *args, **kwargs
+            self, get_selenium_from_case(self).browser, *args, **kwargs
         )
     return wrapper
 
@@ -396,12 +458,16 @@ class SeleniumCaseLayer(case.CaseLayer):
             require.append(EX_NAME)
 
     def on_setup(self, case):
-        if not case.__browsers__:
-            _get_selenium_from_case(case).start()
+        if not case.__browsers__ and not case.config.SELENIUM_BROWSERS:
+            get_selenium_from_case(case).start()
 
     def on_teardown(self, case):
-        if not case.__browsers__:
-            _get_selenium_from_case(case).stop()
+        selenium = get_selenium_from_case(case)
+
+        if selenium.browser.config.LOGS_PATH:
+            save_logs(case, selenium)
+
+        selenium.stop()
 
 
 class SeleniumCase(case.Case):
@@ -416,9 +482,6 @@ class SeleniumCase(case.Case):
         kwargs.update(use_flows=False)
 
         super(SeleniumCase, self).__init__(*args, **kwargs)
-
-        if self.config.SELENIUM_BROWSERS:
-            self.__browsers__ = self.config.SELENIUM_BROWSERS
 
         self.__selenium = self.ext('selenium')
 
@@ -436,42 +499,51 @@ class SeleniumCase(case.Case):
             case.apply_flows(self)
 
     def __reason__(self):
-        reason_args = []
+        try:
+            screen_url = self.__selenium.config.get('SCREEN_URL', None)
+            screen_path = self.__selenium.config.get('SCREEN_PATH', None)
 
-        for k, v in self.__selenium.browser.reason_storage.items():
-            reason_args.append('{}: {}'.format(k, v))
+            if screen_path:
+                file_name = random_file_name('.png')
+                screen_path = os.path.join(screen_path, file_name)
 
-        screen_url = self.__selenium.config.get('SCREEN_URL', None)
-        screen_path = self.__selenium.config.get('SCREEN_PATH', None)
+                with self.__selenium.browser.disable_polling():
+                    if self.__selenium.browser.get_screenshot_as_file(screen_path):
+                        if screen_url:
+                            self.__selenium.browser.reason_storage['screen url'] = u'{}{}'.format(
+                                screen_url, file_name,
+                            )
+                        else:
+                            self.__selenium.browser.reason_storage['screen path'] = screen_path
 
-        if screen_path:
-            file_name = random_file_name('.png')
-            screen_path = os.path.join(screen_path, file_name)
-
-            self.__selenium.browser.save_screenshot(screen_path)
-
-            if screen_url:
-                reason_args.append(
-                    u'screen url: {}{}'.format(screen_url, file_name),
-                )
-            else:
-                reason_args.append('screen path: {}'.format(screen_path))
-
-        return create_reason(
-            'Selenium',
-            'info from selenium extension',
-            'browser name: {}'.format(self.__selenium.browser_name),
-            *reason_args
-        )
+            return create_reason(
+                'Selenium',
+                'info from selenium extension',
+                *('{}: {}'.format(k, v) for k, v in self.__selenium.browser.reason_storage.items())
+            )
+        except BaseException as error:  # if browser wasn't init, that reason can't be created
+            logger.error(error, exc_info=True)
+            return ''
 
     def __repeat__(self):
-        if self.__browsers__:
-            for browser_name in self.__browsers__:
+        if self.config.SELENIUM_BROWSERS:
+            for browser_name in self.config.SELENIUM_BROWSERS:
+                if self.__browsers__ and browser_name not in self.__browsers__:
+                    continue
+                if self.__selenium.browser and self.__selenium.browser.config.LOGS_PATH:
+                    save_logs(self, self.__selenium)
+
+                self.__selenium.stop()
                 self.__selenium.start(browser_name)
-                try:
-                    yield
-                finally:
-                    self.__selenium.stop()
+                yield
+        elif self.__browsers__:
+            for browser_name in self.__browsers__:
+                if self.__selenium.browser and self.__selenium.browser.config.LOGS_PATH:
+                    save_logs(self, self.__selenium)
+
+                self.__selenium.stop()
+                self.__selenium.start(browser_name)
+                yield
         else:
             yield
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import traceback
 from functools import wraps
 from unittest import TestCase as __UnitTest__
@@ -16,6 +17,9 @@ from .utils.common import measure_time
 from .utils.common import call_to_chain
 from .exceptions import ExtensionNotRequired
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
+
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_LAYERS = []
@@ -161,6 +165,8 @@ class CaseBox(object):
     def __init__(self, iterable):
         self.__cases = iterable
         self.__current = None
+
+        logger.debug('CaseBox was created')
 
     def __call__(self, *args, **kwargs):
         self.run(*args, **kwargs)
@@ -377,6 +383,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
                 yield layer
 
     def start_context(self, case):
+        logger.debug(
+            'Start context of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_setup', case,
@@ -387,6 +399,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def stop_context(self, case):
+        logger.debug(
+            'Stop context of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_teardown', case,
@@ -402,16 +420,34 @@ class CaseContext(runnable.ContextOfRunnableObject):
                 self.__extensions[ext_name] = extensions.get(ext_name)
 
     def on_init(self, case):
+        logger.debug(
+            'Call to chain callbacks "on_init" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, case), 'on_init', case,
         )
 
     def on_require(self, case):
+        logger.debug(
+            'Call to chain callbacks "on_require" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         call_to_chain(
             with_match_layers(self, case), 'on_require', self.__require,
         )
 
     def on_skip(self, case, reason, result):
+        logger.debug(
+            'Call to chain callbacks "on_skip" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_skip', case, reason, result,
@@ -421,6 +457,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_any_error(self, error, case, result):
+        logger.debug(
+            'Call to chain callbacks "on_any_error" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_any_error', error, case, result,
@@ -430,6 +472,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_error(self, error, case, result):
+        logger.debug(
+            'Call to chain callbacks "on_error" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_error', error, case, result,
@@ -439,6 +487,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_context_error(self, error, case, result):
+        logger.debug(
+            'Call to chain callbacks "on_context_error" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_context_error', error, case, result,
@@ -448,6 +502,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_fail(self, fail, case, result):
+        logger.debug(
+            'Call to chain callbacks "on_fail" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_fail', fail, case, result,
@@ -457,6 +517,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_success(self, case):
+        logger.debug(
+            'Call to chain callbacks "on_success" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_success', case,
@@ -466,6 +532,12 @@ class CaseContext(runnable.ContextOfRunnableObject):
             raise
 
     def on_run(self, case):
+        logger.debug(
+            'Call to chain callbacks "on_run" of case "{}"'.format(
+                runnable.class_name(case),
+            ),
+        )
+
         try:
             call_to_chain(
                 with_match_layers(self, case), 'on_run', case,
@@ -568,12 +640,24 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
         self.__context.on_init(self)
         self.__context.on_require(self)
 
+        logger.debug(
+            'Install extensions on context of case "{}"'.format(
+                runnable.class_name(self),
+            ),
+        )
+
         self.__context.install_extensions()
 
         super(Case, self).__init__()
 
     @classmethod
     def mount_to(cls, suite, require=None):
+        logger.debug(
+            'Mount case "{}.{}" to suite "{}"'.format(
+                cls.__module__, cls.__name__, suite.name,
+            ),
+        )
+
         if hasattr(cls, '__mount_data__'):
             raise RuntimeError(
                 'Case "{}" already mounted'.format(cls.__name__),
@@ -684,6 +768,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                         for _ in iter(repeater):
                             test_method()
                     except ALLOW_RAISED_EXCEPTIONS:
+                        result_proxy.current_state.should_stop = True
                         raise
                     except Skip as s:
                         was_success = False

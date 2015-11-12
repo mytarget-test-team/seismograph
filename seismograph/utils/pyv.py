@@ -62,8 +62,9 @@ def get_exc_message(error):
 
 
 def get_func_name(func):
-    if hasattr(func, '__func__'):
-        return func.__func__.__name__
+    __func__ = getattr(func, '__func__', None)
+    if __func__ is not None:
+        return __func__.__name__
 
     return func.__name__
 

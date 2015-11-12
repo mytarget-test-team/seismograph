@@ -26,7 +26,7 @@ if __name__ == '__main__':
             'six>=1.4.0',
             'requests',
             'flask>=0.7',
-            'selenium==2.46.0',
+            'selenium>=2.46',
         ),
         entry_points={
             'console_scripts': (
