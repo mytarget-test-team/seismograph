@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import logging
 from contextlib import contextmanager
 
 from six import with_metaclass
 
-from ..utils import pyv
 from .. import pageobject
 from .fields import FormField
 from ..query import QueryObject
@@ -12,6 +12,9 @@ from .iterators import FieldsIterator
 from .fields import SimpleFieldInterface
 from .iterators import RequiredFieldsIterator
 from .iterators import FieldsWithContainsInvalidValueIterator
+
+
+logger = logging.getLogger(__name__)
 
 
 def make_field(group_class, weight=None, name=None):
@@ -104,16 +107,19 @@ class FieldsGroupMeta(pageobject.PageMeta):
 
     def __call__(self, *args, **kwargs):
         instance = super(FieldsGroupMeta, self).__call__(*args, **kwargs)
+        attributes = (
+            a for a in dir(instance.__class__) if not a.startswith('_')
+        )
 
-        for attr_name in (a for a in dir(instance.__class__) if not a.startswith('_')):
+        for attr_name in attributes:
             attr_value = getattr(instance.__class__, attr_name, None)
 
             if isinstance(attr_value, (FormField, GroupContainer)):
                 if attr_value.name in instance.__exclude__:
                     try:
                         delattr(instance, attr_name)
-                    except AttributeError:
-                        pass
+                    except AttributeError as warn:
+                        logger.warn(warn, exc_info=True)
                     continue
 
                 instance.add_field(attr_name, attr_value)

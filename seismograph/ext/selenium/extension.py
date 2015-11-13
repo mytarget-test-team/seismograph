@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import json
 import logging
 from functools import wraps
 
@@ -16,9 +17,10 @@ from ... import case
 from ... import steps
 from . import drivers
 from ... import suite
+from ... import reason
 from ... import runnable
+from ...utils import pyv
 from .proxy import WebDriverProxy
-from ...tools import create_reason
 from .utils import random_file_name
 from .polling import POLLING_EXCEPTIONS
 from ...utils.common import waiting_for
@@ -70,16 +72,50 @@ def create_browser(selenium, driver):
 
 
 def save_logs(case, selenium):
-    log_file_name = lambda lt: '{}-{}({}:{}).{}'.format(
+    log_file_name = lambda log_type: '{}-{}({}:{}).log'.format(
         selenium.browser_name,
-        lt,
+        log_type,
         runnable.class_name(case),
         runnable.method_name(case),
-        'log',
     )
+
+    def log_to_string(log):
+        def create_string(item, tab=0, break_line=False):
+            if isinstance(item, pyv.basestring):
+                try:
+                    item = json.loads(item)
+                except BaseException:
+                    pass
+
+            if isinstance(item, dict):
+                return ('\n' if break_line else '') + u'\n'.join(
+                    u'{}{}: {}'.format(
+                        ('  ' * tab), k, create_string(v, tab=(tab + 1), break_line=True)
+                    ) for k, v in item.items()
+                )
+            elif isinstance(item, (list, tuple)):
+                return ('\n' if break_line else '') + u'\n'.join(
+                    u'{}{}'.format(
+                        ('  ' * tab), create_string(i, tab=(tab + 1), break_line=True),
+                    ) for i in item
+                )
+            else:
+                item = pyv.unicode_string(item)
+
+            return item.strip()
+
+        string = create_string(log).strip()
+
+        if pyv.IS_PYTHON_2:
+            return string.encode('utf-8')
+        return string
 
     with selenium.browser.disable_polling():
         for log_type in selenium.browser.log_types:
+            log = selenium.browser.get_log(log_type)
+            if not log:
+                continue
+
             log_file_path = os.path.join(
                 selenium.browser.config.LOGS_PATH,
                 log_file_name(log_type),
@@ -87,8 +123,7 @@ def save_logs(case, selenium):
 
             try:
                 with open(log_file_path, 'w') as f:
-                    log = selenium.browser.get_log(log_type)
-                    f.write(u''.join(log))
+                    f.write(log_to_string(log))
             except BaseException as error:
                 logger.error(error, exc_info=True)
 
@@ -99,6 +134,14 @@ class BrowserConfig(object):
         self.__browser = browser
 
         self.LOGS_PATH = selenium.config.get('LOGS_PATH')
+        self.PROJECT_URL = selenium.config.get('PROJECT_URL')
+
+        self.POLLING_DELAY = selenium.config.get(
+            'POLLING_DELAY', DEFAULt_POLLING_DELAY,
+        )
+        self.POLLING_TIMEOUT = selenium.config.get(
+            'POLLING_TIMEOUT', DEFAULT_POLLING_TIMEOUT,
+        )
 
         self.__SCRIPT_TIMEOUT = None
         self.SCRIPT_TIMEOUT = selenium.config.get('SCRIPT_TIMEOUT')
@@ -114,14 +157,6 @@ class BrowserConfig(object):
             'MAXIMIZE_WINDOW', DEFAULT_MAXIMIZE_WINDOW,
         )
 
-        self.PROJECT_URL = selenium.config.get('PROJECT_URL')
-        self.POLLING_DELAY = selenium.config.get(
-            'POLLING_DELAY', DEFAULt_POLLING_DELAY,
-        )
-        self.POLLING_TIMEOUT = selenium.config.get(
-            'POLLING_TIMEOUT', DEFAULT_POLLING_TIMEOUT,
-        )
-
     @property
     def SCRIPT_TIMEOUT(self):
         return self.__SCRIPT_TIMEOUT
@@ -129,6 +164,7 @@ class BrowserConfig(object):
     @SCRIPT_TIMEOUT.setter
     def SCRIPT_TIMEOUT(self, value):
         if value is not None:
+            self.__SCRIPT_TIMEOUT = value
             self.__browser.set_script_timeout(value)
 
     @property
@@ -138,6 +174,7 @@ class BrowserConfig(object):
     @IMPLICITLY_WAIT.setter
     def IMPLICITLY_WAIT(self, value):
         if value is not None:
+            self.__IMPLICITLY_WAIT = value
             self.__browser.implicitly_wait(value)
 
     @property
@@ -305,7 +342,7 @@ class Selenium(object):
 
         return self.__browser
 
-    def get_browser(self, browser_name=None, timeout=None):
+    def get_browser(self, browser_name=None, timeout=None, delay=None):
         if self.__browser:
             return self.__browser
 
@@ -329,15 +366,28 @@ class Selenium(object):
                 'Incorrect browser name "{}"'.format(browser_name),
             )
 
+        delay = delay or self.__config.get('POLLING_DELAY')
+        timeout = timeout or self.__config.get('POLLING_TIMEOUT') or GET_DRIVER_TIMEOUT
+
         if self.__config.get('USE_REMOTE', False):
             driver = waiting_for(
                 lambda: get_browser(self.remote, self.__browser_name),
-                timeout=timeout or GET_DRIVER_TIMEOUT,
+                delay=delay,
+                timeout=timeout,
+                exc_cls=SeleniumExError,
+                message='Can not get browser "{}" for "{}" sec.'.format(
+                    self.__browser_name, timeout,
+                ),
             )
         else:
             driver = waiting_for(
                 lambda: get_browser(get_local_browser, self.__browser_name),
-                timeout=timeout or GET_DRIVER_TIMEOUT,
+                delay=delay,
+                timeout=timeout,
+                exc_cls=SeleniumExError,
+                message='Can not get browser "{}" for "{}" sec.'.format(
+                    self.__browser_name, timeout,
+                ),
             )
 
         return driver
@@ -345,7 +395,7 @@ class Selenium(object):
 
 class SeleniumAssertion(case.AssertionBase):
 
-    DEFAULT_TIMEOUT = 3
+    DEFAULT_TIMEOUT = 0.5
 
     def any_text_in_page(self, browser, texts, msg=None):
         page_text = browser.text
@@ -394,9 +444,9 @@ class SeleniumAssertion(case.AssertionBase):
                 timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
             )
 
-    def web_element_exist(self, browser, query_object, timeout=None, msg=None):
+    def web_element_exist(self, browser, query, timeout=None, msg=None):
         waiting_for(
-            lambda: browser.query.form_object(query_object).exist,
+            lambda: browser.query.form_object(query).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was not found on page "{}"'.format(
                 browser.driver.current_url,
@@ -405,9 +455,9 @@ class SeleniumAssertion(case.AssertionBase):
             timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
         )
 
-    def web_element_not_exist(self, browser, query_object, timeout=None, msg=None):
+    def web_element_not_exist(self, browser, query, timeout=None, msg=None):
         waiting_for(
-            lambda: not browser.query.form_object(query_object).exist,
+            lambda: not browser.query.form_object(query).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was found on page "{}"'.format(
                 browser.driver.current_url,
@@ -473,7 +523,6 @@ class SeleniumCaseLayer(case.CaseLayer):
 class SeleniumCase(case.Case):
 
     __browsers__ = None
-    __create_reason__ = True
     __layers__ = (SeleniumCaseLayer(), )
     __assertion_class__ = SeleniumAssertion
 
@@ -500,30 +549,36 @@ class SeleniumCase(case.Case):
 
     def __reason__(self):
         try:
-            screen_url = self.__selenium.config.get('SCREEN_URL', None)
-            screen_path = self.__selenium.config.get('SCREEN_PATH', None)
+            if self.__selenium.browser:  # if browser wasn't init, that reason can't be created
+                screen_url = self.__selenium.config.get('SCREEN_URL', None)
+                screen_path = self.__selenium.config.get('SCREEN_PATH', None)
 
-            if screen_path:
-                file_name = random_file_name('.png')
-                screen_path = os.path.join(screen_path, file_name)
+                if screen_path:
+                    try:
+                        file_name = random_file_name('.png')
+                        screen_path = os.path.join(screen_path, file_name)
 
-                with self.__selenium.browser.disable_polling():
-                    if self.__selenium.browser.get_screenshot_as_file(screen_path):
-                        if screen_url:
-                            self.__selenium.browser.reason_storage['screen url'] = u'{}{}'.format(
-                                screen_url, file_name,
-                            )
-                        else:
-                            self.__selenium.browser.reason_storage['screen path'] = screen_path
+                        with self.__selenium.browser.disable_polling():
+                            if self.__selenium.browser.get_screenshot_as_file(screen_path):
+                                if screen_url:
+                                    self.__selenium.browser.reason_storage['screen url'] = u'{}{}'.format(
+                                        screen_url, file_name,
+                                    )
+                                else:
+                                    self.__selenium.browser.reason_storage['screen path'] = screen_path
+                    except BaseException as error:
+                        logger.warn(error, exc_info=True)
 
-            return create_reason(
-                'Selenium',
-                'info from selenium extension',
-                *('{}: {}'.format(k, v) for k, v in self.__selenium.browser.reason_storage.items())
-            )
-        except BaseException as error:  # if browser wasn't init, that reason can't be created
-            logger.error(error, exc_info=True)
-            return ''
+                return super(SeleniumCase, self).__reason__() + reason.create_item(
+                    'Selenium',
+                    'info from selenium extension',
+                    *(u'{}: {}'.format(k, v) for k, v in self.__selenium.browser.reason_storage.items())
+                )
+
+            return super(SeleniumCase, self).__reason__()
+        except BaseException as error:
+            logger.warn(error, exc_info=True)
+            return super(SeleniumCase, self).__reason__()
 
     def __repeat__(self):
         if self.config.SELENIUM_BROWSERS:

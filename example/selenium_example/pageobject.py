@@ -16,7 +16,7 @@ class IndexPage(selenium.Page):
 
     search_field = selenium.PageObject(
         selenium.query('input', name='q'),
-        proxy_class=SearchField,
+        proxy=SearchField,
     )
 
     search_button = selenium.PageObject(

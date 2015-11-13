@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from gevent.pool import Pool
 
 from .. import runnable
-from ..tools import get_pool_size_of_value
+from ..groups import get_pool_size_of_value
 from ..exceptions import ALLOW_RAISED_EXCEPTIONS
 
 

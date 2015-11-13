@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from . import steps
 from . import runnable
 from .utils import pyv
 
@@ -33,19 +32,7 @@ class Reason(object):
         return self.__config
 
     def __format_reason__(self):
-        if steps.is_step_by_step_case(self.__runnable_object):
-            if self.__runnable_object.__create_reason__:
-                formatted_reason = (
-                    steps.reason(self.__runnable_object),
-                    runnable.reason(self.__runnable_object),
-                    self.__reason,
-                )
-            else:
-                formatted_reason = (
-                    steps.reason(self.__runnable_object),
-                    self.__reason,
-                )
-        elif self.__runnable_object.__create_reason__:
+        if self.__runnable_object.__create_reason__:
             formatted_reason = (
                 runnable.reason(self.__runnable_object),
                 self.__reason,
@@ -77,3 +64,9 @@ class Reason(object):
 
 def create(runnable_object, reason, config=None):
     return Reason(runnable_object, reason, config)
+
+
+def create_item(name, desc, *args):
+    return u'{} ({}): \n{}\n\n'.format(
+        name, desc, u'\n'.join(u'  {}'.format(s) for s in args),
+    )

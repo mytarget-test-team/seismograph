@@ -79,8 +79,7 @@ def is_class_type(obj):
 def unicode_string(string):
     try:
         return unicode(string)
-    except UnicodeDecodeError as e:
-        try:
+    except UnicodeDecodeError as error:
+        if IS_PYTHON_2:
             return unicode(string.decode('utf-8'))
-        except AttributeError:
-            raise e
+        raise error

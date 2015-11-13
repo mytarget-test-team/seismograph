@@ -93,7 +93,10 @@ class PageObject(object):
         self.__wait_timeout = options.get('wait_timeout', None)
 
     def __call__(self, *args, **kwargs):
-        return self
+        # for IDE only
+        raise TypeError(
+            '"{}" object is not callable'.format(self.__class__.__name__),
+        )
 
     def __getattr__(self, item):
         # for IDE only

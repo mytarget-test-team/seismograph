@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from functools import wraps
+from collections import OrderedDict
 from contextlib import contextmanager
 
 from .utils import pyv
-from .utils.common import MPSupportedValue
+from .utils.mp import MPSupportedValue
 
 
 def reason(runnable):
@@ -82,6 +83,7 @@ class RunnableObject(object):
         self.__stopped_on = MPSupportedValue(
             method_name(self),
         )
+        self.__reason_storage = OrderedDict()
 
     def __call__(self, *args, **kwargs):
         return self.run(*args, **kwargs)
@@ -105,6 +107,10 @@ class RunnableObject(object):
     @_stopped_on.setter
     def _stopped_on(self, value):
         self.__stopped_on.value = value
+
+    @property
+    def reason_storage(self):
+        return self.__reason_storage
 
     def __is_run__(self):
         raise NotImplementedError(
@@ -131,7 +137,7 @@ class RunnableObject(object):
 
     def support_mp(self, stopped_on=None):
         if stopped_on:
-            self.__stopped_on.set_mp(stopped_on)
+            self.__stopped_on.set(stopped_on)
 
     def run(self, *args, **kwargs):
         raise NotImplementedError(

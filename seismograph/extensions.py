@@ -50,7 +50,9 @@ class SingletonExtensionContainer(ExtensionContainer):
 
     def __call__(self):
         if self.__instance is None:
-            self.__instance = super(SingletonExtensionContainer, self).__call__()
+            self.__instance = super(
+                SingletonExtensionContainer, self,
+            ).__call__()
         return self.__instance
 
 

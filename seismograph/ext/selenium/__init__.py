@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
+from warnings import warn
 from optparse import OptionGroup
 
 from . import forms
-from .query import contains
 from .pageobject import Page
 from .router import add_route
-from .query import QueryObject
 from .utils import re_raise_exc
 from .extension import assertion
 from .pageobject import PageObject
@@ -14,8 +13,10 @@ from .extension import inject_driver
 from .pageobject import PageObjectProxy
 from .extension import case_of_browsers
 from .extension import SeleniumAssertion
+from .query import Contains as _Contains
 from .extension import SeleniumCase as Case
 from .extension import SeleniumSuite as Suite
+from .query import QueryObject as _QueryObject
 
 
 CONFIG_KEY = 'SELENIUM_EX'
@@ -38,6 +39,13 @@ def __add_options__(parser):
         help='Base URL of your project.',
     )
     group.add_option(
+        '--selenium-remote',
+        dest='SELENIUM_REMOTE',
+        action='store_true',
+        default=False,
+        help='Use remote server only.'
+    )
+    group.add_option(
         '--selenium-no-remote',
         dest='SELENIUM_NO_REMOTE',
         action='store_true',
@@ -50,6 +58,13 @@ def __add_options__(parser):
         type=float,
         default=None,
         help='Polling timeout.',
+    )
+    group.add_option(
+        '--selenium-polling-delay',
+        dest='SELENIUM_POLLING_DELAY',
+        type=float,
+        default=None,
+        help='Polling delay.',
     )
     group.add_option(
         '--selenium-window-size',
@@ -73,20 +88,46 @@ def __install__(program):
     if program.config.SELENIUM_NO_REMOTE:
         config['USE_REMOTE'] = False
 
+    if program.config.SELENIUM_REMOTE:
+        config['USE_REMOTE'] = True
+
     if program.config.SELENIUM_POLLING:
         config['POLLING_TIMEOUT'] = program.config.SELENIUM_POLLING
+
+    if program.config.SELENIUM_POLLING_DELAY:
+        config['POLLING_DELAY'] = program.config.SELENIUM_POLLING_DELAY
 
     if program.config.SELENIUM_WINDOW_SIZE:
         w, h = program.config.SELENIUM_WINDOW_SIZE.split('x')
         config['WINDOW_SIZE'] = (int(w), int(h))
+
+    if (config['POLLING_TIMEOUT'] and config['IMPLICITLY_WAIT']) \
+            and config['POLLING_TIMEOUT'] >= config['IMPLICITLY_WAIT']:
+        warn_message = 'POLLING_TIMEOUT >= IMPLICITLY_WAIT it will be work so slowly. ' \
+                       'Please set IMPLICITLY_WAIT larger POLLING_TIMEOUT'
+        warn(warn_message, RuntimeWarning)
 
     program.shared_extension(
         EX_NAME, Selenium, args=(config, ),
     )
 
 
-query = QueryObject
-wrapper = QueryObject
+class _Query(object):
+    """
+    For usability only.
+
+    query('div', _class=query.contains('name'))
+    """
+
+    @property
+    def contains(self):
+        return _Contains
+
+    def __call__(self, tag, **selector):
+        return _QueryObject(tag, **selector)
+
+
+query = _Query()
 
 
 __all__ = (
@@ -95,12 +136,10 @@ __all__ = (
     'forms',
     'query',
     'Suite',
-    'wrapper',
     'contains',
     'add_route',
     'assertion',
     'PageObject',
-    'QueryObject',
     're_raise_exc',
     'inject_driver',
     'PageObjectProxy',

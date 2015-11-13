@@ -94,9 +94,13 @@ class WebElementListProxy(list):
         return self.__reason_storage
 
     def get_by(self, **kwargs):
-        for we in self:
-            if all(_check_equal(we, k, v) for k, v in kwargs.items()):
-                return we
+        try:
+            return next(
+                we for we in self
+                if all(_check_equal(we, k, v) for k, v in kwargs.items())
+            )
+        except StopIteration:
+            pass
 
     def filter(self, **kwargs):
         for we in self:
@@ -207,7 +211,7 @@ class BaseProxy(object):
                 exc_cls=exc_cls,
                 message=message,
                 delay=self.config.POLLING_DELAY,
-                timeout=timeout or self.config.POLLING_TIMEOUT or 3,
+                timeout=timeout or self.config.POLLING_TIMEOUT or 0.5,
             )
 
         try:
@@ -217,15 +221,11 @@ class BaseProxy(object):
 
     @contextmanager
     def disable_polling(self):
-        implicitly_wait = self.driver.config.IMPLICITLY_WAIT
-
         try:
             self.__allow_polling = False
-            self.driver.config.IMPLICITLY_WAIT = 0
             yield
         finally:
             self.__allow_polling = True
-            self.driver.config.IMPLICITLY_WAIT = implicitly_wait
 
 
 class WebElementProxy(BaseProxy):

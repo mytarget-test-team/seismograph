@@ -5,6 +5,7 @@ import logging
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
+from ...utils import pyv
 from ...utils.common import waiting_for
 from .utils import change_name_from_python_to_html
 
@@ -40,7 +41,7 @@ class QueryObject(object):
         )
 
 
-class _Contains(object):
+class Contains(object):
 
     def __init__(self, value):
         self.value = value
@@ -53,9 +54,6 @@ class _Contains(object):
 
     def __unicode__(self):
         return unicode(self.value)
-
-
-contains = _Contains
 
 
 def tag_by_alias(tag_name):
@@ -73,7 +71,7 @@ def make_result(proxy, tag):
         query = [tag_by_alias(tag)]
 
         def get_format(value):
-            if isinstance(value, contains):
+            if isinstance(value, Contains):
                 return u'[{}*="{}"]'
             return u'[{}="{}"]'
 
@@ -141,6 +139,7 @@ class QueryResult(object):
     def wait(self, timeout=None):
         return waiting_for(
             lambda: self.exist,
+            exc_cls=NoSuchElementException,
             timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
             message='Could not wait web element by css "{}"'.format(self.__css),
         )
@@ -170,8 +169,13 @@ class QueryProcessor(object):
     def __getattr__(self, item):
         return make_result(self.__proxy, item)
 
-    def __call__(self, proxy):
-        return self.__class__(proxy)
+    def __call__(self, proxy_or_tag, **selector):
+        if isinstance(proxy_or_tag, pyv.basestring):
+            return self.from_object(
+                QueryObject(proxy_or_tag, **selector),
+            )
+
+        return self.__class__(proxy_or_tag)
 
     @property
     def proxy(self):
@@ -180,6 +184,10 @@ class QueryProcessor(object):
     @property
     def driver(self):
         return self.__proxy.driver
+
+    @property
+    def contains(self):
+        return Contains
 
     def from_object(self, obj):
         if not isinstance(obj, QueryObject):

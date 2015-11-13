@@ -2,25 +2,37 @@
 
 import os
 import sys
+import shutil
 from codecs import getwriter
 
 from seismograph.utils import pyv
 
 
-TMP_FOLDER = os.path.join(
-    os.path.dirname(
-        __file__,
+TMP_FOLDER = os.path.abspath(
+    os.path.join(
+        os.path.dirname(
+            __file__,
+        ),
+        'tmp',
     ),
-    'tmp',
 )
 
-BIN_FOLDER = os.path.join(
-    os.path.dirname(
-        __file__,
+BIN_FOLDER = os.path.abspath(
+    os.path.join(
+        os.path.dirname(
+            __file__,
+        ),
+        '..',
+        'bin',
     ),
-    '..',
-    'bin',
 )
+
+
+if os.path.exists(TMP_FOLDER):
+    shutil.rmtree(TMP_FOLDER)
+    os.mkdir(TMP_FOLDER)
+else:
+    os.mkdir(TMP_FOLDER)
 
 
 MOCK_SERVER_EX = {
@@ -41,13 +53,13 @@ MOCK_SERVER_EX = {
 
 SELENIUM_EX = {
     'USE_REMOTE': False,
-    'IMPLICITLY_WAIT': 7,
-    'POLLING_TIMEOUT': 30,
+    'POLLING_TIMEOUT': 10,
     'POLLING_DELAY': None,
     'SCRIPT_TIMEOUT': None,
+    'IMPLICITLY_WAIT': None,
     'WINDOW_SIZE': None,
     'MAXIMIZE_WINDOW': True,
-    'DEFAULT_BROWSER': 'phantomjs',
+    'DEFAULT_BROWSER': 'chrome',
     'PROJECT_URL': 'https://www.google.ru/',
     'SCREEN_PATH': TMP_FOLDER,
     'LOGS_PATH': TMP_FOLDER,
@@ -105,7 +117,7 @@ LOGGING_SETTINGS = {
         'seismograph': {
             'propagate': False,
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
         },
     },
 }

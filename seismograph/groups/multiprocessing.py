@@ -6,7 +6,7 @@ from .. import runnable
 from ..case import CaseBox
 from ..xunit import XUnitData
 from ..utils.common import waiting_for
-from ..tools import get_pool_size_of_value
+from ..groups import get_pool_size_of_value
 
 
 MPQueue = MPProcess = MPValue = MPLock = None

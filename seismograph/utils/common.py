@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import sys
 import time
-from contextlib import contextmanager
 
 from ..exceptions import TimeoutException
 
@@ -44,42 +42,3 @@ def call_to_chain(chain, method_name, *args, **kwargs):
 def measure_time():
     start_time = time.time()
     return lambda: time.time() - start_time
-
-
-@contextmanager
-def dev_null():
-    class MockStd(object):
-
-        def __getattr__(self, item):
-            def null(*args, **kwargs):
-                pass
-            return null
-
-    stdout = sys.stdout
-    sys.stdout = MockStd()
-    try:
-        yield
-    finally:
-        sys.stdout = stdout
-
-
-class MPSupportedValue(object):
-
-    def __init__(self, value=None):
-        self._value = value
-
-    @property
-    def value(self):
-        if hasattr(self._value, 'value'):
-            return self._value.value
-        return self._value
-
-    @value.setter
-    def value(self, value):
-        if hasattr(self._value, 'value'):
-            self._value.value = value
-        else:
-            self._value = value
-
-    def set_mp(self, value):
-        self._value = value

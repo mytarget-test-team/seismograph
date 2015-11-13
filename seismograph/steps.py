@@ -4,8 +4,8 @@ import sys
 from functools import wraps
 
 from . import loader
+from . import runnable
 from .utils import pyv
-from .tools import create_reason
 
 
 STEP_ATTRIBUTE_NAME = '__step__'
@@ -36,30 +36,6 @@ def step(num, doc=None, performer=None):
         return wrapped
 
     return wrapper
-
-
-def reason(case):
-    history = get_case_history(case) or [None]
-
-    return u''.join(
-        (
-            create_reason(
-                'History',
-                'was done earlier',
-                *history
-            ),
-            create_reason(
-                'Current step',
-                'when exception was raised',
-                get_current_step(case),
-            ),
-            create_reason(
-                'Current flow',
-                'context of steps execution',
-                get_current_flow(case),
-            ),
-        ),
-    )
 
 
 def get_step_methods(case):
@@ -154,9 +130,9 @@ def _run_step(case, method, flow=None):
             method(case, flow)
         else:
             method(case)
-    except BaseException:
-        case._stop_on = pyv.get_func_name(method)
-        raise
+    except BaseException as error:
+        runnable.stopped_on(case, pyv.get_func_name(method))
+        raise error
 
 
 def _make_run_test():

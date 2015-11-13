@@ -10,7 +10,7 @@ from . import reason
 from . import runnable
 from .utils import pyv
 from .utils import colors
-from .utils.common import MPSupportedValue
+from .utils.mp import MPSupportedValue
 
 
 lock = Lock()
@@ -224,7 +224,7 @@ class State(object):
 
     def support_mp(self, should_stop=None):
         if should_stop:
-            self.__should_stop.set_mp(should_stop)
+            self.__should_stop.set(should_stop)
 
     @property
     def should_stop(self):

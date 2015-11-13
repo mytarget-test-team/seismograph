@@ -9,6 +9,7 @@ from six import with_metaclass
 
 from . import steps
 from . import loader
+from . import reason
 from . import runnable
 from .utils import pyv
 from . import extensions
@@ -557,7 +558,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     __static__ = False
     __require__ = None
     __repeatable__ = True
-    __create_reason__ = False
+    __create_reason__ = True
     __always_success__ = False
     __assertion_class__ = None
 
@@ -583,6 +584,45 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             self.__mount_data__.suite_name, self.__class__.__name__,
         )
 
+    def __reason__(self):
+        reasons = []
+
+        if steps.is_step_by_step_case(self):
+            history = steps.get_case_history(self) or [None]
+
+            reasons.append(
+                u''.join(
+                    (
+                        reason.create_item(
+                            'History',
+                            'was done earlier',
+                            *history
+                        ),
+                        reason.create_item(
+                            'Current step',
+                            'when exception was raised',
+                            steps.get_current_step(self),
+                        ),
+                        reason.create_item(
+                            'Current flow',
+                            'context of steps execution',
+                            steps.get_current_flow(self),
+                        ),
+                    ),
+                ),
+            )
+
+        if self.reason_storage:
+            reasons.append(
+                reason.create_item(
+                    'Case',
+                    'info from test case',
+                    *(u'{}: {}'.format(k, v) for k, v in self.reason_storage.items())
+                ),
+            )
+
+        return u''.join(reasons)
+
     #
     # Behavior on magic methods
     #
@@ -592,6 +632,14 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             self._method_name,
             self.__mount_data__.suite_name,
             self.__class__.__name__,
+        )
+
+    def __repr__(self):
+        class_path = '{}.{}'.format(
+            self.__mount_data__.suite_name, self.__class__.__name__,
+        )
+        return '<{} method_name={} stopped_on={}>'.format(
+            class_path, runnable.method_name(self), runnable.stopped_on(self),
         )
 
     #
@@ -658,7 +706,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             ),
         )
 
-        if hasattr(cls, '__mount_data__'):
+        if getattr(cls, '__mount_data__', None) is not None:
             raise RuntimeError(
                 'Case "{}" already mounted'.format(cls.__name__),
             )
