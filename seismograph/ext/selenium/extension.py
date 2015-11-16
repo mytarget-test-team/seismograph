@@ -80,7 +80,7 @@ def save_logs(case, selenium):
     )
 
     def log_to_string(log):
-        def create_string(item, tab=0, break_line=False):
+        def create_string_from_item(item, tab=0, break_line=False):
             if isinstance(item, pyv.basestring):
                 try:
                     item = json.loads(item)
@@ -90,13 +90,13 @@ def save_logs(case, selenium):
             if isinstance(item, dict):
                 return ('\n' if break_line else '') + u'\n'.join(
                     u'{}{}: {}'.format(
-                        ('  ' * tab), k, create_string(v, tab=(tab + 1), break_line=True)
+                        ('  ' * tab), k, create_string_from_item(v, tab=(tab + 1), break_line=True)
                     ) for k, v in item.items()
                 )
             elif isinstance(item, (list, tuple)):
                 return ('\n' if break_line else '') + u'\n'.join(
                     u'{}{}'.format(
-                        ('  ' * tab), create_string(i, tab=(tab + 1), break_line=True),
+                        ('  ' * tab), create_string_from_item(i, tab=(tab + 1), break_line=True),
                     ) for i in item
                 )
             else:
@@ -104,7 +104,7 @@ def save_logs(case, selenium):
 
             return item.strip()
 
-        string = create_string(log).strip()
+        string = create_string_from_item(log).strip()
 
         if pyv.IS_PYTHON_2:
             return string.encode('utf-8')
@@ -375,7 +375,7 @@ class Selenium(object):
                 delay=delay,
                 timeout=timeout,
                 exc_cls=SeleniumExError,
-                message='Can not get browser "{}" for "{}" sec.'.format(
+                message='Browser "{}" have not been started for "{}" sec.'.format(
                     self.__browser_name, timeout,
                 ),
             )
@@ -385,7 +385,7 @@ class Selenium(object):
                 delay=delay,
                 timeout=timeout,
                 exc_cls=SeleniumExError,
-                message='Can not get browser "{}" for "{}" sec.'.format(
+                message='Browser "{}" have not been started for "{}" sec.'.format(
                     self.__browser_name, timeout,
                 ),
             )

@@ -190,9 +190,10 @@ def load_suites_from_path(path_to_dir, suite_class, package=None, recursive=True
         packs = (n for n in lst_dir if is_package(full_path(n)))
 
         for pack in packs:
-            if package:
-                pack = '{}.{}'.format(package, pack)
 
             for suite in load_suites_from_path(
-                    full_path(pack), suite_class, package=pack, recursive=recursive):
+                    full_path(pack),
+                    suite_class,
+                    recursive=recursive,
+                    package='{}.{}'.format(package, pack) if package else pack):
                 yield suite

@@ -116,7 +116,7 @@ def create_option_parser():
         dest='REPEAT',
         type=int,
         default=0,
-        help='Num of tries to repeat run test',
+        help='Num of tries to repeat test',
     )
     run_group.add_option(
         '--random',
@@ -129,7 +129,7 @@ def create_option_parser():
         '--random-seed',
         dest='RANDOM_SEED',
         default=time.time(),
-        help='Num of tries to repeat run test',
+        help='Seed for random.',
     )
     run_group.add_option(
         '--no-skip',

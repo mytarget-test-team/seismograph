@@ -27,6 +27,7 @@ if __name__ == '__main__':
             'requests',
             'flask>=0.7',
             'selenium>=2.46',
+            'sqlalchemy==0.9.8',
         ),
         entry_points={
             'console_scripts': (

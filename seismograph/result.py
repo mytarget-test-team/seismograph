@@ -126,12 +126,12 @@ class ResultConsole(object):
             )
             self.__buffer = []
 
-    def __init__(self, stdout=None, verbose=False):
+    def __init__(self, stream=None, verbose=False):
         self.__buffer = []
         self.__children = []
 
         self.__verbose = verbose
-        self.__stdout = stdout or sys.stdout
+        self.__stream = stream or sys.stdout
 
     def __call__(self, string):
         self.writeln(string)
@@ -144,11 +144,13 @@ class ResultConsole(object):
 
     def flush(self):
         with lock:
-            self.__stdout.write(
+            self.__stream.write(
                 u''.join(self.__buffer),
             )
             for child in self.__children:
-                child.flush(self.__stdout)
+                child.flush(self.__stream)
+
+            self.__stream.flush()
 
         self.__buffer = []
 
@@ -386,6 +388,7 @@ class Result(object):
         proxy = self.create_proxy(
             name=runnable.class_name(runnable_object) if runnable_object else None,
         )
+
         if runnable_object:
             logger.debug(
                 'Result proxy will work on runnable object "{}"'.format(

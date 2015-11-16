@@ -51,6 +51,25 @@ MOCK_SERVER_EX = {
 }
 
 
+ALCHEMY_EX = {
+    'PROTOCOL': 'mysql+mysqlconnector',
+    'HOST': '127.0.0.1',
+    'PORT': 3306,
+    'USER': 'root',
+    'DNS_PARAMS': {
+        'charset': 'utf8',
+        'use_unicode': 1,
+    },
+    'DATABASES': {
+        'information_schema': {},
+        'test': {
+            'bind_key': 'test',
+        },
+    },
+    'SESSION': {},
+}
+
+
 SELENIUM_EX = {
     'USE_REMOTE': False,
     'POLLING_TIMEOUT': 10,
