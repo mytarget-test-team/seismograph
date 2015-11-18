@@ -6,6 +6,9 @@ from . import registry
 from .constants import DEFAULT_BIND_KEY
 
 
+EX_NAME = 'db'
+
+
 class DBClient(object):
     """
     Read-write client

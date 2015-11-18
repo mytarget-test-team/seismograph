@@ -170,7 +170,7 @@ class CaseBox(object):
         logger.debug('CaseBox was created')
 
     def __call__(self, *args, **kwargs):
-        self.run(*args, **kwargs)
+        return self.__run__(*args, **kwargs)
 
     def __iter__(self):
         for case in self.__cases:
@@ -185,31 +185,29 @@ class CaseBox(object):
     def __getattr__(self, item):
         return getattr(self.__current, item)
 
-    def __run_one__(self, result):
+    def __run_current__(self, result):
         if self.__current.__repeatable__ and self.__current.config.REPEAT > 0:
             for _ in pyv.xrange(self.__current.config.REPEAT):
                 self.__current(result)
         else:
             self.__current(result)
 
-    def run(self, result):
-        case = None
-
+    def __run__(self, result):
         for case in self.__cases:
             self.__current = case
             try:
                 setup_class_proxy(self.__current)
-            except BaseException:
+            except BaseException as error:
                 runnable.stopped_on(self.__current, 'setup_class')
-                raise
-            self.__run_one__(result)
+                raise error
+            self.__run_current__(result)
 
-        if case:
+        if self.__current:
             try:
                 teardown_class_proxy(self.__current)
-            except BaseException:
+            except BaseException as error:
                 runnable.stopped_on(self.__current, 'teardown_class')
-                raise
+                raise error
 
 
 class MountData(object):
@@ -624,11 +622,10 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
     def __run__(self, result):
         self.__is_run = True
+        timer = measure_time()
 
         if result.current_state.should_stop:
             return
-
-        timer = measure_time()
 
         with result.proxy() as result_proxy:
             result_proxy.print_start(self)

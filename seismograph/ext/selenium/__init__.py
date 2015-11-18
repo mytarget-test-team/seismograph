@@ -4,19 +4,19 @@ from warnings import warn
 from optparse import OptionGroup
 
 from . import forms
+from .query import query
+from .case import assertion
 from .pageobject import Page
 from .router import add_route
 from .utils import re_raise_exc
-from .extension import assertion
+from .case import inject_driver
 from .pageobject import PageObject
-from .extension import inject_driver
+from .case import case_of_browsers
+from .case import SeleniumAssertion
+from .case import SeleniumCase as Case
 from .pageobject import PageObjectProxy
-from .extension import case_of_browsers
-from .extension import SeleniumAssertion
-from .query import Contains as _Contains
-from .extension import SeleniumCase as Case
-from .extension import SeleniumSuite as Suite
-from .query import QueryObject as _QueryObject
+from .query import Contains as contains
+from .suite import SeleniumSuite as Suite
 
 
 CONFIG_KEY = 'SELENIUM_EX'
@@ -30,7 +30,7 @@ def __add_options__(parser):
         dest='SELENIUM_BROWSERS',
         action='append',
         default=[],
-        help='Browser names for run cases.',
+        help='Browser name for run cases.',
     )
     group.add_option(
         '--selenium-project-url',
@@ -57,14 +57,14 @@ def __add_options__(parser):
         dest='SELENIUM_POLLING',
         type=float,
         default=None,
-        help='Polling timeout.',
+        help='Polling timeout. Float or integer value.',
     )
     group.add_option(
         '--selenium-polling-delay',
         dest='SELENIUM_POLLING_DELAY',
         type=float,
         default=None,
-        help='Polling delay.',
+        help='Polling delay. Float or integer value.',
     )
     group.add_option(
         '--selenium-window-size',
@@ -112,30 +112,13 @@ def __install__(program):
     )
 
 
-class _Query(object):
-    """
-    For usability only.
-
-    query('div', _class=query.contains('name'))
-    """
-
-    @property
-    def contains(self):
-        return _Contains
-
-    def __call__(self, tag, **selector):
-        return _QueryObject(tag, **selector)
-
-
-query = _Query()
-
-
 __all__ = (
     'Case',
     'Page',
     'forms',
     'query',
     'Suite',
+    'contains',
     'add_route',
     'assertion',
     'PageObject',

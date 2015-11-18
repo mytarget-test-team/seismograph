@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from .extension import EX_NAME
+from .extension import DBClient
 from .exceptions import ConfigurationError
 
 
-EX_NAME = 'db'
 CONFIG_KEY = 'ALCHEMY_EX'
 
 
@@ -12,7 +13,6 @@ def __install__(program):
 
     if config:
         from . import install
-        from .extension import DBClient
 
         default_host = config.get('HOST')
         default_port = config.get('PORT')

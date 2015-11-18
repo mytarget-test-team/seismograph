@@ -29,6 +29,9 @@ class QueryObject(object):
         self.tag = tag
         self.selector = selector
 
+    def __call__(self, proxy):
+        return make_result(proxy, self.tag)(**self.selector)
+
     def __str__(self):
         return self.__unicode__()
 
@@ -193,4 +196,24 @@ class QueryProcessor(object):
         if not isinstance(obj, QueryObject):
             raise TypeError('"{}" is not QueryObject instance'.format(type(obj)))
 
-        return self.__getattr__(obj.tag)(**obj.selector)
+        return make_result(self.__proxy, obj.tag)(**obj.selector)
+
+
+class Query(object):
+    """
+    For usability only.
+
+    q = query('div', _class=query.contains('name'))
+    result = q(browser)
+    result.first()
+    """
+
+    @property
+    def contains(self):
+        return Contains
+
+    def __call__(self, tag, **selector):
+        return QueryObject(tag, **selector)
+
+
+query = Query()

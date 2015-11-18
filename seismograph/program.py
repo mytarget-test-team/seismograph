@@ -201,6 +201,7 @@ class Program(runnable.RunnableObject):
 
     def __run__(self):
         self.__is_run = True
+        timer = measure_time()
 
         result = self._make_result()
 
@@ -219,7 +220,6 @@ class Program(runnable.RunnableObject):
             print_tree(self.__suites)
 
         group = self._make_group()
-        timer = measure_time()
 
         with result:
             try:

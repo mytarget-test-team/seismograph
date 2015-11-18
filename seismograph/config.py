@@ -47,7 +47,7 @@ def create_option_parser():
         dest='TREE',
         action='store_true',
         default=False,
-        help='Print suites tree to console.',
+        help='Print tree of suites to console.',
     )
     console_group.add_option(
         '--no-color',
@@ -64,14 +64,14 @@ def create_option_parser():
         dest='STEPS_LOG',
         action='store_true',
         default=False,
-        help='Log steps history to output.',
+        help='Print history of steps to console.',
     )
     case_group.add_option(
         '--flows-log',
         dest='FLOWS_LOG',
         action='store_true',
         default=False,
-        help='Log flows to output.',
+        help='Print flows to console.',
     )
     case_group.add_option(
         '--step-by-step',
@@ -129,7 +129,7 @@ def create_option_parser():
         '--random-seed',
         dest='RANDOM_SEED',
         default=time.time(),
-        help='Seed for random.',
+        help='Seed for random tests and suites.',
     )
     run_group.add_option(
         '--no-skip',
@@ -157,7 +157,7 @@ def create_option_parser():
         type=int,
         dest='ASYNC_TESTS',
         default=0,
-        help='Num tests in suite to async run.',
+        help='Num tests from suite to async run.',
     )
     run_group.add_option(
         '--mp-timeout',
@@ -171,21 +171,21 @@ def create_option_parser():
         dest='GEVENT',
         action='store_true',
         default=False,
-        help='Use gevent groups to run. Allow for python 2 only.',
+        help='Use gevent groups for run. Allow for python 2 only.',
     )
     run_group.add_option(
         '--threading',
         dest='THREADING',
         action='store_true',
         default=False,
-        help='Use threading groups to run.',
+        help='Use threading groups for run.',
     )
     run_group.add_option(
         '--multiprocessing',
         dest='MULTIPROCESSING',
         action='store_true',
         default=False,
-        help='Use multiprocessing groups to run.',
+        help='Use multiprocessing groups for run.',
     )
     parser.add_option_group(run_group)
 

@@ -324,12 +324,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
     @runnable.build_method
     def __run__(self, result):
         self.__is_run = True
+        timer = measure_time()
 
         if result.current_state.should_stop or not self.__case_instances:
             return
 
         group = self._make_group()
-        timer = measure_time()
 
         with result.proxy(self) as result_proxy:
             try:
