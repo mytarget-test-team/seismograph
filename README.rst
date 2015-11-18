@@ -15,7 +15,7 @@ Simple example
     suite = seismograph.Suite(__name__)
 
 
-    suite.register
+    @suite.register
     def my_first_test(case):
         case.assertion.equal(1, 1)
 
