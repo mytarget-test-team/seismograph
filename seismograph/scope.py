@@ -13,7 +13,6 @@ import seismograph.result as _result
 import seismograph.loader as _loader
 import seismograph.program as _program
 import seismograph.runnable as _runnable
-import seismograph.utils.common as _common_utils
 
 
 shared_data = _program.Program.shared_data
@@ -41,9 +40,7 @@ def set_default_program_layers(*layers):
 
 
 def configure(
-        wait_sleep=None,
         reason_class=None,
-        wait_timeout=None,
         config_class=None,
         result_class=None,
         round_runtime=None,
@@ -69,10 +66,6 @@ def configure(
     if config_env_name:
         _program.CONFIG_ENV_NAME = config_env_name
 
-    if wait_sleep:
-        assert type(wait_sleep) in (int, float)
-        _common_utils.WAITING_FOR_SLEEP = wait_sleep
-
     if test_name_prefix:
         _loader.TEST_NAME_PREFIX = test_name_prefix
 
@@ -81,10 +74,6 @@ def configure(
 
     if skip_attribute_name:
         _case.SKIP_ATTRIBUTE_NAME = skip_attribute_name
-
-    if wait_timeout:
-        assert type(wait_timeout) in (int, float)
-        _common_utils.WAITING_FOR_TIMEOUT = wait_timeout
 
     if result_class:
         assert issubclass(result_class, _result.Result)

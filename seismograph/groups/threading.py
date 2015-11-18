@@ -15,7 +15,7 @@ def target(runnable_object, result):
 
 class ThreadingSuiteGroup(runnable.RunnableGroup):
 
-    def run(self, result):
+    def __run__(self, result):
         self._is_run = True
 
         pool = ThreadPool(
@@ -35,7 +35,7 @@ class ThreadingSuiteGroup(runnable.RunnableGroup):
 
 class ThreadingCaseGroup(runnable.RunnableGroup):
 
-    def run(self, result):
+    def __run__(self, result):
         self._is_run = True
 
         pool = ThreadPool(

@@ -321,6 +321,30 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
     def __class_name__(self):
         return self.__name
 
+    @runnable.build_method
+    def __run__(self, result):
+        self.__is_run = True
+
+        if result.current_state.should_stop or not self.__case_instances:
+            return
+
+        group = self._make_group()
+        timer = measure_time()
+
+        with result.proxy(self) as result_proxy:
+            try:
+                self.__context.on_run(self)
+
+                with self.__context(self):
+                    group(result_proxy)
+            except ALLOW_RAISED_EXCEPTIONS:
+                raise
+            except BaseException as error:
+                result_proxy.add_error(
+                    self, traceback.format_exc(), timer(), error,
+                )
+                self.__context.on_error(error, self, result_proxy)
+
     #
     # Behavior on magic methods
     #
@@ -615,27 +639,3 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             shuffle(self.__case_instances)
 
         self.__is_build = True
-
-    @runnable.build_method
-    def run(self, result):
-        self.__is_run = True
-
-        if result.current_state.should_stop or not self.__case_instances:
-            return
-
-        group = self._make_group()
-        timer = measure_time()
-
-        with result.proxy(self) as result_proxy:
-            try:
-                self.__context.on_run(self)
-
-                with self.__context(self):
-                    group(result_proxy)
-            except ALLOW_RAISED_EXCEPTIONS:
-                raise
-            except BaseException as error:
-                result_proxy.add_error(
-                    self, traceback.format_exc(), timer(), error,
-                )
-                self.__context.on_error(error, self, result_proxy)

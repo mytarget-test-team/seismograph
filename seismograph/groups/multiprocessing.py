@@ -198,7 +198,7 @@ class Multiprocessing(object):
 
 class MultiprocessingSuiteGroup(runnable.RunnableGroup):
 
-    def run(self, result):
+    def __run__(self, result):
         self._is_run = True
 
         import_mp()

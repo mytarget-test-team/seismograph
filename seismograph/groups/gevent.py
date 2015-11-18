@@ -15,7 +15,7 @@ def target(runnable_object, result):
 
 class GeventSuiteGroup(runnable.RunnableGroup):
 
-    def run(self, result):
+    def __run__(self, result):
         self._is_run = True
 
         pool = Pool(
@@ -36,7 +36,7 @@ class GeventSuiteGroup(runnable.RunnableGroup):
 
 class GeventCaseGroup(runnable.RunnableGroup):
 
-    def run(self, result):
+    def __run__(self, result):
         self._is_run = True
 
         pool = Pool(

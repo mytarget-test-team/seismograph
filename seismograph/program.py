@@ -199,6 +199,49 @@ class Program(runnable.RunnableObject):
     def __is_run__(self):
         return self.__is_run
 
+    def __run__(self):
+        self.__is_run = True
+
+        result = self._make_result()
+
+        if self.suites_path:
+            self.load_suites()
+
+        if not self.__suites and not self.__scripts:
+            raise RuntimeError('No suites or scripts for execution')
+
+        self.__suites = collector.create_generator(
+            self.__suites, self.__config,
+        )
+
+        if self.__config.TREE:
+            from .tree import print_tree
+            print_tree(self.__suites)
+
+        group = self._make_group()
+        timer = measure_time()
+
+        with result:
+            try:
+                self.__context.on_run(self)
+
+                with self.__context(self):
+                    self.run_scripts(result, run_point='before')
+                    group(result)
+                    self.run_scripts(result, run_point='after')
+            except ALLOW_RAISED_EXCEPTIONS:
+                raise
+            except BaseException as error:
+                result.add_error(
+                    self, traceback.format_exc(), timer(), error,
+                )
+                self.__context.on_error(error, self, result)
+
+        if self.__exit:
+            sys.exit(not result.current_state.was_success)
+
+        return result.current_state.was_success
+
     #
     # Self code is starting here
     #
@@ -221,6 +264,7 @@ class Program(runnable.RunnableObject):
         self.recursive_load = recursive_load
 
         self.__suites = []
+        self.__scripts = []
         self.__exit = exit
         self.__is_run = False
 
@@ -254,18 +298,14 @@ class Program(runnable.RunnableObject):
             from .case import set_no_skip
             set_no_skip()
 
-        if self.__config.NO_SCRIPTS:
-            self.__scripts = []
-        else:
-            self.__scripts = [
-                s(self) for s in (scripts or [])
-            ] if scripts else []
-
         for extension in ext.TO_INIT:
             extensions.install(extension, self)
 
         if suites:
             self.register_suites(suites)
+
+        if scripts:
+            self.register_scripts(scripts)
 
         self.__context.on_init(self)
 
@@ -409,6 +449,14 @@ class Program(runnable.RunnableObject):
 
         return is_valid
 
+    def register_scripts(self, scripts):
+        for script in scripts:
+            self.register_script(script)
+
+    def register_script(self, script):
+        if not self.__config.NO_SCRIPTS:
+            self.__scripts.append(script(self))
+
     def register_suite(self, suite):
         if self.suite_is_valid(suite):
             logger.debug(
@@ -459,49 +507,8 @@ class Program(runnable.RunnableObject):
             if result.current_state.should_stop:
                 break
 
-    def run(self):
-        self.__is_run = True
-
-        result = self._make_result()
-
-        if self.suites_path:
-            self.load_suites()
-
-        if not self.__suites and not self.__scripts:
-            raise RuntimeError('No suites or scripts for execution')
-
-        self.__suites = collector.create_generator(
-            self.__suites, self.__config,
-        )
-
-        if self.__config.TREE:
-            from .tree import print_tree
-            print_tree(self.__suites)
-
-        group = self._make_group()
-        timer = measure_time()
-
-        with result:
-            try:
-                self.__context.on_run(self)
-
-                with self.__context(self):
-                    self.run_scripts(result, run_point='before')
-                    group(result)
-                    self.run_scripts(result, run_point='after')
-            except ALLOW_RAISED_EXCEPTIONS:
-                raise
-            except BaseException as error:
-                result.add_error(
-                    self, traceback.format_exc(), timer(), error,
-                )
-                self.__context.on_error(error, self, result)
-
-        if self.__exit:
-            sys.exit(not result.current_state.was_success)
-
-        return result.current_state.was_success
-
 
 def main(*args, **kwargs):
-    Program(*args, **kwargs).run()
+    runnable.run(
+        Program(*args, **kwargs),
+    )

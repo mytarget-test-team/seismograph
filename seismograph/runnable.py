@@ -8,6 +8,10 @@ from .utils import pyv
 from .utils.mp import MPSupportedValue
 
 
+def run(runnable, *args, **kwargs):
+    return runnable.__run__(*args, **kwargs)
+
+
 def reason(runnable):
     return runnable.__reason__()
 
@@ -86,7 +90,7 @@ class RunnableObject(object):
         self.__reason_storage = OrderedDict()
 
     def __call__(self, *args, **kwargs):
-        return self.run(*args, **kwargs)
+        return self.__run__(*args, **kwargs)
 
     def __repr__(self):
         class_path = '{}.{}'.format(
@@ -135,16 +139,16 @@ class RunnableObject(object):
             self.__class__.__module__, self.__class__.__name__,
         )
 
-    def support_mp(self, stopped_on=None):
-        if stopped_on:
-            self.__stopped_on.set(stopped_on)
-
-    def run(self, *args, **kwargs):
+    def __run__(self, *args, **kwargs):
         raise NotImplementedError(
             'Method "run" not implemented in "{}"'.format(
                 self.__class__.__name__,
             ),
         )
+
+    def support_mp(self, stopped_on=None):
+        if stopped_on:
+            self.__stopped_on.set(stopped_on)
 
 
 class BuildObjectMixin(object):

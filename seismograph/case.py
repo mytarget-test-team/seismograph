@@ -35,8 +35,8 @@ def repeat(case):
     return case.__repeat__()
 
 
-def prepare(case):
-    return case.__prepare__()
+def prepare(case, method):
+    return case.__prepare__(method)
 
 
 def setup_class_proxy(case):
@@ -578,7 +578,6 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     def __method_name__(self):
         return self._method_name
 
-    @runnable.mount_method
     def __class_name__(self):
         return '{}.{}'.format(
             self.__mount_data__.suite_name, self.__class__.__name__,
@@ -622,6 +621,84 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             )
 
         return u''.join(reasons)
+
+    def __run__(self, result):
+        self.__is_run = True
+
+        if result.current_state.should_stop:
+            return
+
+        timer = measure_time()
+
+        with result.proxy() as result_proxy:
+            result_proxy.print_start(self)
+
+            if self.__always_success__:
+                result_proxy.add_success(
+                    self, timer(),
+                )
+                self.__context.on_success(self)
+                return
+
+            if hasattr(self, SKIP_ATTRIBUTE_NAME):
+                reason = getattr(self, SKIP_WHY_ATTRIBUTE_NAME, 'no reason')
+                result_proxy.add_skip(
+                    self, reason, timer(),
+                )
+                self.__context.on_skip(self, reason, result_proxy)
+                return
+
+            self.__console = result_proxy.console.child_console()
+
+            try:
+                was_success = True
+                self.__context.on_run(self)
+
+                with self.__context(self):
+                    try:
+                        repeater = repeat(self)
+                        test_method = prepare(
+                            self, getattr(self, runnable.method_name(self)),
+                        )
+
+                        for _ in iter(repeater):
+                            test_method()
+                    except ALLOW_RAISED_EXCEPTIONS:
+                        result_proxy.current_state.should_stop = True
+                        raise
+                    except Skip as s:
+                        was_success = False
+                        result_proxy.add_skip(
+                            self, s.message, timer(),
+                        )
+                        self.__context.on_skip(self, s.message, result_proxy)
+                    except AssertionError as fail:
+                        was_success = False
+                        result_proxy.add_fail(
+                            self, traceback.format_exc(), timer(), fail,
+                        )
+                        self.__context.on_fail(fail, self, result_proxy)
+                    except BaseException as error:
+                        was_success = False
+                        result_proxy.add_error(
+                            self, traceback.format_exc(), timer(), error,
+                        )
+                        self.__context.on_error(error, self, result_proxy)
+                        self.__context.on_any_error(error, self, result_proxy)
+
+                if was_success:
+                    result_proxy.add_success(
+                        self, timer(),
+                    )
+                    self.__context.on_success(self)
+            except ALLOW_RAISED_EXCEPTIONS:
+                raise
+            except BaseException as error:
+                result_proxy.add_error(
+                    self, traceback.format_exc(), timer(), error,
+                )
+                self.__context.on_context_error(error, self, result_proxy)
+                self.__context.on_any_error(error, self, result_proxy)
 
     #
     # Behavior on magic methods
@@ -729,8 +806,8 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     def __repeat__(self):
         yield
 
-    def __prepare__(self):
-        pass
+    def __prepare__(self, method):
+        return method
 
     @property
     def config(self):
@@ -772,82 +849,3 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
     @runnable.run_method
     def skip_test(self, reason):
         _skip(reason)(lambda: None)()
-
-    def run(self, result):
-        self.__is_run = True
-
-        if result.current_state.should_stop:
-            return
-
-        timer = measure_time()
-
-        with result.proxy() as result_proxy:
-            result_proxy.print_start(self)
-
-            if self.__always_success__:
-                result_proxy.add_success(
-                    self, timer(),
-                )
-                self.__context.on_success(self)
-                return
-
-            if hasattr(self, SKIP_ATTRIBUTE_NAME):
-                reason = getattr(self, SKIP_WHY_ATTRIBUTE_NAME, 'no reason')
-                result_proxy.add_skip(
-                    self, reason, timer(),
-                )
-                self.__context.on_skip(self, reason, result_proxy)
-                return
-
-            self.__console = result_proxy.console.child_console()
-
-            try:
-                was_success = True
-                self.__context.on_run(self)
-
-                with self.__context(self):
-                    try:
-                        repeater = repeat(self)
-                        prepare(self)
-                        test_method = getattr(
-                            self, runnable.method_name(self),
-                        )
-
-                        for _ in iter(repeater):
-                            test_method()
-                    except ALLOW_RAISED_EXCEPTIONS:
-                        result_proxy.current_state.should_stop = True
-                        raise
-                    except Skip as s:
-                        was_success = False
-                        result_proxy.add_skip(
-                            self, s.message, timer(),
-                        )
-                        self.__context.on_skip(self, s.message, result_proxy)
-                    except AssertionError as fail:
-                        was_success = False
-                        result_proxy.add_fail(
-                            self, traceback.format_exc(), timer(), fail,
-                        )
-                        self.__context.on_fail(fail, self, result_proxy)
-                    except BaseException as error:
-                        was_success = False
-                        result_proxy.add_error(
-                            self, traceback.format_exc(), timer(), error,
-                        )
-                        self.__context.on_error(error, self, result_proxy)
-                        self.__context.on_any_error(error, self, result_proxy)
-
-                if was_success:
-                    result_proxy.add_success(
-                        self, timer(),
-                    )
-                    self.__context.on_success(self)
-            except ALLOW_RAISED_EXCEPTIONS:
-                raise
-            except BaseException as error:
-                result_proxy.add_error(
-                    self, traceback.format_exc(), timer(), error,
-                )
-                self.__context.on_context_error(error, self, result_proxy)
-                self.__context.on_any_error(error, self, result_proxy)

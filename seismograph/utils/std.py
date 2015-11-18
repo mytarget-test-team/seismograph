@@ -14,8 +14,11 @@ def dev_null():
             return null
 
     stdout = sys.stdout
+    stderr = sys.stderr
     sys.stdout = MockStd()
+    sys.stderr = MockStd()
     try:
         yield
     finally:
         sys.stdout = stdout
+        sys.stderr = stderr
