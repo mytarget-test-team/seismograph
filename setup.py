@@ -23,7 +23,7 @@ if __name__ == '__main__':
         zip_safe=False,
         platforms='any',
         install_requires=(
-            'six>=1.4.0',
+            'six>=1.4',
             'requests',
             'flask>=0.7',
             'selenium>=2.46',
