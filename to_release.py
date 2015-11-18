@@ -73,14 +73,14 @@ def delete_old_files():
     call(command)
 
 
-def run_tests():
+def run_tests(pyv='2.7'):
     # command = sudo(python('setup.py test'))
     # assert call(command) == 0, 'Tests was worked with errors'
 
-    command = 'PYTHONPATH={} SEISMOGRAPH_CONF={} python -m seismograph {} -v'
+    command = 'PYTHONPATH={} SEISMOGRAPH_CONF={} python{} -m seismograph {} -v'
     assert call(
         command.format(
-            SELF_PATH, 'example.etc.base', os.path.join(SELF_PATH, 'example'),
+            SELF_PATH, 'example.etc.base', pyv, os.path.join(SELF_PATH, 'example'),
         ),
     ) == 0, 'Example tests was worked with errors'
 
@@ -106,6 +106,7 @@ def main():
     check_git_branch()
     delete_old_files()
     run_tests()
+    run_tests('3.4')
     # rebuild_docs()
     upload_to_pip()
 
