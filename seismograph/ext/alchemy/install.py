@@ -103,7 +103,7 @@ def setup_session(
     """
     Setup orm session
     """
-    logger.debug('Setup session')
+    logger.debug('Setup orm session')
 
     sess = scoped_session(
         sessionmaker(

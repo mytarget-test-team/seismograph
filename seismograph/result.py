@@ -385,10 +385,6 @@ class Result(object):
 
     @contextmanager
     def proxy(self, runnable_object=None):
-        proxy = self.create_proxy(
-            name=runnable.class_name(runnable_object) if runnable_object else None,
-        )
-
         if runnable_object:
             logger.debug(
                 'Result proxy will work on runnable object "{}"'.format(
@@ -396,7 +392,12 @@ class Result(object):
                 ),
             )
 
+            proxy = self.create_proxy(
+                name=runnable.class_name(runnable_object),
+            )
             self.proxies.append(proxy)
+        else:
+            proxy = self.create_proxy()
 
         try:
             yield proxy

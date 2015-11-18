@@ -16,14 +16,14 @@ Session = registry.get_session()
 
 
 @contextmanager
-def session_scope(rollback=True):
+def session_scope(rollback=False):
     session = Session()
     try:
         yield session
-    except:
+    except BaseException as error:
         if rollback:
             session.rollback()
-        raise
+        raise error
     finally:
         session.close()
 
@@ -50,27 +50,27 @@ class ModelObjects(object):
         self.__model = model
 
     def get(self, pk):
-        with session_scope(rollback=False) as session:
+        with session_scope() as session:
             obj = session.query(self.__model).get(pk)
         return obj
 
     def get_by(self, **params):
-        with session_scope(rollback=False) as session:
+        with session_scope() as session:
             obj = session.query(self.__model).filter_by(**params).first()
         return obj
 
     def getlist(self, offset=DEFAULT_OFFSET, limit=DEFAULT_LIMIT):
-        with session_scope(rollback=False) as session:
+        with session_scope() as session:
             result = session.query(self.__model).offset(offset).limit(limit).all()
         return result
 
     def getlist_by(self, offset=DEFAULT_OFFSET, limit=DEFAULT_LIMIT, **params):
-        with session_scope(rollback=False) as session:
+        with session_scope() as session:
             result = session.query(self.__model).filter_by(**params).offset(offset).limit(limit).all()
         return result
 
     def update_by(self, by, **params):
-        with session_scope() as session:
+        with session_scope(rollback=True) as session:
             objects = session.query(self.__model).filter_by(**by).all()
 
         for obj in objects:
@@ -89,7 +89,7 @@ class ModelObjects(object):
             objects = session.query(self.__model).filter_by(**params).all()
 
         for obj in objects:
-            with session_scope() as session:
+            with session_scope(rollback=True) as session:
                 session.delete(obj)
                 session.commit()
 
@@ -122,7 +122,7 @@ class ModelCRUD(object):
     def create(cls, **params):
         instance = cls(**params)
 
-        with session_scope() as session:
+        with session_scope(rollback=True) as session:
             session.add(instance)
             session.commit()
             session.refresh(instance)

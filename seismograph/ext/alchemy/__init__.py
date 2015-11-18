@@ -11,7 +11,7 @@ def __install__(program):
     config = program.config.get(CONFIG_KEY, {})
 
     if config:
-        from . import base
+        from . import install
         from .extension import DBClient
 
         default_host = config.get('HOST')
@@ -54,7 +54,7 @@ def __install__(program):
             dns_params = db_config.pop('dns_params', default_dns_params)
             pool_class = db_config.pop('pool_class', default_pool_class)
 
-            base.setup_engine(
+            install.setup_engine(
                 protocol,
                 host,
                 port,
@@ -66,7 +66,7 @@ def __install__(program):
                 **db_config
             )
 
-        base.setup_session(**session_config)
+        install.setup_session(**session_config)
 
         program.shared_extension(EX_NAME, DBClient)
     else:
