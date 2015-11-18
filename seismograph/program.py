@@ -229,6 +229,7 @@ class Program(runnable.RunnableObject):
                     self.run_scripts(result, run_point='before')
                     group(result)
                     self.run_scripts(result, run_point='after')
+                    result.runtime = timer()
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
@@ -453,8 +454,10 @@ class Program(runnable.RunnableObject):
         for script in scripts:
             self.register_script(script)
 
-    def register_script(self, script):
+    def register_script(self, script, run_point=None):
         if not self.__config.NO_SCRIPTS:
+            if run_point:
+                setattr(script, '__run_point__', run_point)
             self.__scripts.append(script(self))
 
     def register_suite(self, suite):

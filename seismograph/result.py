@@ -120,8 +120,8 @@ class ResultConsole(object):
             yield
             self.__tabs = current_tabs
 
-        def flush(self, stdout):
-            stdout.write(
+        def flush(self, stream):
+            stream.write(
                 u''.join(self.__buffer),
             )
             self.__buffer = []
@@ -242,6 +242,9 @@ class State(object):
 
     @property
     def runtime(self):
+        if self.__result.runtime is not None:
+            return self.__result.runtime
+
         runtime = float()
 
         for storage in (
@@ -298,6 +301,7 @@ class Result(object):
         self._stdout = stdout or sys.stdout
         self._marker = self.__marker_class__(self.__config)
 
+        self.__runtime = None
         self.__console = ResultConsole(
             self._stdout,
             verbose=self.__config.VERBOSE,
@@ -353,6 +357,14 @@ class Result(object):
     @property
     def console(self):
         return self.__console
+
+    @property
+    def runtime(self):
+        return self.__runtime
+
+    @runtime.setter
+    def runtime(self, value):
+        self.__runtime = value
 
     @property
     def current_state(self):

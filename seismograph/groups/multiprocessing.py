@@ -83,6 +83,7 @@ class MPResult(object):
             self.queue.put(
                 (
                     self.result.proxies[0].name,
+                    self.result.proxies[0].runtime,
 
                     self.pack_result_storage(
                         self.result.successes,
@@ -101,11 +102,12 @@ class MPResult(object):
 
     def sync(self):
         while not self.queue.empty():
-            name, successes, skipped, failures, errors = self.queue.get()
+            name, runtime, successes, skipped, failures, errors = self.queue.get()
 
             result_proxy = self.create_proxy(
                 name=name,
             )
+            result_proxy.runtime = runtime
 
             result_proxy.errors.extend(
                 self.unpack_result_storage(errors),

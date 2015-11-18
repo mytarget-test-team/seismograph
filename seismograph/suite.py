@@ -337,6 +337,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
                 with self.__context(self):
                     group(result_proxy)
+                    result_proxy.runtime = timer()
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
