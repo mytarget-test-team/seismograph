@@ -4,7 +4,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 
-__version__ = '0.0.9'
+__version__ = '0.0.10'
 
 
 if __name__ == '__main__':
@@ -27,7 +27,7 @@ if __name__ == '__main__':
             'requests',
             'flask>=0.7',
             'selenium>=2.46',
-            'sqlalchemy==0.9.8',
+            'sqlalchemy>=0.8',
         ),
         entry_points={
             'console_scripts': (
