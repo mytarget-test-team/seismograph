@@ -42,4 +42,3 @@ def test_model(case):
     case.assertion.greater(
         len(UsersModel.objects.getlist()), 0,
     )
-

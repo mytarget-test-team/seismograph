@@ -136,7 +136,6 @@ __all__ = (
     'forms',
     'query',
     'Suite',
-    'contains',
     'add_route',
     'assertion',
     'PageObject',
