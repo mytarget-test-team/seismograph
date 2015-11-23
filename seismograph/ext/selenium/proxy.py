@@ -199,7 +199,7 @@ class BaseProxy(object):
         return get_text()
 
     @contextmanager
-    def polling(self, func=None, exc_cls=None, message=None, timeout=None, args=None, kwargs=None):
+    def polling(self, func=None, exc_cls=None, message=None, timeout=None, delay=None, args=None, kwargs=None):
         to_restore = self.__allow_polling
         self.__allow_polling = True
 
@@ -210,7 +210,7 @@ class BaseProxy(object):
                 kwargs=kwargs,
                 exc_cls=exc_cls,
                 message=message,
-                delay=self.config.POLLING_DELAY,
+                delay=delay or self.config.POLLING_DELAY,
                 timeout=timeout or self.config.POLLING_TIMEOUT or 0.5,
             )
 

@@ -34,16 +34,16 @@ class TestStepsForSelenium(selenium.Case):
     )
 
     @step(1, 'To open google')
-    def open_google(self, driver, ctx):
-        driver.router.go_to('/')
+    def open_google(self, browser, ctx):
+        browser.router.go_to('/')
 
     @step(2, 'To fill search form')
-    def fill_search_form(self, driver, ctx):
-        search = driver.input(name='q').first()
+    def fill_search_form(self, browser, ctx):
+        search = browser.input(name='q').first()
         search.set(ctx.text)
-        button = driver.button(name='btnG').first()
+        button = browser.button(name='btnG').first()
         button.click()
 
     @step(3, 'To check result')
-    def check_result(self, driver, ctx):
-        self.assertion.text_in_page(driver, ctx.text)
+    def check_result(self, browser, ctx):
+        self.assertion.text_in_page(browser, ctx.text)

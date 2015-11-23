@@ -146,9 +146,10 @@ class RunnableObject(object):
             ),
         )
 
-    def support_mp(self, stopped_on=None):
-        if stopped_on:
-            self.__stopped_on.set(stopped_on)
+    def support_mp(self, manager):
+        self.__stopped_on.set(
+            manager.Value('s', self._stopped_on),
+        )
 
 
 class BuildObjectMixin(object):

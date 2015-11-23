@@ -60,8 +60,3 @@ def test_of_my_uite(case):
     case.assertion.true(hasattr(my_suite, 'on_init_was_call'))
     case.assertion.true(hasattr(my_suite, 'on_mount_was_call'))
     case.assertion.true(hasattr(my_suite, 'on_run_was_call'))
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

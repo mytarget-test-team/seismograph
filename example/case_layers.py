@@ -60,8 +60,3 @@ class ExampleCase(Case):
     def test(self):
         self.assertion.true(hasattr(self, 'on_init_was_call'))
         self.assertion.true(hasattr(self, 'on_run_was_call'))
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

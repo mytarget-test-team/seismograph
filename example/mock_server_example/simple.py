@@ -120,8 +120,3 @@ class TestSimpleMocks(Case):
 
         response = self.server.client.get('/hello/dolly')
         self.assertion.equal(response.status_code, 404)
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

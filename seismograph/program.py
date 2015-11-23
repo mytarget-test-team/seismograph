@@ -202,8 +202,7 @@ class Program(runnable.RunnableObject):
     def __run__(self):
         self.__is_run = True
         timer = measure_time()
-
-        result = self._make_result()
+        self.__result.set_timer(timer)
 
         if self.suites_path:
             self.load_suites()
@@ -221,27 +220,27 @@ class Program(runnable.RunnableObject):
 
         group = self._make_group()
 
-        with result:
+        with self.__result:
             try:
                 self.__context.on_run(self)
 
                 with self.__context(self):
-                    self.run_scripts(result, run_point='before')
-                    group(result)
-                    self.run_scripts(result, run_point='after')
-                    result.runtime = timer()
+                    self.run_scripts(self.__result, run_point='before')
+                    group(self.__result)
+                    self.run_scripts(self.__result, run_point='after')
+                    self.__result.stop_timer()
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
-                result.add_error(
+                self.__result.add_error(
                     self, traceback.format_exc(), timer(), error,
                 )
-                self.__context.on_error(error, self, result)
+                self.__context.on_error(error, self, self.__result)
 
         if self.__exit:
-            sys.exit(not result.current_state.was_success)
+            sys.exit(not self.__result.current_state.was_success)
 
-        return result.current_state.was_success
+        return self.__result.current_state.was_success
 
     #
     # Self code is starting here
@@ -293,6 +292,9 @@ class Program(runnable.RunnableObject):
         )
 
         config.prepare_config(self.__config)
+
+        self.__result = self._make_result()
+
         self.__context.on_config(self, config)
 
         if self.__config.NO_SKIP:
@@ -389,18 +391,18 @@ class Program(runnable.RunnableObject):
 
     def _make_result(self):
         if self.__config.OUTPUT:
-            logger.debug(
-                'Sdtout for result object will be redirected to "{}"'.format(
+            stream = open(self.__config.OUTPUT, 'w')
+            logger.info(
+                'Output stream was redirected to "{}"'.format(
                     self.__config.OUTPUT,
                 ),
             )
-            stdout = open(self.__config.OUTPUT, 'w')
         else:
-            stdout = sys.stdout
+            stream = sys.stdout
 
         return self.__result_class__(
             self.__config,
-            stdout=stdout,
+            stream=stream,
         )
 
     @staticmethod

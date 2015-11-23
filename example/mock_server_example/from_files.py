@@ -43,8 +43,3 @@ class TestMocksFromFiles(Case):
 
         data = response.json()
         self.assertion.equal(data['result'], 'created')
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

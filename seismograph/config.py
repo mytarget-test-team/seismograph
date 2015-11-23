@@ -43,6 +43,20 @@ def create_option_parser():
         help='Redirect output to file.',
     )
     console_group.add_option(
+        '--no-capture',
+        dest='NO_CAPTURE',
+        action='store_true',
+        default=False,
+        help='No capture log.',
+    )
+    console_group.add_option(
+        '--suite-detail',
+        action='store_true',
+        dest='SUITE_DETAIL',
+        default=False,
+        help='Detail stat from suites.',
+    )
+    console_group.add_option(
         '--tree',
         dest='TREE',
         action='store_true',
@@ -54,7 +68,7 @@ def create_option_parser():
         dest='NO_COLOR',
         action='store_true',
         default=False,
-        help='Not use color on output.',
+        help='No use color on output.',
     )
     parser.add_option_group(console_group)
 

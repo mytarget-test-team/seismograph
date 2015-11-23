@@ -62,7 +62,66 @@ def get_runtime_from_storage(storage):
     return rt
 
 
-class ResultConsole(object):
+class CaptureStream(object):
+
+    def __init__(self):
+        self.__buffer = []
+
+    def __getattr__(self, item):
+        return getattr(sys.stdout, item)
+
+    def write(self, s):
+        self.__buffer.append(s)
+
+    def flush(self, fp=None):
+        if fp and self.__buffer:
+            with lock:
+                fp.write('\nLogging capture:\n\n')
+                for s in self.__buffer:
+                    fp.write(s)
+                    fp.flush()
+            self.__buffer = []
+
+
+class LogCapture(object):
+
+    was_captured = []
+    stream = CaptureStream()
+
+    def __init__(self, config):
+        if not config.NO_CAPTURE:
+            self.do_capture()
+
+        self.__config = config
+
+    def __bool__(self):
+        return self.__nonzero__()
+
+    def __nonzero__(self):
+        return not self.__config.NO_CAPTURE
+
+    @property
+    def loggers(self):
+        for _, logger in logging.Logger.manager.loggerDict.items():
+            if isinstance(logger, logging.Logger):
+                yield logger
+
+    def do_capture(self):
+        for logger in self.loggers:
+            if logger in self.was_captured:
+                continue
+
+            for handler in logger.handlers:
+                if handler.__class__ == logging.StreamHandler:
+                    handler.stream = self.stream
+
+            self.was_captured.append(logger)
+
+    def flush(self, fp):
+        self.stream.flush(fp)
+
+
+class Console(object):
 
     class ChildConsole(object):
 
@@ -164,7 +223,7 @@ class ResultConsole(object):
         self.writeln('')
 
 
-class ResultMarkers(object):
+class Markers(object):
 
         LONG_FAIL = 'FAIL'
         LONG_SKIP = 'SKIP: '
@@ -224,9 +283,10 @@ class State(object):
         self.__result = result
         self.__should_stop = MPSupportedValue(should_stop)
 
-    def support_mp(self, should_stop=None):
-        if should_stop:
-            self.__should_stop.set(should_stop)
+    def support_mp(self, manager):
+        self.__should_stop.set(
+            manager.Value('b', self.should_stop)
+        )
 
     @property
     def should_stop(self):
@@ -234,16 +294,16 @@ class State(object):
 
     @should_stop.setter
     def should_stop(self, value):
-        logger.debug(
-            'should_stop on result state did changed. value={}'.format(value),
-        )
-
         self.__should_stop.value = value
+
+        logger.debug(
+            '"should_stop" on result state did changed. value={}'.format(value),
+        )
 
     @property
     def runtime(self):
         if self.__result.runtime is not None:
-            return self.__result.runtime
+            return round(self.__result.runtime, xunit.ROUND_RUNTIME)
 
         runtime = float()
 
@@ -283,9 +343,9 @@ class State(object):
 
 class Result(object):
 
-    __marker_class__ = ResultMarkers
+    __marker_class__ = Markers
 
-    def __init__(self, config, name=None, stdout=None, current_state=None, is_proxy=False):
+    def __init__(self, config, name=None, stream=None, current_state=None, is_proxy=False):
         self.errors = []
         self.skipped = []
         self.failures = []
@@ -298,17 +358,21 @@ class Result(object):
         self.__name = name or DEFAULT_NAME
         self.__current_state = current_state or State(self)
 
-        self._stdout = stdout or sys.stdout
+        self._stream = stream or sys.stdout
         self._marker = self.__marker_class__(self.__config)
 
+        self.__timer = None
         self.__runtime = None
-        self.__console = ResultConsole(
-            self._stdout,
+        self.__capture = None
+        self.__console = Console(
+            self._stream,
             verbose=self.__config.VERBOSE,
         )
 
         if not is_proxy:
             global lock
+
+            self.__capture = LogCapture(config)
 
             if self.__config.GEVENT:
                 pyv.check_gevent_supported()
@@ -323,11 +387,11 @@ class Result(object):
                 lock = Lock()
 
     def __enter__(self):
-        self.print_begin()
+        self.begin()
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.print_final()
+        self.final()
 
         if self.__config.XUNIT_REPORT:
             self.create_report(self.__config.XUNIT_REPORT)
@@ -355,6 +419,10 @@ class Result(object):
         return self.__config
 
     @property
+    def capture(self):
+        return self.__capture
+
+    @property
     def console(self):
         return self.__console
 
@@ -370,13 +438,23 @@ class Result(object):
     def current_state(self):
         return self.__current_state
 
+    def support_mp(self, manager):
+        self.__current_state.support_mp(manager)
+
+    def set_timer(self, timer):
+        self.__timer = timer
+
+    def stop_timer(self):
+        if self.__timer:
+            self.__runtime = self.__timer()
+
     def create_proxy(self, **kwargs):
         logger.debug('Create proxy to result')
 
         return self.__class__(
             self.__config,
             is_proxy=True,
-            stdout=self._stdout,
+            stream=self._stream,
             current_state=self.__current_state,
             **kwargs
         )
@@ -396,7 +474,7 @@ class Result(object):
         self.successes.extend(result.successes)
 
     @contextmanager
-    def proxy(self, runnable_object=None):
+    def proxy(self, runnable_object=None, timer=None):
         if runnable_object:
             logger.debug(
                 'Result proxy will work on runnable object "{}"'.format(
@@ -407,6 +485,8 @@ class Result(object):
             proxy = self.create_proxy(
                 name=runnable.class_name(runnable_object),
             )
+            proxy.set_timer(timer)
+
             self.proxies.append(proxy)
         else:
             proxy = self.create_proxy()
@@ -414,6 +494,7 @@ class Result(object):
         try:
             yield proxy
         finally:
+            proxy.stop_timer()
             self.extend(proxy)
             proxy.console.flush()
 
@@ -460,7 +541,7 @@ class Result(object):
         )
 
         self.errors.append((runnable_object, xunit_data))
-        self.print_finish(self._marker.error())
+        self.finish(self._marker.error())
 
         if self.__config.STOP:
             self.__current_state.should_stop = True
@@ -479,7 +560,7 @@ class Result(object):
         )
 
         self.failures.append((runnable_object, xunit_data))
-        self.print_finish(self._marker.fail())
+        self.finish(self._marker.fail())
 
         if self.__config.STOP:
             self.__current_state.should_stop = True
@@ -492,7 +573,7 @@ class Result(object):
         )
 
         self.successes.append((runnable_object, xunit_data))
-        self.print_finish(self._marker.success())
+        self.finish(self._marker.success())
 
     def add_skip(self, runnable_object, reason, runtime):
         xunit_data = xunit.XUnitData(
@@ -503,32 +584,50 @@ class Result(object):
         )
 
         self.skipped.append((runnable_object, xunit_data))
-        self.print_finish(self._marker.skip(reason))
+        self.finish(self._marker.skip(reason))
 
     def create_report(self, file_path):
+        if self.__is_proxy:
+            raise RuntimeError(
+                'Proxy result can not be independent',
+            )
+
         with open(file_path, 'w') as f:
             f.write(
                 xunit.create_xml_document(self),
             )
 
-    def print_start(self, runnable_object):
+    def start(self, runnable_object):
         if self.__config.VERBOSE:
             self.__console.write(
                 '* {}: '.format(str(runnable_object)),
             )
 
-    def print_finish(self, status):
+    def finish(self, status):
         if self.__config.VERBOSE:
             self.__console.writeln(status)
         else:
             self.__console.write(status)
 
-    def print_begin(self):
+    def begin(self):
+        if self.__is_proxy:
+            raise RuntimeError(
+                'Proxy result can not be independent',
+            )
+
+        if self.__capture:
+            self.__capture.do_capture()
+
         self.__console.writeln('Seismograph is measuring:')
         self.__console.line_break()
         self.console.flush()
 
-    def print_final(self):
+    def final(self):
+        if self.__is_proxy:
+            raise RuntimeError(
+                'Proxy result can not be independent',
+            )
+
         if not self.__config.VERBOSE:
             self.__console.line_break()
 
@@ -568,6 +667,21 @@ class Result(object):
         if not need_report:
             self.__console.line_break()
 
+        if self.config.SUITE_DETAIL:
+            self.__console.writeln(sep_line)
+
+            for proxy in self.proxies:
+                state = proxy.get_state()
+
+                self.__console.writeln(
+                    '{}: {}'.format(
+                        proxy.name, state.runtime,
+                    ),
+                )
+
         self.__console.writeln(sep_line)
         self.__console.writeln(total)
         self.__console.flush()
+
+        if self.__capture:
+            self.__capture.flush(self._stream)

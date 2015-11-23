@@ -55,8 +55,3 @@ class CaseSetupTearDownExample(Case):
 
     def test(self):
         self.assertion.false(False)
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

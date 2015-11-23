@@ -30,7 +30,8 @@ def step(num, doc=None, performer=None):
         @wraps(method)
         def wrapped(self, *args, **kwargs):
             if performer:
-                return performer(self, method, args, kwargs)
+                step_method = lambda: method(self, *args, **kwargs)
+                return performer(self, step_method)
             return method(self, *args, **kwargs)
 
         return wrapped

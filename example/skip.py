@@ -44,8 +44,3 @@ class SkipAllClassWithDecorator(Case):
 
     def test_one(self):
         pass
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

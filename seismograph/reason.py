@@ -66,7 +66,11 @@ def create(runnable_object, reason, config=None):
     return Reason(runnable_object, reason, config)
 
 
-def create_item(name, desc, *args):
+def item(name, desc, *args):
     return u'{} ({}): \n{}\n\n'.format(
         name, desc, u'\n'.join(u'  {}'.format(s) for s in args),
     )
+
+
+def join(*args):
+    return u''.join(args)

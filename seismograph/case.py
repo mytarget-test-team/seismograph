@@ -588,19 +588,19 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             history = steps.get_case_history(self) or [None]
 
             reasons.append(
-                u''.join(
+                reason.join(
                     (
-                        reason.create_item(
+                        reason.item(
                             'History',
                             'was done earlier',
                             *history
                         ),
-                        reason.create_item(
+                        reason.item(
                             'Current step',
                             'when exception was raised',
                             steps.get_current_step(self),
                         ),
-                        reason.create_item(
+                        reason.item(
                             'Current flow',
                             'context of steps execution',
                             steps.get_current_flow(self),
@@ -611,14 +611,14 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
         if self.reason_storage:
             reasons.append(
-                reason.create_item(
+                reason.item(
                     'Case',
                     'info from test case',
                     *(u'{}: {}'.format(k, v) for k, v in self.reason_storage.items())
                 ),
             )
 
-        return u''.join(reasons)
+        return reason.join(reasons)
 
     def __run__(self, result):
         self.__is_run = True
@@ -628,7 +628,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             return
 
         with result.proxy() as result_proxy:
-            result_proxy.print_start(self)
+            result_proxy.start(self)
 
             if self.__always_success__:
                 result_proxy.add_success(

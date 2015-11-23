@@ -113,7 +113,7 @@ LOGGING_SETTINGS = {
     'version': 1,
     'formatters': {
         'basic': {
-            'format': '%(asctime)-15s %(levelname)s %(message)s'
+            'format': '%(asctime)-15s %(levelname)s %(message)s',
         },
     },
     'handlers': {
@@ -128,7 +128,7 @@ LOGGING_SETTINGS = {
         },
     },
     'loggers': {
-        'example': {
+        'steps': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,

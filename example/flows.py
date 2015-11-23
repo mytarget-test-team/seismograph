@@ -83,8 +83,3 @@ def set_flows_for_function_test(case, ctx):
 @suite.register(static=True)
 def set_flows_for_static_function_test(ctx):
     assertion.greater(ctx.num, 0)
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()

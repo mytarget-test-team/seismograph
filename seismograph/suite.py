@@ -5,6 +5,7 @@ import traceback
 from types import FunctionType
 
 from . import case
+from . import reason
 from . import loader
 from . import runnable
 from .utils import pyv
@@ -301,7 +302,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
     __layers__ = None
     __require__ = None
-    __create_reason__ = False
+    __create_reason__ = True
     __case_class__ = case.Case
     __case_group_class__ = None
 
@@ -321,6 +322,15 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
     def __class_name__(self):
         return self.__name
 
+    def __reason__(self):
+        if self.reason_storage:
+            return reason.item(
+                'Suite',
+                'info from suite',
+                *(u'{}: {}'.format(k, v) for k, v in self.reason_storage.items())
+            )
+        return ''
+
     @runnable.build_method
     def __run__(self, result):
         self.__is_run = True
@@ -331,13 +341,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
         group = self._make_group()
 
-        with result.proxy(self) as result_proxy:
+        with result.proxy(self, timer=timer) as result_proxy:
             try:
                 self.__context.on_run(self)
 
                 with self.__context(self):
                     group(result_proxy)
-                    result_proxy.runtime = timer()
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:

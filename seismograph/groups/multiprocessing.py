@@ -9,21 +9,17 @@ from ..utils.common import waiting_for
 from ..groups import get_pool_size_of_value
 
 
-MPQueue = MPProcess = MPValue = MPLock = None
+MPProcess = mp_manager = None
 
 
 def import_mp():
-    global MPQueue, MPProcess, MPValue, MPLock
+    global MPProcess, mp_manager
 
     from multiprocessing import Process
     from multiprocessing import Manager
 
-    manager = Manager()
-
     MPProcess = Process
-    MPLock = manager.Lock
-    MPValue = manager.Value
-    MPQueue = manager.Queue
+    mp_manager = Manager()
 
 
 def target(suite, mp_result):
@@ -37,13 +33,9 @@ class MPResult(object):
 
     def __init__(self, result):
         self.result = result
-        self.queue = MPQueue()
+        self.queue = mp_manager.Queue()
 
-        self.result.current_state.support_mp(
-            should_stop=MPValue(
-                'b', self.result.current_state.should_stop,
-            ),
-        )
+        self.result.support_mp(mp_manager)
 
     def __getattr__(self, item):
         return getattr(self.result, item)
@@ -61,22 +53,16 @@ class MPResult(object):
 
     def match(self, suite):
         self.MATCH[suite.id] = suite
-        suite.support_mp(
-            stopped_on=MPValue('s', runnable.method_name(suite)),
-        )
+        suite.support_mp(mp_manager)
 
         for case in suite:
             if isinstance(case, CaseBox):
                 for c in case:
                     self.MATCH[c.id] = c
-                    c.support_mp(
-                        stopped_on=MPValue('s', runnable.method_name(c)),
-                    )
+                    c.support_mp(mp_manager)
             else:
                 self.MATCH[case.id] = case
-                case.support_mp(
-                    stopped_on=MPValue('s', runnable.method_name(case)),
-                )
+                case.support_mp(mp_manager)
 
     def save_result(self):
         if self.result.proxies:

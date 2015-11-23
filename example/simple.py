@@ -21,8 +21,3 @@ def example_function_test(case):
 @suite.register(static=True)
 def example_static_function_test():
     assertion.true(True)
-
-
-if __name__ == '__main__':
-    import seismograph
-    seismograph.main()
