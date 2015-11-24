@@ -105,8 +105,8 @@ def flows(*flows):
         def wrapped(self, *args, **kwargs):
             for flow in flows:
                 if self.config.FLOWS_LOG:
-                    with self.console.tab():
-                        self.console(
+                    with self.log.tab():
+                        self.log(
                             'Flow: ', pyv.unicode_string(flow),
                         )
                 f(self, flow, *args, **kwargs)
@@ -230,36 +230,69 @@ class AssertionBase(object):
     __unittest__ = __UnitTest__('__call__')
 
     def fail(self, msg=None):
+        """
+        Raised AssertionError with message
+        """
         self.__unittest__.fail(msg)
 
     def true(self, expr, msg=None):
+        """
+        Like assertTrue in unittest
+        """
         self.__unittest__.assertTrue(expr, msg=msg)
 
     def false(self, expr, msg=None):
+        """
+        Like assertFalse in unittest
+        """
         self.__unittest__.assertFalse(expr, msg=msg)
 
     def greater(self, a, b, msg=None):
+        """
+        Like assertGreater in unittest
+        """
         self.__unittest__.assertGreater(a, b, msg=msg)
 
     def equal(self, first, second, msg=None):
+        """
+        Like assertEqual in unittest
+        """
         self.__unittest__.assertEqual(first, second, msg=msg)
 
     def not_equal(self, first, second, msg=None):
+        """
+        Like assertNotEqual in unittest
+        """
         self.__unittest__.assertNotEqual(first, second, msg=msg)
 
     def raises(self, exc_class, callable_obj=None, *args, **kwargs):
+        """
+        Like assertRaises in unittest
+        """
         self.__unittest__.assertRaises(exc_class, callable_obj, *args, **kwargs)
 
     def is_instance(self, obj, cls, msg=None):
+        """
+        Like assertIsInstance in unittest
+        """
         self.__unittest__.assertIsInstance(obj, cls, msg=msg)
 
     def sequence_equal(self, seq1, seq2, msg=None, seq_type=None):
+        """
+        Like assertSequenceEqual in unittest
+        """
         self.__unittest__.assertSequenceEqual(seq1, seq2, msg=msg, seq_type=seq_type)
 
     def almost_equal(self, first, second, places=None, msg=None, delta=None):
+        """
+        Like assertAlmostEqual in unittest
+        """
         self.__unittest__.assertAlmostEqual(first, second, places=places, msg=msg, delta=delta)
 
     def not_almost_equal(self, first, second, places=None, msg=None, delta=None):
+        """
+        Like assertNotAlmostEqual in unittest
+        """
         self.__unittest__.assertNotAlmostEqual(first, second, places=places, msg=msg, delta=delta)
 
 
@@ -645,7 +678,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 self.__context.on_skip(self, reason, result_proxy)
                 return
 
-            self.__console = result_proxy.console.child_console()
+            self.__log = result_proxy.console.child_console()
 
             try:
                 was_success = True
@@ -730,8 +763,8 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 ),
             )
 
+        self.__log = None
         self.__is_run = False
-        self.__console = None
         self.__config = config
         self._method_name = method_name
 
@@ -812,8 +845,8 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
     @property
     @runnable.run_method
-    def console(self):
-        return self.__console
+    def log(self):
+        return self.__log
 
     @property
     def context(self):

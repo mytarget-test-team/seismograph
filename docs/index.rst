@@ -1,5 +1,17 @@
-Seismograph
-===========
+Welcome to documentation
+========================
+
+.. toctree::
+    :maxdepth: 2
+
+    case
+    suite
+    program
+    scripts
+    config
+    layers
+    extensions
+    scope
 
 
 About
@@ -60,4 +72,3 @@ Async run
 * multiprocessing
 * threading
 * gevent (for python 2 only)
-

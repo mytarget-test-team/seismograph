@@ -248,17 +248,3 @@ class RunnableGroup(RunnableObject):
     @property
     def objects(self):
         return self.__objects
-
-
-class Script(RunnableObject):
-
-    __run_point__ = None
-
-    def __init__(self, program):
-        super(Script, self).__init__()
-
-        self.__program = program
-
-    @property
-    def config(self):
-        return self.__program.config

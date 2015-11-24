@@ -208,7 +208,9 @@ class Program(runnable.RunnableObject):
             self.load_suites()
 
         if not self.__suites and not self.__scripts:
-            raise RuntimeError('No suites or scripts for execution')
+            raise RuntimeError(
+                'No suites or scripts for execution',
+            )
 
         self.__suites = collector.create_generator(
             self.__suites, self.__config,
@@ -270,11 +272,11 @@ class Program(runnable.RunnableObject):
 
         self.__context = ProgramContext(self.setup, self.teardown)
 
-        if layers:
-            self.__context.add_layers(layers)
-
         if self.__layers__:
             self.__context.add_layers(self.__layers__)
+
+        if layers:
+            self.__context.add_layers(layers)
 
         parser = config.create_option_parser()
         self.__context.on_option_parser(parser)
@@ -393,7 +395,7 @@ class Program(runnable.RunnableObject):
         if self.__config.OUTPUT:
             stream = open(self.__config.OUTPUT, 'w')
             logger.info(
-                'Output stream was redirected to "{}"'.format(
+                'Result output stream was redirected to "{}"'.format(
                     self.__config.OUTPUT,
                 ),
             )

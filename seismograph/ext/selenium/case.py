@@ -106,8 +106,8 @@ class SeleniumAssertion(case.AssertionBase):
 
     DEFAULT_TIMEOUT = 0.5
 
-    def any_text_in_page(self, browser, texts, msg=None):
-        page_text = browser.text
+    def any_text_in(self, proxy, texts, msg=None):
+        page_text = proxy.text
         error_message = u'Not of those texts was not found on page "{}". Texts: [{}]'
 
         for text in texts:
@@ -115,17 +115,17 @@ class SeleniumAssertion(case.AssertionBase):
                 break
         else:
             error_message = error_message.format(
-                browser.driver.current_url,
+                proxy.driver.current_url,
                 u', '.join(texts),
             )
             self.fail(msg or error_message)
 
-    def text_in_page(self, browser, text_or_texts, timeout=None, msg=None):
+    def text_in(self, proxy, text_or_texts, timeout=None, msg=None):
         error_message = u'Text "{}" not found on page "{}"'
 
         def check_text(txt):
             try:
-                return txt in browser.text
+                return txt in proxy.text
             except (HTTPException, StaleElementReferenceException):
                 return False
 
@@ -136,10 +136,10 @@ class SeleniumAssertion(case.AssertionBase):
                     args=(t,),
                     exc_cls=AssertionError,
                     message=msg or error_message.format(
-                        t, browser.driver.current_url,
+                        t, proxy.driver.current_url,
                     ),
-                    delay=browser.config.POLLING_DELAY,
-                    timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+                    delay=proxy.config.POLLING_DELAY,
+                    timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
                 )
         else:
             waiting_for(
@@ -147,43 +147,43 @@ class SeleniumAssertion(case.AssertionBase):
                 args=(text_or_texts,),
                 exc_cls=AssertionError,
                 message=msg or error_message.format(
-                    text_or_texts, browser.driver.current_url,
+                    text_or_texts, proxy.driver.current_url,
                 ),
-                delay=browser.config.POLLING_DELAY,
-                timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+                delay=proxy.config.POLLING_DELAY,
+                timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
             )
 
-    def web_element_exist(self, browser, query, timeout=None, msg=None):
+    def web_element_in(self, proxy, query, timeout=None, msg=None):
         waiting_for(
-            lambda: browser.query.form_object(query).exist,
+            lambda: proxy.query.form_object(query).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was not found on page "{}"'.format(
-                browser.driver.current_url,
+                proxy.driver.current_url,
             ),
-            delay=browser.config.POLLING_DELAY,
-            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
         )
 
-    def web_element_not_exist(self, browser, query, timeout=None, msg=None):
+    def web_element_not_in(self, proxy, query, timeout=None, msg=None):
         waiting_for(
-            lambda: not browser.query.form_object(query).exist,
+            lambda: not proxy.query.form_object(query).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was found on page "{}"'.format(
-                browser.driver.current_url,
+                proxy.driver.current_url,
             ),
-            delay=browser.config.POLLING_DELAY,
-            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
         )
 
-    def content_in_web_element_exist(self, browser, query_object, timeout=None, msg=None):
+    def content_exist_in(self, proxy, query, timeout=None, msg=None):
         waiting_for(
-            lambda: len(browser.query.form_object(query_object).first().text) > 0,
+            lambda: len(proxy.query.form_object(query).first().text) > 0,
             exc_cls=AssertionError,
             message=msg or 'Content does not exist inside element on page "{}"'.format(
-                browser.driver.current_url,
+                proxy.driver.current_url,
             ),
-            delay=browser.config.POLLING_DELAY,
-            timeout=timeout or browser.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
         )
 
 
@@ -258,7 +258,7 @@ class SeleniumCase(case.Case):
                     except BaseException as error:
                         logger.warn(error, exc_info=True)
 
-                return super(SeleniumCase, self).__reason__() + reason.create_item(
+                return super(SeleniumCase, self).__reason__() + reason.item(
                     'Selenium',
                     'info from selenium extension',
                     *(u'{}: {}'.format(k, v) for k, v in self.__selenium.browser.reason_storage.items())

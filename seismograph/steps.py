@@ -113,7 +113,7 @@ def _perform_prompt(case, method, exit_code=None):
         pyv.get_func_name(method),
         ', '.join([c for _, c in commands.items()]),
     )
-    command = case.console.prompt(prompt).strip()
+    command = case.log.prompt(prompt).strip()
 
     if command == commands['exit']:
         sys.exit(exit_code or 0)
@@ -124,7 +124,7 @@ def _run_step(case, method, flow=None):
         _perform_prompt(case, method)
 
     if case.config.STEPS_LOG:
-        case.console(_step_log(case, method, flow))
+        case.log(_step_log(case, method, flow))
 
     try:
         if flow is not None:
@@ -154,7 +154,7 @@ def _make_run_test():
                 setattr(self, CURRENT_FLOW_ATTRIBUTE_NAME, flow)
 
                 if self.config.STEPS_LOG:
-                    self.console(u'  Flow: ', pyv.unicode_string(flow))
+                    self.log(u'  Flow: ', pyv.unicode_string(flow))
 
                 for step_method in get_step_methods(self):
                     setattr(

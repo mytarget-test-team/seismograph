@@ -387,11 +387,11 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
         self.__context = SuiteContext(self.setup, self.teardown)
 
-        if layers:
-            self.__context.add_layers(layers)
-
         if self.__layers__:
             self.__context.add_layers(self.__layers__)
+
+        if layers:
+            self.__context.add_layers(layers)
 
         if require:
             self.__context.require.extend(require)
@@ -571,6 +571,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 _class,
                 skip=None,
                 flows=None,
+                layers=None,
                 static=False,
                 require=None,
                 case_class=None,
@@ -597,6 +598,12 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
             if always_success:
                 setattr(_class, '__always_success__', True)
+
+            if layers:
+                if _class.__layers__:
+                    _class.__layers__ = tuple(_class.__layers__) + tuple(layers)
+                else:
+                    _class.__layers__ = tuple(layers)
 
             if assertion_class:
                 setattr(_class, '__assertion_class__', assertion_class)

@@ -20,6 +20,10 @@ from .case import AssertionBase
 from .suite import Suite
 from .suite import SuiteLayer
 
+from .script import Script
+from .script import AfterScript
+from .script import BeforeScript
+
 from .program import main
 from .program import Program
 from .program import ProgramLayer
@@ -44,8 +48,10 @@ __all__ = (
     'assertion',
     'CaseLayer',
     'SuiteLayer',
+    'AfterScript',
     'skip_unless',
     'ProgramLayer',
+    'BeforeScript',
     'AssertionBase',
     'get_config_path_by_env',
 )
