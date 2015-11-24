@@ -33,4 +33,4 @@ def test_google_search(case, browser):
     page.search_field.fill('python')
     page.search_button.click()
 
-    case.assertion.text_in_page(browser, 'python')
+    case.assertion.text_in(browser, 'python')

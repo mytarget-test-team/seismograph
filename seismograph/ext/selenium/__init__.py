@@ -101,8 +101,8 @@ def __install__(program):
         w, h = program.config.SELENIUM_WINDOW_SIZE.split('x')
         config['WINDOW_SIZE'] = (int(w), int(h))
 
-    if (config['POLLING_TIMEOUT'] and config['IMPLICITLY_WAIT']) \
-            and config['POLLING_TIMEOUT'] >= config['IMPLICITLY_WAIT']:
+    if (config.get('POLLING_TIMEOUT') and config.get('IMPLICITLY_WAIT')) \
+            and config.get('POLLING_TIMEOUT') >= config.get('IMPLICITLY_WAIT'):
         warn_message = 'POLLING_TIMEOUT >= IMPLICITLY_WAIT it will be work so slowly. ' \
                        'Please set IMPLICITLY_WAIT larger POLLING_TIMEOUT'
         warn(warn_message, RuntimeWarning)

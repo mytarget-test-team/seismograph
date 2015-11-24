@@ -34,4 +34,4 @@ def test_search_form(case, browser):
     page.search.fill()
     page.search.submit()
 
-    case.assertion.text_in_page(browser, page.search.search_field.value)
+    case.assertion.text_in(browser, page.search.search_field.value)

@@ -16,7 +16,7 @@ def test_google_search(case):
         button = browser.button(name='btnG').first()
         button.click()
 
-        selenium.assertion.text_in_page(browser, 'python')
+        selenium.assertion.text_in(browser, 'python')
 
 
 @suite.register(case_class=selenium.Case, static=True)
@@ -27,4 +27,4 @@ def test_google_search_static(browser):
     button = browser.button(name='btnG').first()
     button.click()
 
-    selenium.assertion.text_in_page(browser, 'python')
+    selenium.assertion.text_in(browser, 'python')

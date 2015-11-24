@@ -23,7 +23,7 @@ class TestGoogleSearch(selenium.Case):
         button = browser.button(name='btnG').first()
         button.click()
 
-        self.assertion.text_in_page(browser, ctx.text)
+        self.assertion.text_in(browser, ctx.text)
 
 
 @suite.register
@@ -46,4 +46,4 @@ class TestStepsForSelenium(selenium.Case):
 
     @step(3, 'To check result')
     def check_result(self, browser, ctx):
-        self.assertion.text_in_page(browser, ctx.text)
+        self.assertion.text_in(browser, ctx.text)

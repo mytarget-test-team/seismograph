@@ -651,7 +651,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 ),
             )
 
-        return reason.join(reasons)
+        return reason.join(*reasons)
 
     def __run__(self, result):
         self.__is_run = True
