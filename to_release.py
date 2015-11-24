@@ -107,7 +107,7 @@ def main():
     delete_old_files()
     run_tests()
     run_tests('3.4')
-    # rebuild_docs()
+    rebuild_docs()
     upload_to_pip()
 
 
