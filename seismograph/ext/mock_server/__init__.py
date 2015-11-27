@@ -25,7 +25,8 @@ def create_server(host=None,
                   mocks=None,
                   debug=False,
                   mocks_path=None,
-                  server_type=DEFAULT_SERVER_TYPE):
+                  server_type=DEFAULT_SERVER_TYPE,
+                  **kwargs):
     try:
         mock_server_class = SERVER_TYPES[server_type]
     except KeyError:
@@ -39,6 +40,7 @@ def create_server(host=None,
         port=port,
         mocks=mocks,
         debug=debug,
+        **kwargs
     )
 
 

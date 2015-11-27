@@ -16,7 +16,7 @@ class SearchForm(selenium.forms.UIForm):
 
     submit = selenium.PageObject(
         selenium.query('button', name='btnG'),
-        proxy=lambda b: b.click(),
+        action=lambda b: b.click(),
     )
 
 
