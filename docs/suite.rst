@@ -155,7 +155,7 @@ How can i add info to reason storage?
 -------------------------------------
 
 This is reason of crash by any problem.
-She will be saved to xunit report and writing to console.
+She will be save to xunit report and write to console.
 
 
 .. code-block:: python

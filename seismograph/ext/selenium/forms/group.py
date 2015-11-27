@@ -138,11 +138,11 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
         self.name = name or self.__class__.__name__
 
         self.__fields = []
+        self.__proxy = proxy
         self.__parent = parent
         self.__weight = weight
         self.__fill_memo = set()
         self.__memento = GroupMemento()
-        self.__proxy = proxy
 
     def __getattr__(self, item):
         return getattr(self.area, item)

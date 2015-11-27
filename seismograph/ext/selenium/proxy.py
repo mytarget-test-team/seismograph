@@ -278,6 +278,10 @@ class WebDriverProxy(BaseProxy):
 
         return self._wrapped.current_url
 
+    @property
+    def url(self):
+        return self.current_url
+
 
 class ActionChainsProxy(object):
 

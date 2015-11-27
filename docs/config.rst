@@ -40,16 +40,25 @@ Config path can be set with creating instance of program.
     program = seismograph.Program(config_path='project.etc.base')
 
 
-If you will be use config path with creating instance of program that config path will be default value for environment variable.
+If you will be use config path with creating instance of program that config path be default value for environment variable.
 In this way config path is path by default for your program.
 
 
 Available sections
 ------------------
 
-+----------------------+-------------------------------+
-| **LOGGING_SETTINGS** | *dict config for logging lib* |
-+----------------------+-------------------------------+
++----------------------+-------------------------------------------+
+| **LOGGING_SETTINGS** | dict config for logging lib               |
++----------------------+-------------------------------------------+
+| **SELENIUM_EX**      | dict config for selenium extension        |
+|                      | `details... <selenium_config.html>`_      |
++----------------------+-------------------------------------------+
+| **ALCHEMY_EX**       | dict config for alchemy extension         |
+|                      | `details... <alchemy_config.html>`_       |
++----------------------+-------------------------------------------+
+| **MOCK_SERVER_EX**   | dict config for mock server extension     |
+|                      | `details... <mock_server_config.html>`_   |
++----------------------+-------------------------------------------+
 
 
 How can i add options to command line?

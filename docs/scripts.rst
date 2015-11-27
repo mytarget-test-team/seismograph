@@ -3,7 +3,7 @@ Scripts
 
 Scripts is independent essences unlike suite and case.
 You can write your script and implement run logic for him.
-Script can run separately of suites. Let look example...
+Script can run separately of suites by **run_scripts** method. Let look example...
 
 
 .. code-block:: python

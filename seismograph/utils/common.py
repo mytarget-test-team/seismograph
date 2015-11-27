@@ -25,7 +25,7 @@ def waiting_for(func, timeout=None, exc_cls=None, message=None, delay=None, args
         if delay:
             time.sleep(delay)
     else:
-        message = message or 'Timeout {} exceeded'.format(timeout)
+        message = message or 'Timeout "{}" exceeded'.format(timeout)
         if exc_cls:
             raise exc_cls(message)
         raise TimeoutException(message)

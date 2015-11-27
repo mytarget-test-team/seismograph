@@ -1,7 +1,7 @@
 Case
 ====
 
-Case class is abstraction platform of your test script.
+Case class is abstraction platform for your test script.
 He can be as function for usability only. So, example usage is below.
 
 
@@ -101,7 +101,7 @@ Assertion class. How to change him?
     :special-members:
 
 
-If you use case as function that you can change assertion class for...
+If you use case as function then you want to change him, maybe, you can do it so...
 
 
 .. code-block:: python
@@ -264,6 +264,10 @@ Let look at this...
         seismograph.main()
 
 
+Begin method will be called after setup and finish before teardown.
+Need to remember, finish method can't be called if any exception will be raised before.
+
+
 Step performer
 --------------
 
@@ -301,8 +305,8 @@ It's easy, look at this... :)
         seismograph.main()
 
 
-How to use flows for
---------------------
+How to use flows. What is it?
+-----------------------------
 
 If you have only one test script and many context for that, so you can use flows of execution.
 
@@ -441,6 +445,9 @@ I think, it's no problem for you :)
         seismograph.main()
 
 
+Also, you can use simple skip on registration case. Should use keyword argument "skip" for that.
+
+
 How to require extensions
 -------------------------
 
@@ -474,9 +481,9 @@ You can use extensions for your tests script. Extensions should be configure in 
 How to use case log. What is it?
 --------------------------------
 
-Log object stores buffer for a while test case is running.
+Log object does store output in buffer for a while test case is running.
 Log will be flushed to stream after run.
-This give a chance to get sorted output while program is running.
+This give a chance to get sorted output while program is async running.
 
 
 .. code-block:: python
@@ -500,7 +507,7 @@ How can i add info to error reason?
 -----------------------------------
 
 This is reason of crash by any problem.
-She will be saved to xunit report and writing to console.
+She will be save to xunit report and write to console.
 
 
 .. code-block:: python
@@ -550,7 +557,7 @@ This is for example only...
         def switch_protocol(self, protocol):
             self._protocol = protocol
 
-        def get(path, **kw):
+        def get(self, path, **kw):
             requests.get(self.url, **kw)
 
 

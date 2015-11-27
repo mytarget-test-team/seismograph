@@ -87,6 +87,9 @@ def __install__(program):
         'server_type': params.get(
             'SERVER_TYPE', DEFAULT_SERVER_TYPE,
         ),
+        'multiprocessing': program.config.MULTIPROCESSING,
+        'threading': program.config.THREADING,
+        'gevent': program.config.GEVENT,
     }
 
     program.shared_extension(

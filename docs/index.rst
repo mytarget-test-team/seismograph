@@ -10,8 +10,8 @@ Welcome to documentation
     scripts
     config
     layers
-    extensions
     scope
+    extensions
 
 
 About
@@ -22,6 +22,22 @@ Who is needing to him?
 The target audience is test developers.
 You can use the framework for unit testing and how you wish but him made
 for functional testing web servers and web applications.
+
+
+Features
+--------
+
+* Built-in extensions
+* Async launch at choice
+* Real suite objects
+* Test script by steps
+* Test case as class, function or static function
+* Context flow for test execution
+* XUnit xml report
+* Detailed reason of crash by any problem
+* Logical layers for all runnable objects
+* Time of execution measured separately for any of runnable objects
+* Opportunity to repeat test with help generator object
 
 
 Installation

@@ -231,14 +231,14 @@ class BaseMockServer(object):
                 with mock.as_(old_mock):
                     self.add_mock(mock, rewrite=True)
                 try:
-                    yield
+                    yield old_mock
                 finally:
                     self.add_mock(old_mock, rewrite=True)
                 break
         else:
             self.add_mock(mock)
             try:
-                yield
+                yield None
             finally:
                 _mock.abort(mock, 404)
 

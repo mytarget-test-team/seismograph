@@ -130,6 +130,11 @@ class QueryResult(object):
 
     @property
     def exist(self):
+        """
+        Check exist first element of query
+
+        :rtype: bool
+        """
         try:
             el = execute(self.__proxy, self.__css, disable_polling=True)
 
@@ -140,6 +145,11 @@ class QueryResult(object):
             return False
 
     def wait(self, timeout=None):
+        """
+        Wait first element of query while timeout doesn't exceeded
+
+        :param timeout: time for wait in seconds
+        """
         return waiting_for(
             lambda: self.exist,
             exc_cls=NoSuchElementException,
@@ -148,6 +158,11 @@ class QueryResult(object):
         )
 
     def get(self, index):
+        """
+        Get element of query by index
+
+        :param index: index of element
+        """
         try:
             return execute(self.__proxy, self.__css, list_result=True)[index]
         except IndexError:
@@ -158,9 +173,15 @@ class QueryResult(object):
             )
 
     def first(self):
+        """
+        Get first element of query
+        """
         return execute(self.__proxy, self.__css)
 
     def all(self):
+        """
+        Get all elements of query
+        """
         return execute(self.__proxy, self.__css, list_result=True)
 
 

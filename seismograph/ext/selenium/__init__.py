@@ -9,7 +9,7 @@ from .case import assertion
 from .pageobject import Page
 from .router import add_route
 from .utils import re_raise_exc
-from .case import inject_driver
+from .case import require_browser
 from .pageobject import PageObject
 from .case import case_of_browsers
 from .case import SeleniumAssertion

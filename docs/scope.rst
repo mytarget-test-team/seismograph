@@ -4,8 +4,8 @@ Scope
 Yuo can tune global context, within a reasonable of course :)
 
 
-Match suite to layer
---------------------
+Layers matching
+---------------
 
 This is way to create relationship layer to class and him heirs.
 

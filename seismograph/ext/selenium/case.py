@@ -32,7 +32,7 @@ def case_of_browsers(*browsers):
     return wrapper
 
 
-def inject_driver(f):
+def require_browser(f):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
         return f(
@@ -227,12 +227,12 @@ class SeleniumCase(case.Case):
             step_methods = []
 
             for step_method in steps.get_step_methods(self):
-                step_methods.append(inject_driver(step_method))
+                step_methods.append(require_browser(step_method))
 
             setattr(self.__class__, steps.STEPS_STORAGE_ATTRIBUTE_NAME, step_methods)
         else:
             method = getattr(self.__class__, runnable.method_name(self))
-            setattr(self.__class__, runnable.method_name(self), inject_driver(method))
+            setattr(self.__class__, runnable.method_name(self), require_browser(method))
 
             case.apply_flows(self)
 

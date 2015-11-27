@@ -227,9 +227,9 @@ class Program(runnable.RunnableObject):
                 self.__context.on_run(self)
 
                 with self.__context(self):
-                    self.run_scripts(self.__result, run_point='before')
+                    self.run_scripts(run_point='before')
                     group(self.__result)
-                    self.run_scripts(self.__result, run_point='after')
+                    self.run_scripts(run_point='after')
                     self.__result.stop_timer()
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
@@ -500,13 +500,16 @@ class Program(runnable.RunnableObject):
                     ),
                 )
 
-    def run_scripts(self, result, run_point=None):
+    def run_scripts(self, result=None, run_point=None):
         if run_point:
             scripts = filter(
                 lambda s: s.__run_point__ == run_point, self.__scripts,
             )
         else:
             scripts = self.__scripts
+
+        if result is None:
+            result = self.__result
 
         for script in scripts:
             with result.proxy(script) as result_proxy:

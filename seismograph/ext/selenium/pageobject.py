@@ -42,10 +42,12 @@ def page_object_factory(page_element):
             else:
                 result = result.first()
 
+        if page_element.action:
+            return lambda *a, **k: page_element.action(result, *a, **k)
+
         if page_element.proxy:
-            if pyv.is_class_type(page_element.proxy):
-                return page_element.proxy(result)
-            return lambda: page_element.proxy(result)
+            return page_element.proxy(result)
+
         return result
 
     return property(wrapper)
@@ -89,6 +91,7 @@ class PageObject(object):
 
         self.__index = options.get('index', None)
         self.__proxy = options.get('proxy', None)
+        self.__action = options.get('action', None)
         self.__is_list = options.get('is_list', False)
         self.__wait_timeout = options.get('wait_timeout', None)
 
@@ -126,6 +129,10 @@ class PageObject(object):
     @property
     def proxy(self):
         return self.__proxy
+
+    @property
+    def action(self):
+        return self.__action
 
     @proxy.setter
     def proxy(self, cls):
