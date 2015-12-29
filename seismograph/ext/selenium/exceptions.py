@@ -7,6 +7,10 @@ class SeleniumExError(SeismographError):
     pass
 
 
+class PollingTimeoutExceeded(SeleniumExError):
+    pass
+
+
 class RouterError(SeleniumExError):
     pass
 

@@ -17,7 +17,7 @@ def apply_gevent_patch():
         pyv.check_gevent_supported()
         raise e
 
-    patch_all(thread=False)
+    patch_all()
 
 
 def get_suites_path():

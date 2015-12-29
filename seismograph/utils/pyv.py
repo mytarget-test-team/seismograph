@@ -54,6 +54,14 @@ elif IS_PYTHON_3:
     reduce = reduce
 
 
+if IS_PYTHON_2:
+    execfile = execfile
+elif IS_PYTHON_3:
+    def execfile(filename, globals=None, locals=None):
+        with open(filename, 'r') as fp:
+            exec(fp.read(), globals, locals)
+
+
 def get_exc_message(error):
     if hasattr(error, 'message'):
         return error.message

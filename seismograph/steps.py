@@ -131,26 +131,46 @@ def _run_step(case, method, flow=None):
             method(case, flow)
         else:
             method(case)
-    except BaseException as error:
+    except BaseException:
         runnable.stopped_on(case, pyv.get_func_name(method))
-        raise error
+        raise
+
+
+def _call_to_begin_method_if_exist(case, flow=None):
+    if hasattr(case, 'begin'):
+        setattr(
+            case,
+            CURRENT_STEP_ATTRIBUTE_NAME,
+            'begin',
+        )
+        if flow:
+            case.begin(flow)
+        else:
+            case.begin()
+
+
+def _call_to_finish_method_if_exist(case, flow=None):
+    if hasattr(case, 'finish'):
+        setattr(
+            case,
+            CURRENT_STEP_ATTRIBUTE_NAME,
+            'finish',
+        )
+        if flow:
+            case.finish(flow)
+        else:
+            case.finish()
 
 
 def _make_run_test():
     def run_test(self):
         run_test.__doc__ = self.__doc__
 
-        if hasattr(self, 'begin'):
-            setattr(
-                self,
-                CURRENT_STEP_ATTRIBUTE_NAME,
-                'begin',
-            )
-            self.begin()
-
         if self.__flows__:
 
             for flow in self.__flows__:
+                _call_to_begin_method_if_exist(self, flow=flow)
+
                 setattr(self, CURRENT_FLOW_ATTRIBUTE_NAME, flow)
 
                 if self.config.STEPS_LOG:
@@ -170,7 +190,10 @@ def _make_run_test():
                 else:
                     setattr(self, STEPS_HISTORY_ATTRIBUTE_NAME, [])
 
+                _call_to_finish_method_if_exist(self, flow=flow)
+
         else:
+            _call_to_begin_method_if_exist(self)
 
             for step_method in get_step_methods(self):
                 setattr(
@@ -184,13 +207,7 @@ def _make_run_test():
 
                 _run_step(self, step_method)
 
-        if hasattr(self, 'finish'):
-            setattr(
-                self,
-                CURRENT_STEP_ATTRIBUTE_NAME,
-                'finish',
-            )
-            self.finish()
+            _call_to_finish_method_if_exist(self)
 
     return run_test
 

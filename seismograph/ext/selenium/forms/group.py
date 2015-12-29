@@ -158,15 +158,9 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
                 raise TypeError(
                     '"__wrapper__" can be instance of QueryObject only',
                 )
-            return self.__proxy.query.from_object(
-                self.__wrapper__,
-            ).first()
+            return self.__wrapper__(self.__proxy).first()
 
         return self.__proxy
-
-    @property
-    def query(self):
-        return self.area.query
 
     @property
     def fields(self):
@@ -180,7 +174,7 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
     def fill_memo(self):
         return self.__fill_memo
 
-    def relate_to(self, proxy):
+    def bind_to(self, proxy):
         self.__proxy = proxy
 
     def add_field(self, name, field):

@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Multiprocessing utils
+"""
+
 
 class MPSupportedValue(object):
 

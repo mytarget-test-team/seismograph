@@ -13,7 +13,7 @@ except ImportError:  # please python 3
 from selenium.common.exceptions import WebDriverException
 
 from ...utils import pyv
-from .exceptions import SeleniumExError
+from .exceptions import PollingTimeoutExceeded
 
 
 logger = logging.getLogger(__name__)
@@ -26,9 +26,13 @@ POLLING_EXCEPTIONS = (
     WebDriverException,
 )
 DEFAULT_POLLING_TIMEOUT = 30
+DEFAULT_POLLING_DELAY = None
 
 
-def do(callback=None, timeout=DEFAULT_POLLING_TIMEOUT, delay=None):
+def do(callback,
+       exceptions=POLLING_EXCEPTIONS,
+       timeout=DEFAULT_POLLING_TIMEOUT,
+       delay=DEFAULT_POLLING_DELAY):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
@@ -43,24 +47,29 @@ def do(callback=None, timeout=DEFAULT_POLLING_TIMEOUT, delay=None):
                         ),
                     )
                     return f(*args, **kwargs)
-                except socket.error as error:  # if connection will be refused,
+                except socket.error:  # if connection will be refused,
                     # that we not need to continue polling
-                    raise error
-                except POLLING_EXCEPTIONS as error:
+                    raise
+                except exceptions as error:
                     exc = error
                     if delay:
                         time.sleep(delay)
                     continue
             else:
                 if exc:
-                    raise exc
-                raise SeleniumExError(
-                    'Timeout {} exceeded'.format(timeout),
-                )
+                    raise
+                raise PollingTimeoutExceeded(str(timeout))
 
         return wrapped
+    return wrapper(callback)
 
-    if callback is not None:
-        return wrapper(callback)
 
+def wrap(timeout=DEFAULT_POLLING_TIMEOUT,
+         delay=DEFAULT_POLLING_DELAY,
+         exceptions=POLLING_EXCEPTIONS):
+    def wrapper(f):
+        return do(f,
+                  timeout=timeout,
+                  delay=delay,
+                  exceptions=exceptions)
     return wrapper

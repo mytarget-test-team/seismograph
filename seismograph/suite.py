@@ -350,10 +350,10 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                self.__context.on_error(error, self, result_proxy)
                 result_proxy.add_error(
                     self, traceback.format_exc(), timer(), error,
                 )
-                self.__context.on_error(error, self, result_proxy)
 
     #
     # Behavior on magic methods

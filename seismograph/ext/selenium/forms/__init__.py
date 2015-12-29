@@ -14,13 +14,6 @@ class UIForm(FieldsGroup):
     def __init__(self, proxy):
         super(UIForm, self).__init__(proxy)
 
-    def submit(self):
-        raise NotImplementedError(
-            'Method "submit" not implemented in "{}"'.format(
-                self.__class__.__name__,
-            ),
-        )
-
 
 __all__ = (
     'fields',

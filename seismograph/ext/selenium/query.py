@@ -5,7 +5,6 @@ import logging
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
-from ...utils import pyv
 from ...utils.common import waiting_for
 from .utils import change_name_from_python_to_html
 
@@ -14,12 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 TAG_ALIASES = {
-    'link': 'a',
+    'any': '*',
 }
+
 ATTRIBUTE_ALIASES = {
     '_id': 'id',
     '_class': 'class',
     '_type': 'type',
+    'id_': 'id',
+    'class_': 'class',
+    'type_': 'type',
 }
 
 
@@ -129,6 +132,10 @@ class QueryResult(object):
         return getattr(obj.query, item)
 
     @property
+    def css(self):
+        return self.__css
+
+    @property
     def exist(self):
         """
         Check exist first element of query
@@ -185,53 +192,62 @@ class QueryResult(object):
         return execute(self.__proxy, self.__css, list_result=True)
 
 
-class QueryProcessor(object):
-
-    def __init__(self, proxy):
-        self.__proxy = proxy
-
-    def __getattr__(self, item):
-        return make_result(self.__proxy, item)
-
-    def __call__(self, proxy_or_tag, **selector):
-        if isinstance(proxy_or_tag, pyv.basestring):
-            return self.from_object(
-                QueryObject(proxy_or_tag, **selector),
-            )
-
-        return self.__class__(proxy_or_tag)
-
-    @property
-    def proxy(self):
-        return self.__proxy
-
-    @property
-    def driver(self):
-        return self.__proxy.driver
-
-    @property
-    def contains(self):
-        return Contains
-
-    def from_object(self, obj):
-        if not isinstance(obj, QueryObject):
-            raise TypeError('"{}" is not QueryObject instance'.format(type(obj)))
-
-        return make_result(self.__proxy, obj.tag)(**obj.selector)
-
-
 class Query(object):
     """
-    For usability only.
+    Make query data for execution.
 
-    q = query('div', _class=query.contains('name'))
+    q = query(query.DIV, _class=query.contains('name'))
     result = q(browser)
     result.first()
     """
 
-    @property
-    def contains(self):
-        return Contains
+    A = 'a'
+    B = 'b'
+    P = 'p'
+    U = 'u'
+    UL = 'ul'
+    LI = 'li'
+    BR = 'br'
+    EM = 'em'
+    HR = 'hr'
+    TR = 'tr'
+    TD = 'td'
+    TH = 'th'
+    TT = 'tt'
+    VAR = 'var'
+    IMG = 'img'
+    DIV = 'div'
+    MAP = 'map'
+    HEAD = 'head'
+    FORM = 'form'
+    BODY = 'body'
+    AREA = 'area'
+    CODE = 'code'
+    BASE = 'base'
+    SPAN = 'span'
+    LINK = 'link'
+    META = 'meta'
+    SMALL = 'small'
+    TABLE = 'table'
+    INPUT = 'input'
+    LABEL = 'label'
+    FRAME = 'frame'
+    EMBED = 'embed'
+    BLINK = 'blink'
+    IFRAME = 'iframe'
+    CENTER = 'center'
+    STRONG = 'strong'
+    BUTTON = 'button'
+    OBJECT = 'object'
+    OPTION = 'option'
+    SELECT = 'select'
+    TEXTAREA = 'textarea'
+    OPTGROUP = 'optgroup'
+    FRAMESET = 'frameset'
+
+    ANY = '*'
+
+    contains = Contains
 
     def __call__(self, tag, **selector):
         return QueryObject(tag, **selector)

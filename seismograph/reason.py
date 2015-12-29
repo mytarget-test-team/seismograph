@@ -73,4 +73,12 @@ def item(name, desc, *args):
 
 
 def join(*args):
-    return u''.join(args)
+    def gen(item):
+        for i in item:
+            if isinstance(i, (list, tuple)):
+                for ni in gen(i):
+                    yield pyv.unicode_string(ni)
+            else:
+                yield pyv.unicode_string(i)
+
+    return u''.join(gen(args))

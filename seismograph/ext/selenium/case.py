@@ -25,7 +25,7 @@ from ...utils.common import waiting_for
 logger = logging.getLogger(__name__)
 
 
-def case_of_browsers(*browsers):
+def make_with_browsers(*browsers):
     def wrapper(cls):
         setattr(cls, '__browsers__', browsers)
         return cls
@@ -35,16 +35,27 @@ def case_of_browsers(*browsers):
 def require_browser(f):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
+        selenium = self.ext(EX_NAME)
         return f(
-            self, get_selenium_from_case(self).browser, *args, **kwargs
+            self, selenium.browser, *args, **kwargs
         )
     return wrapper
 
 
-def save_logs(case, selenium):
-    log_file_name = lambda log_type: '{}-{}({}:{}).log'.format(
+def make_setup(case, browser_name=None):
+    selenium = case.ext(EX_NAME)
+    selenium.start(browser_name)
+    if case.__page_class__:
+        case.page = case.__page_class__(
+            selenium.browser,
+        )
+
+
+def save_logs(case):
+    selenium = case.ext(EX_NAME)
+    log_file_name = lambda lt: '{}-{}({}:{}).log'.format(
         selenium.browser_name,
-        log_type,
+        lt,
         runnable.class_name(case),
         runnable.method_name(case),
     )
@@ -87,7 +98,7 @@ def save_logs(case, selenium):
                 continue
 
             log_file_path = os.path.join(
-                selenium.browser.config.LOGS_PATH,
+                selenium.config.get('LOGS_PATH'),
                 log_file_name(log_type),
             )
 
@@ -98,92 +109,183 @@ def save_logs(case, selenium):
                 logger.error(error, exc_info=True)
 
 
-def get_selenium_from_case(self):
-    return self._SeleniumCase__selenium
-
-
 class SeleniumAssertion(case.AssertionBase):
 
-    DEFAULT_TIMEOUT = 0.5
+    @staticmethod
+    def any_text_exist(proxy, texts, msg=None, timeout=None):
+        def check_exist():
+            page_text = proxy.text
+            for text in texts:
+                if text in page_text:
+                    return True
+            return False
 
-    def any_text_in(self, proxy, texts, msg=None):
-        page_text = proxy.text
-        error_message = u'Not of those texts was not found on page "{}". Texts: [{}]'
-
-        for text in texts:
-            if text in page_text:
-                break
-        else:
-            error_message = error_message.format(
+        waiting_for(
+            check_exist,
+            exc_cls=AssertionError,
+            message=msg or u'Not of those texts was not found on page by URL "{}". Texts: [{}]'.format(
                 proxy.driver.current_url,
                 u', '.join(texts),
-            )
-            self.fail(msg or error_message)
+            ),
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
 
-    def text_in(self, proxy, text_or_texts, timeout=None, msg=None):
-        error_message = u'Text "{}" not found on page "{}"'
-
-        def check_text(txt):
+    @staticmethod
+    def text_exist(proxy, text, msg=None, timeout=None):
+        def check_text():
             try:
-                return txt in proxy.text
+                return text in proxy.text
             except (HTTPException, StaleElementReferenceException):
                 return False
 
-        if isinstance(text_or_texts, (list, tuple)):
-            for t in text_or_texts:
-                waiting_for(
-                    check_text,
-                    args=(t,),
-                    exc_cls=AssertionError,
-                    message=msg or error_message.format(
-                        t, proxy.driver.current_url,
-                    ),
-                    delay=proxy.config.POLLING_DELAY,
-                    timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-                )
-        else:
-            waiting_for(
-                check_text,
-                args=(text_or_texts,),
-                exc_cls=AssertionError,
-                message=msg or error_message.format(
-                    text_or_texts, proxy.driver.current_url,
-                ),
-                delay=proxy.config.POLLING_DELAY,
-                timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
-            )
-
-    def web_element_in(self, proxy, query, timeout=None, msg=None):
         waiting_for(
-            lambda: proxy.query.form_object(query).exist,
+            check_text,
             exc_cls=AssertionError,
-            message=msg or u'Web element was not found on page "{}"'.format(
-                proxy.driver.current_url,
+            message=msg or u'Text "{}" not found on page by URL "{}"'.format(
+                text, proxy.driver.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
-            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
 
-    def web_element_not_in(self, proxy, query, timeout=None, msg=None):
+    def texts_exist(self, proxy, texts, timeout=None, msg=None):
+        for text in texts:
+            self.text_exist(proxy, text, timeout=timeout, msg=msg)
+
+    @staticmethod
+    def web_element_exist(proxy, query, msg=None, timeout=None):
         waiting_for(
-            lambda: not proxy.query.form_object(query).exist,
+            lambda: query(proxy).exist,
             exc_cls=AssertionError,
-            message=msg or u'Web element was found on page "{}"'.format(
+            message=msg or u'Web element was not found on page by URL "{}"'.format(
                 proxy.driver.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
-            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
 
-    def content_exist_in(self, proxy, query, timeout=None, msg=None):
+    @staticmethod
+    def web_element_not_exist(proxy, query, timeout=None, msg=None):
         waiting_for(
-            lambda: len(proxy.query.form_object(query).first().text) > 0,
+            lambda: not query(proxy).exist,
             exc_cls=AssertionError,
-            message=msg or 'Content does not exist inside element on page "{}"'.format(
+            message=msg or u'Web element was found on page by URL "{}"'.format(
                 proxy.driver.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
-            timeout=timeout or proxy.config.POLLING_TIMEOUT or self.DEFAULT_TIMEOUT,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def content_exist(proxy, query, msg=None, timeout=None):
+        waiting_for(
+            lambda: len(query(proxy).first().text) > 0,
+            exc_cls=AssertionError,
+            message=msg or 'Content is not exist inside element on page by URL "{}"'.format(
+                proxy.driver.current_url,
+            ),
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def content_not_exist(proxy, query, msg=None, timeout=None):
+        waiting_for(
+            lambda: len(query(proxy).first().text) == 0,
+            exc_cls=AssertionError,
+            message=msg or 'Content is exist inside element on page by URL "{}"'.format(
+                proxy.driver.current_url,
+            ),
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def current_url_equal(browser, url, msg=None, timeout=None):
+        waiting_for(
+            lambda: browser.current_url == url,
+            exc_cls=AssertionError,
+            message=msg or '{} != {}'.format(
+                browser.current_url, url,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def current_url_not_equal(browser, url, msg=None, timeout=None):
+        waiting_for(
+            lambda: browser.current_url != url,
+            exc_cls=AssertionError,
+            message=msg or '{} == {}'.format(
+                browser.current_url, url,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def current_path_equal(browser, path, msg=None, timeout=None):
+        waiting_for(
+            lambda: browser.current_path == path,
+            exc_cls=AssertionError,
+            message=msg or '{} != {}'.format(
+                browser.current_path, path,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def current_path_not_equal(browser, path, msg=None, timeout=None):
+        waiting_for(
+            lambda: browser.current_path != path,
+            exc_cls=AssertionError,
+            message=msg or '{} == {}'.format(
+                browser.current_path, path,
+            ),
+            delay=browser.config.POLLING_DELAY,
+            timeout=timeout or browser.config.POLLING_TIMEOUT,
+        )
+
+    @staticmethod
+    def any_text_for_field_exist(field, texts, msg=None, timeout=None):
+        def check_exist():
+            page_text = field.group.area.text
+            for txt in texts:
+                if txt in page_text:
+                    return True
+            return False
+
+        waiting_for(
+            check_exist,
+            exc_cls=AssertionError,
+            message=msg or u'Text for field "{}" not found on page by URL "{}". Text list: [{}]'.format(
+                field.name,
+                field.group.area.driver.current_url,
+                u', '.join(texts),
+            ),
+            delay=field.config.POLLING_DELAY,
+            timeout=timeout or field.config.POLLING_TIMEOUT,
+        )
+
+    def texts_for_field_exist(self, field, texts, msg=None, timeout=None):
+        for text in texts:
+            self.text_for_field_exist(field, text, timeout=timeout, msg=msg)
+
+    def text_for_field_exist(self, field, text, msg=None, timeout=None):
+        error_message = msg or u'Text for field "{}" not found on page by URL "{}". Text: "{}"'.format(
+            field.name,
+            field.group.area.driver.current_url,
+            text,
+        )
+
+        self.text_exist(
+            field.group.area,
+            text,
+            timeout=timeout,
+            msg=msg or error_message,
         )
 
 
@@ -196,15 +298,12 @@ class SeleniumCaseLayer(case.CaseLayer):
         if EX_NAME not in require:
             require.append(EX_NAME)
 
-    def on_setup(self, case):
-        if not case.__browsers__ and not case.config.SELENIUM_BROWSERS:
-            get_selenium_from_case(case).start()
-
     def on_teardown(self, case):
-        selenium = get_selenium_from_case(case)
+        selenium = case.ext(EX_NAME)
+        logs_path = selenium.config.get('LOGS_PATH')
 
-        if selenium.browser.config.LOGS_PATH:
-            save_logs(case, selenium)
+        if logs_path:
+            save_logs(case)
 
         selenium.stop()
 
@@ -212,81 +311,84 @@ class SeleniumCaseLayer(case.CaseLayer):
 class SeleniumCase(case.Case):
 
     __browsers__ = None
+    __page_class__ = None
+    __require_browser__ = True
     __layers__ = (SeleniumCaseLayer(), )
     __assertion_class__ = SeleniumAssertion
 
     def __init__(self, *args, **kwargs):
-        # do it latter
-        kwargs.update(use_flows=False)
+        if self.__require_browser__:
+            kwargs.update(use_flows=False)
+    
+            super(SeleniumCase, self).__init__(*args, **kwargs)
 
-        super(SeleniumCase, self).__init__(*args, **kwargs)
+            if steps.is_step_by_step_case(self):
+                step_methods = []
 
-        self.__selenium = self.ext('selenium')
+                for step_method in steps.get_step_methods(self):
+                    step_methods.append(require_browser(step_method))
 
-        if steps.is_step_by_step_case(self):
-            step_methods = []
+                setattr(self.__class__, steps.STEPS_STORAGE_ATTRIBUTE_NAME, step_methods)
+            else:
+                method = getattr(self.__class__, runnable.method_name(self))
+                setattr(self.__class__, runnable.method_name(self), require_browser(method))
 
-            for step_method in steps.get_step_methods(self):
-                step_methods.append(require_browser(step_method))
-
-            setattr(self.__class__, steps.STEPS_STORAGE_ATTRIBUTE_NAME, step_methods)
+                case.apply_flows(self)
         else:
-            method = getattr(self.__class__, runnable.method_name(self))
-            setattr(self.__class__, runnable.method_name(self), require_browser(method))
+            super(SeleniumCase, self).__init__(*args, **kwargs)
 
-            case.apply_flows(self)
+            self.page = None
 
     def __reason__(self):
+        selenium = self.ext(EX_NAME)
+        reasons = [
+            super(SeleniumCase, self).__reason__(),
+        ]
+
         try:
-            if self.__selenium.browser:  # if browser wasn't init, that reason can't be created
-                screen_url = self.__selenium.config.get('SCREEN_URL', None)
-                screen_path = self.__selenium.config.get('SCREEN_PATH', None)
+            screen_url = selenium.config.get('SCREEN_URL', None)
+            screen_path = selenium.config.get('SCREEN_PATH', None)
 
-                if screen_path:
-                    try:
-                        file_name = random_file_name('.png')
-                        screen_path = os.path.join(screen_path, file_name)
+            if screen_path:
+                try:
+                    file_name = random_file_name('.png')
+                    screen_path = os.path.join(screen_path, file_name)
 
-                        with self.__selenium.browser.disable_polling():
-                            if self.__selenium.browser.get_screenshot_as_file(screen_path):
-                                if screen_url:
-                                    self.__selenium.browser.reason_storage['screen url'] = u'{}{}'.format(
-                                        screen_url, file_name,
-                                    )
-                                else:
-                                    self.__selenium.browser.reason_storage['screen path'] = screen_path
-                    except BaseException as error:
-                        logger.warn(error, exc_info=True)
+                    with selenium.browser.disable_polling():
+                        if selenium.browser.get_screenshot_as_file(screen_path):
+                            if screen_url:
+                                selenium.browser.reason_storage['screen url'] = u'{}{}'.format(
+                                    screen_url, file_name,
+                                )
+                            else:
+                                selenium.browser.reason_storage['screen path'] = screen_path
+                except BaseException as error:
+                    logger.warn(error, exc_info=True)
 
-                return super(SeleniumCase, self).__reason__() + reason.item(
+            reasons.append(
+                reason.item(
                     'Selenium',
                     'info from selenium extension',
-                    *(u'{}: {}'.format(k, v) for k, v in self.__selenium.browser.reason_storage.items())
-                )
-
-            return super(SeleniumCase, self).__reason__()
+                    *(u'{}: {}'.format(k, v) for k, v in selenium.browser.reason_storage.items())
+                ),
+            )
         except BaseException as error:
             logger.warn(error, exc_info=True)
-            return super(SeleniumCase, self).__reason__()
+
+        return reason.join(reasons)
 
     def __repeat__(self):
-        if self.config.SELENIUM_BROWSERS:
+        if self.config.SELENIUM_BROWSERS and self.__repeatable__:
             for browser_name in self.config.SELENIUM_BROWSERS:
                 if self.__browsers__ and browser_name not in self.__browsers__:
                     continue
-                if self.__selenium.browser and self.__selenium.browser.config.LOGS_PATH:
-                    save_logs(self, self.__selenium)
 
-                self.__selenium.stop()
-                self.__selenium.start(browser_name)
+                make_setup(self, browser_name)
                 yield
-        elif self.__browsers__:
+        elif self.__browsers__ and self.__repeatable__:
             for browser_name in self.__browsers__:
-                if self.__selenium.browser and self.__selenium.browser.config.LOGS_PATH:
-                    save_logs(self, self.__selenium)
-
-                self.__selenium.stop()
-                self.__selenium.start(browser_name)
+                make_setup(self, browser_name)
                 yield
         else:
+            make_setup(self)
             yield

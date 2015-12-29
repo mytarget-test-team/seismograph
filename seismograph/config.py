@@ -8,6 +8,7 @@ from optparse import OptionGroup
 from optparse import OptionParser
 from importlib import import_module
 
+from .utils import pyv
 from .exceptions import ConfigError
 from .datastructures import DictObject
 
@@ -301,7 +302,7 @@ class Config(DictObject):
         module.__file__ = file_path
 
         try:
-            execfile(file_path, module.__dict__)
+            pyv.execfile(file_path, module.__dict__)
         except IOError as e:
             e.strerror = 'Unable to load file "{}"'.format(e.strerror)
             raise

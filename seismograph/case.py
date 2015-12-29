@@ -35,6 +35,10 @@ def repeat(case):
     return case.__repeat__()
 
 
+def repeat_method(case):
+    return case.__repeat_method__()
+
+
 def prepare(case, method):
     return case.__prepare__(method)
 
@@ -229,6 +233,17 @@ class AssertionBase(object):
 
     __unittest__ = __UnitTest__('__call__')
 
+    def len_equal(self, a, b, msg=None):
+        """
+        Check equal from length of list or tuple
+
+        len_equal([1, 2, 3], 3)
+        """
+        if isinstance(a, (list, tuple)):
+            self.equal(len(a), b, msg=msg)
+        else:
+            self.equal(a, len(b), msg=msg)
+
     def fail(self, msg=None):
         """
         Raised AssertionError with message
@@ -294,6 +309,18 @@ class AssertionBase(object):
         Like assertNotAlmostEqual in unittest
         """
         self.__unittest__.assertNotAlmostEqual(first, second, places=places, msg=msg, delta=delta)
+
+    def is_in(self, member, container, msg=None):
+        """
+        Like assertIn in unittest
+        """
+        self.__unittest__.assertIn(member, container, msg=msg)
+
+    def is_not_in(self, member, container, msg=None):
+        """
+        Like assertNotIn in unittest
+        """
+        self.__unittest__.assertNotIn(member, container, msg=msg)
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):
@@ -664,71 +691,74 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             result_proxy.start(self)
 
             if self.__always_success__:
+                self.__context.on_success(self)
                 result_proxy.add_success(
                     self, timer(),
                 )
-                self.__context.on_success(self)
                 return
 
             if hasattr(self, SKIP_ATTRIBUTE_NAME):
                 reason = getattr(self, SKIP_WHY_ATTRIBUTE_NAME, 'no reason')
+                self.__context.on_skip(self, reason, result_proxy)
                 result_proxy.add_skip(
                     self, reason, timer(),
                 )
-                self.__context.on_skip(self, reason, result_proxy)
                 return
 
             self.__log = result_proxy.console.child_console()
 
             try:
-                was_success = True
                 self.__context.on_run(self)
 
-                with self.__context(self):
-                    try:
-                        repeater = repeat(self)
-                        test_method = prepare(
-                            self, getattr(self, runnable.method_name(self)),
-                        )
+                was_success = True
 
-                        for _ in iter(repeater):
-                            test_method()
-                    except ALLOW_RAISED_EXCEPTIONS:
-                        result_proxy.current_state.should_stop = True
-                        raise
-                    except Skip as s:
-                        was_success = False
-                        result_proxy.add_skip(
-                            self, s.message, timer(),
-                        )
-                        self.__context.on_skip(self, s.message, result_proxy)
-                    except AssertionError as fail:
-                        was_success = False
-                        result_proxy.add_fail(
-                            self, traceback.format_exc(), timer(), fail,
-                        )
-                        self.__context.on_fail(fail, self, result_proxy)
-                    except BaseException as error:
-                        was_success = False
-                        result_proxy.add_error(
-                            self, traceback.format_exc(), timer(), error,
-                        )
-                        self.__context.on_error(error, self, result_proxy)
-                        self.__context.on_any_error(error, self, result_proxy)
+                for _ in iter(repeat(self)):
+                    with self.__context(self):
+                        try:
+                            test_method = prepare(
+                                self, getattr(self, runnable.method_name(self)),
+                            )
+                            for _ in iter(repeat_method(self)):
+                                test_method()
+                        except ALLOW_RAISED_EXCEPTIONS:
+                            result_proxy.current_state.should_stop = True
+                            raise
+                        except Skip as s:
+                            was_success = False
+                            self.__context.on_skip(self, s.message, result_proxy)
+                            result_proxy.add_skip(
+                                self, s.message, timer(),
+                            )
+                        except AssertionError as fail:
+                            was_success = False
+                            self.__context.on_fail(fail, self, result_proxy)
+                            result_proxy.add_fail(
+                                self, traceback.format_exc(), timer(), fail,
+                            )
+                        except BaseException as error:
+                            was_success = False
+                            self.__context.on_error(error, self, result_proxy)
+                            self.__context.on_any_error(error, self, result_proxy)
+                            result_proxy.add_error(
+                                self, traceback.format_exc(), timer(), error,
+                            )
+
+                    if not was_success:
+                        break
 
                 if was_success:
+                    self.__context.on_success(self)
                     result_proxy.add_success(
                         self, timer(),
                     )
-                    self.__context.on_success(self)
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                self.__context.on_context_error(error, self, result_proxy)
+                self.__context.on_any_error(error, self, result_proxy)
                 result_proxy.add_error(
                     self, traceback.format_exc(), timer(), error,
                 )
-                self.__context.on_context_error(error, self, result_proxy)
-                self.__context.on_any_error(error, self, result_proxy)
 
     #
     # Behavior on magic methods
@@ -834,6 +864,9 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
         return cls
 
     def __repeat__(self):
+        yield
+
+    def __repeat_method__(self):
         yield
 
     def __prepare__(self, method):

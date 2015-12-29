@@ -68,7 +68,7 @@ class CaptureStream(object):
         self.__buffer = []
 
     def __getattr__(self, item):
-        return getattr(sys.stdout, item)
+        return getattr(sys.stderr, item)
 
     def write(self, s):
         self.__buffer.append(s)
@@ -106,7 +106,7 @@ class LogCapture(object):
             if isinstance(logger, logging.Logger):
                 yield logger
 
-    def do_capture(self):
+    def make(self):
         for logger in self.loggers:
             if logger in self.was_captured:
                 continue
@@ -616,7 +616,7 @@ class Result(object):
             )
 
         if self.__capture:
-            self.__capture.do_capture()
+            self.__capture.make()
 
         self.__console.writeln('Seismograph is measuring:')
         self.__console.line_break()

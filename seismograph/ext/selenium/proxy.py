@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
 
+import time
+from abc import ABCMeta
 from functools import wraps
 from types import MethodType
+from six import add_metaclass
 from collections import OrderedDict
 from contextlib import contextmanager
 
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.common.touch_actions import TouchActions
 from selenium.webdriver.common.action_chains import ActionChains
 
 from . import polling
+from ...utils import pyv
 from .router import Router
-from .query import QueryProcessor
+from .query import make_result
 from ...utils.common import waiting_for
+from .utils import is_ready_state_complete
 from .utils import change_name_from_python_to_html
 
 
@@ -22,11 +31,15 @@ METHOD_ALIASES = {
 }
 
 
-def _check_equal(we, attr, value):
-    if attr == 'text':
-        return we.text == value
+def make_patch():
+    from selenium.webdriver.remote import webdriver
+    from selenium.webdriver.remote import webelement
 
-    return getattr(we.attr, attr) == value
+    webdriver.WebDriver = add_metaclass(ABCMeta)(webdriver.WebDriver)
+    webelement.WebElement = add_metaclass(ABCMeta)(webelement.WebElement)
+
+    webdriver.WebDriver.register(WebDriverProxy)
+    webelement.WebElement.register(WebElementProxy)
 
 
 def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
@@ -86,25 +99,22 @@ class WebElementListProxy(list):
         return self.__config
 
     @property
-    def query(self):
-        return self.__driver.query
-
-    @property
     def reason_storage(self):
         return self.__reason_storage
 
     def get_by(self, **kwargs):
         try:
-            return next(
-                we for we in self
-                if all(_check_equal(we, k, v) for k, v in kwargs.items())
-            )
+            return next(self.filter(**kwargs))
         except StopIteration:
             pass
 
     def filter(self, **kwargs):
+        def check_equal(we, attr, value):
+            attr_value = getattr(we, attr, None) or getattr(we.attr, attr)
+            return attr_value == value
+
         for we in self:
-            if all(_check_equal(we, k, v) for k, v in kwargs.items()):
+            if all(check_equal(we, k, v) for k, v in kwargs.items()):
                 yield we
 
 
@@ -114,11 +124,26 @@ class BaseProxy(object):
         self.__driver = driver
         self.__config = config
         self.__wrapped = wrapped
-        self.__query = QueryProcessor(self)
         self.__allow_polling = allow_polling
         self.__reason_storage = reason_storage or OrderedDict()
 
         assert self.__class__ != BaseProxy, 'This is base class only. Can not be instanced.'
+
+    def __len__(self):
+        if isinstance(self._wrapped, WebElement):
+            area = self
+        else:
+            area = self.body().first()
+
+        try:
+            with self.disable_polling():
+                length = len(area.attr.innerHTML)
+            return length
+        except WebDriverException:
+            return 0
+
+    def __dir__(self):
+        return list((dir(self._wrapped) + dir(self.__class__)))
 
     def __repr__(self):
         return repr(self._wrapped)
@@ -129,7 +154,7 @@ class BaseProxy(object):
         )
 
         if attr is None:
-            return getattr(self.query, item)
+            return make_result(self, item)
 
         if callable(attr) and type(attr) == MethodType:
             if self.allow_polling:
@@ -164,10 +189,6 @@ class BaseProxy(object):
         return self.__config
 
     @property
-    def query(self):
-        return self.__query
-
-    @property
     def driver(self):
         return self.__driver
 
@@ -199,23 +220,30 @@ class BaseProxy(object):
         return get_text()
 
     @contextmanager
-    def polling(self, func=None, exc_cls=None, message=None, timeout=None, delay=None, args=None, kwargs=None):
+    def polling(self,
+                func=None,
+                exc_cls=None,
+                message=None,
+                timeout=None,
+                delay=None,
+                args=None,
+                kwargs=None):
         to_restore = self.__allow_polling
         self.__allow_polling = True
 
-        if func:
-            waiting_for(
-                func,
-                args=args,
-                kwargs=kwargs,
-                exc_cls=exc_cls,
-                message=message,
-                delay=delay or self.config.POLLING_DELAY,
-                timeout=timeout or self.config.POLLING_TIMEOUT or 0.5,
-            )
-
         try:
-            yield
+            if func:
+                yield waiting_for(
+                    func,
+                    args=args,
+                    kwargs=kwargs,
+                    exc_cls=exc_cls,
+                    message=message,
+                    delay=delay or self.config.POLLING_DELAY,
+                    timeout=timeout or self.config.POLLING_TIMEOUT,
+                )
+            else:
+                yield
         finally:
             self.__allow_polling = to_restore
 
@@ -226,6 +254,42 @@ class BaseProxy(object):
             yield
         finally:
             self.__allow_polling = True
+
+    @contextmanager
+    def confirm_action(self, callback, timeout=None, delay=None):
+        delay = delay or self.config.POLLING_DELAY
+        timeout = timeout or self.config.POLLING_TIMEOUT
+
+        try:
+            yield
+        finally:
+            waiting_for(
+                callback,
+                delay=delay,
+                timeout=timeout,
+                exc_cls=polling.PollingTimeoutExceeded,
+                message='Action has not been confirmed for "{}" sec.'.format(timeout),
+            )
+
+    def wait_ready(self, tries=15, delay=0.01):
+        waiting_for(
+            is_ready_state_complete,
+            args=(self.driver, ),
+            delay=self.config.POLLING_DELAY,
+            timeout=self.config.POLLING_TIMEOUT,
+            message='Timeout waiting for load page',
+        )
+
+        def is_update():
+            length = [
+                (len(self), time.sleep(delay), len(self))
+                for _ in pyv.xrange(tries)
+            ]
+            statuses = [d[0] < d[2] for d in length]
+            return True in statuses or length[0][0] != length[-1:][0][2]
+
+        while is_update():
+            time.sleep(delay)
 
 
 class WebElementProxy(BaseProxy):
@@ -243,8 +307,18 @@ class WebElementProxy(BaseProxy):
     def attr(self):
         return WebElementToObject(self, allow_raise=False)
 
+    def double_click(self):
+        with self.driver.action_chains as action:
+            action.double_click(self)
+
+    def context_click(self):
+        with self.driver.action_chains as action:
+            action.context_click(self)
+
 
 class WebDriverProxy(BaseProxy):
+
+    keys = Keys
 
     def __init__(self, *args, **kwargs):
         super(WebDriverProxy, self).__init__(*args, **kwargs)
@@ -252,7 +326,9 @@ class WebDriverProxy(BaseProxy):
         assert isinstance(self._wrapped, WebDriver), 'This is proxy to WebDriver only'
 
         self.__router = Router(self)
-        self.__action_chains = ActionChainsProxy(self)
+        self.__alert = AlertProxy(self)
+        self.__action_chains = ActionProxy(self, ActionChains)
+        self.__touch_actions = ActionProxy(self, TouchActions)
 
     @property
     def driver(self):
@@ -263,8 +339,16 @@ class WebDriverProxy(BaseProxy):
         return self.__router
 
     @property
+    def alert(self):
+        return self.__alert
+
+    @property
     def action_chains(self):
         return self.__action_chains
+
+    @property
+    def touch_actions(self):
+        return self.__touch_actions
 
     @property
     def current_url(self):
@@ -279,32 +363,67 @@ class WebDriverProxy(BaseProxy):
         return self._wrapped.current_url
 
     @property
-    def url(self):
-        return self.current_url
+    def current_path(self):
+        if not self.config.PROJECT_URL:
+            raise RuntimeError(
+                'Can not calculate current path. PROJECT_URL is not set.',
+            )
+        return self.current_url.replace(self.config.PROJECT_URL, '')
 
 
-class ActionChainsProxy(object):
+class AlertProxy(object):
 
     def __init__(self, proxy):
-        self.__action_chains = ActionChains(proxy.driver)
+        self.__alert = Alert(proxy.driver)
+
+    def __dir__(self):
+        return dir(self.__alert)
 
     def __call__(self, proxy):
         return self.__class__(proxy.driver)
 
     def __getattr__(self, item):
-        return getattr(self.__action_chains, item)
+        return getattr(self.__alert, item)
 
     def __repr__(self):
-        return repr(self.__action_chains)
+        return repr(self.__alert)
+
+
+class ActionProxy(object):
+
+    def __init__(self, proxy, cls):
+        self.__action = cls(proxy.driver)
+
+    def __call__(self, proxy):
+        return self.__class__(
+            proxy.driver,
+            cls=self.__action.__class__,
+        )
+
+    def __dir__(self):
+        return list(set(dir(self.__action) + dir(self.__class__)))
+
+    def __getattr__(self, item):
+        return getattr(self.__action, item)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        try:
+            self.perform()
+        finally:
+            self.reset()
+
+    def __repr__(self):
+        return repr(self.__action)
+
+    @property
+    def driver(self):
+        return self.__action._driver
 
     def reset(self):
-        self.__action_chains._actions = []
-
-    def perform(self, reset=True):
-        self.__action_chains.perform()
-
-        if reset:
-            self.reset()
+        self.__action._actions = []
 
 
 class WebElementToObject(object):

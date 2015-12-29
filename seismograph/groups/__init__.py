@@ -11,12 +11,12 @@ from __future__ import absolute_import
 def get_pool_size_of_value(value, in_two=False):
     from multiprocessing import cpu_count
 
-    size = value
-
-    if size <= 0:
+    if value <= 0:
         size = cpu_count()
+    else:
+        size = value
 
-    if in_two:
+    if in_two and value <= 0:
         return int(round(size / 2)) or 2
 
     return size

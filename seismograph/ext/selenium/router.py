@@ -18,8 +18,8 @@ class Router(object):
         self.__proxy = proxy
 
     @classmethod
-    def add_rule(cls, rule, cls_):
-        cls.__rules__[re.compile(r'^{}$'.format(rule))] = cls_
+    def add_rule(cls, rule, class_):
+        cls.__rules__[re.compile(r'^{}$'.format(rule))] = class_
 
     def get(self, path, go_to=True):
         for rule in self.__rules__:
@@ -44,7 +44,7 @@ class Router(object):
                 'Can not go to the URL. Project URL is not set to config.',
             )
 
-        self.__proxy.get(
+        self.__proxy.driver.get(
             '{}{}'.format(
                 self.__proxy.config.PROJECT_URL.strip('/'), path,
             ),

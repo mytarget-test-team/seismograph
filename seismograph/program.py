@@ -234,10 +234,10 @@ class Program(runnable.RunnableObject):
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                self.__context.on_error(error, self, self.__result)
                 self.__result.add_error(
                     self, traceback.format_exc(), timer(), error,
                 )
-                self.__context.on_error(error, self, self.__result)
 
         if self.__exit:
             sys.exit(not self.__result.current_state.was_success)
@@ -297,7 +297,7 @@ class Program(runnable.RunnableObject):
 
         self.__result = self._make_result()
 
-        self.__context.on_config(self, config)
+        self.__context.on_config(self, self.__config)
 
         if self.__config.NO_SKIP:
             from .case import set_no_skip

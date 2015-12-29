@@ -7,7 +7,16 @@ from setuptools import find_packages
 __version__ = '0.0.13'
 
 
-if __name__ == '__main__':
+REQUIREMENTS = (
+    'six>=1.4',
+    'requests',
+    'flask>=0.7',
+    'selenium>=2.46',
+    'sqlalchemy>=0.8',
+)
+
+
+def install_package():
     setup(
         name='seismograph',
         version=__version__,
@@ -22,13 +31,7 @@ if __name__ == '__main__':
         include_package_data=True,
         zip_safe=False,
         platforms='any',
-        install_requires=(
-            'six>=1.4',
-            'requests',
-            'flask>=0.7',
-            'selenium>=2.46',
-            'sqlalchemy>=0.8',
-        ),
+        install_requires=REQUIREMENTS,
         entry_points={
             'console_scripts': (
                 'seismograph = seismograph.__main__:main',
@@ -49,3 +52,7 @@ if __name__ == '__main__':
             'Topic :: Software Development :: Testing',
         ),
     )
+
+
+if __name__ == '__main__':
+    install_package()

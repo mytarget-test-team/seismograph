@@ -4,7 +4,7 @@ from functools import wraps
 
 from selenium.common.exceptions import NoSuchElementException
 
-from ..query import QueryObject
+from ..query import make_result
 from ..exceptions import FieldError
 
 
@@ -100,10 +100,6 @@ class FormField(object):
     def __getattr__(self, item):
         return getattr(self.we, item)
 
-    @property
-    def query(self):
-        return self.we.query
-
     def __call__(self, group):
         return self.__class__(
             self.name,
@@ -138,9 +134,9 @@ class FormField(object):
 
     @property
     def we(self):
-        return self.group.query.from_object(
-            QueryObject(self.__tag__, **self.__selector),
-        ).first()
+        return make_result(
+            self.group.area, self.__tag__,
+        )(**self.__selector).first()
 
     @property
     def attr(self):

@@ -9,14 +9,16 @@ from .case import assertion
 from .pageobject import Page
 from .router import add_route
 from .utils import re_raise_exc
+from .pageobject import PageItem
+from .pageobject import PageTable
 from .case import require_browser
 from .pageobject import PageObject
-from .case import case_of_browsers
 from .case import SeleniumAssertion
+from .case import make_with_browsers
 from .case import SeleniumCase as Case
 from .pageobject import PageObjectProxy
-from .query import Contains as contains
 from .suite import SeleniumSuite as Suite
+from .browser import change_config as change_browser_config
 
 
 CONFIG_KEY = 'SELENIUM_EX'
@@ -67,6 +69,27 @@ def __add_options__(parser):
         help='Polling delay. Float or integer value.',
     )
     group.add_option(
+        '--selenium-wait-timeout',
+        dest='SELENIUM_WAIT_TIMEOUT',
+        type=float,
+        default=None,
+        help='Implicitly wait timeout. Float or integer value.',
+    )
+    group.add_option(
+        '--selenium-page-load-timeout',
+        dest='SELENIUM_PAGE_LOAD_TIMEOUT',
+        type=float,
+        default=None,
+        help='Load page timeout. Float or integer value.',
+    )
+    group.add_option(
+        '--selenium-script-timeout',
+        dest='SELENIUM_SCRIPT_TIMEOUT',
+        type=float,
+        default=None,
+        help='Execute script timeout. Float or integer value.',
+    )
+    group.add_option(
         '--selenium-window-size',
         dest='SELENIUM_WINDOW_SIZE',
         default=None,
@@ -97,6 +120,15 @@ def __install__(program):
     if program.config.SELENIUM_POLLING_DELAY:
         config['POLLING_DELAY'] = program.config.SELENIUM_POLLING_DELAY
 
+    if program.config.SELENIUM_WAIT_TIMEOUT:
+        config['WAIT_TIMEOUT'] = program.config.SELENIUM_WAIT_TIMEOUT
+
+    if program.config.SELENIUM_PAGE_LOAD_TIMEOUT:
+        config['PAGE_LOAD_TIMEOUT'] = program.config.SELENIUM_PAGE_LOAD_TIMEOUT
+
+    if program.config.SELENIUM_SCRIPT_TIMEOUT:
+        config['SCRIPT_TIMEOUT'] = program.config.SELENIUM_SCRIPT_TIMEOUT
+
     if program.config.SELENIUM_WINDOW_SIZE:
         w, h = program.config.SELENIUM_WINDOW_SIZE.split('x')
         config['WINDOW_SIZE'] = (int(w), int(h))
@@ -118,13 +150,21 @@ __all__ = (
     'forms',
     'query',
     'Suite',
-    'contains',
+    'PageItem',
+    'PageTable',
     'add_route',
     'assertion',
     'PageObject',
     're_raise_exc',
     'inject_driver',
     'PageObjectProxy',
-    'case_of_browsers',
     'SeleniumAssertion',
+    'make_with_browsers',
+    'change_browser_config',
 )
+
+
+from .proxy import make_patch
+
+make_patch()
+del make_patch

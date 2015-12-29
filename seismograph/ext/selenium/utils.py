@@ -52,3 +52,10 @@ def change_name_from_python_to_html(name):
     if name.endswith('-'):
         return name[:-1]
     return name
+
+
+def is_ready_state_complete(driver):
+    state = driver.execute_script(
+        'return document.readyState',
+    )
+    return state == 'complete'
