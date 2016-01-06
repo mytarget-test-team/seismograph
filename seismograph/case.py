@@ -284,7 +284,7 @@ class AssertionBase(object):
         """
         Like assertRaises in unittest
         """
-        self.__unittest__.assertRaises(exc_class, callable_obj, *args, **kwargs)
+        return self.__unittest__.assertRaises(exc_class, callable_obj, *args, **kwargs)
 
     def is_instance(self, obj, cls, msg=None):
         """
