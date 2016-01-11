@@ -322,6 +322,18 @@ class AssertionBase(object):
         """
         self.__unittest__.assertNotIn(member, container, msg=msg)
 
+    def is_none(self, obj, msg=None):
+        """
+        Like assertIsNone in unittest
+        """
+        self.__unittest__.assertIsNone(obj, msg=msg)
+
+    def is_not_none(self, obj, msg=None):
+        """
+        Like assertIsNotNone in unittest
+        """
+        self.__unittest__.assertIsNotNone(obj, msg=msg)
+
 
 class CaseLayer(runnable.LayerOfRunnableObject):
 

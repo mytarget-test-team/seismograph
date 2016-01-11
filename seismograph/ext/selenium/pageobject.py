@@ -6,68 +6,97 @@ from ...utils import pyv
 from .query import QueryObject
 
 
-def query_set(page_object):
-    return page_object.__query_set__()
+def key(page_element):
+    return page_element.__key__()
 
 
-def key(page_object):
-    return page_object.__key__()
+def query_set(page_element):
+    return page_element.__query_set__()
 
 
-class PageObjectProxy(object):
+class ProxyObject(object):
 
-    def __init__(self, proxy):
-        self.__wrapped = proxy
-
-    def __dir__(self):
-        return list(set((dir(self._wrapped) + dir(self.__class__))))
+    def __init__(self, we):
+        self.__we = we
 
     def __getattr__(self, item):
-        return getattr(self.__wrapped, item)
+        return getattr(self.__we, item)
 
     def __repr__(self):
-        return repr(self.__wrapped)
+        return repr(self.__we)
 
-    @property
-    def _wrapped(self):
-        return self.__wrapped
+    def __str__(self):
+        return str(self.__we)
 
-    @property
-    def driver(self):
-        return self.__wrapped.driver
-
-    @property
-    def config(self):
-        return self.__wrapped.config
+    def __dir__(self):
+        return dir(self.__we)
 
 
-class PageObject(object):
+class PageElement(object):
 
     def __init__(self, *args, **options):
         assert bool(args), 'Element can not be created without arguments'
 
+        self.__class = None
         self.__query_set = []
-        self.__obj_class = None
+
+        self.__cached = options.get('cached', None)
 
         for a in args:
             if pyv.is_class_type(a):
-                self.__obj_class = a
+                self.__class = a
+                if self.__cached is not False:
+                    self.__cached = True
                 break
-            elif isinstance(a, PageObject):
+            elif isinstance(a, PageElement):
                 self.__query_set.extend(query_set(a))
             elif isinstance(a, QueryObject):
                 self.__query_set.append(a)
             else:
-                raise ValueError('Incorrect page object argument')
+                raise ValueError(
+                    'Incorrect page object argument {}'.format(a),
+                )
 
         self.__key = options.get('key', None)
+        self.__call = options.get('call', None)
         self.__index = options.get('index', None)
-        self.__proxy = options.get('proxy', None)
-        self.__action = options.get('action', None)
-        self.__cached = options.get('cached', False)
-        self.__handler = options.get('handler', None)
         self.__is_list = options.get('is_list', False)
+        self.__property = options.get('property', None)
+        self.__we_class = options.get('we_class', None)
+        self.__list_class = options.get('list_class', None)
         self.__wait_timeout = options.get('wait_timeout', None)
+
+        if self.__list_class and not self.__is_list:
+            raise ValueError(
+                '"list_class" can not usage without "is_list"',
+            )
+
+        if self.__call:
+            if self.__list_class:
+                self.__list_class = type(
+                    self.__list_class.__name__,
+                    (self.__list_class, ),
+                    {'__call__': self.__call},
+                )
+            elif self.__we_class and not self.__is_list:
+                self.__we_class = type(
+                    self.__we_class.__name__,
+                    (self.__we_class, ),
+                    {'__call__': self.__call},
+                )
+            else:
+                if self.__is_list:
+                    self.__list_class = type(
+                        'CallableObject',
+                        (ProxyObject, ),
+                        {'__call__': self.__call},
+                    )
+                else:
+                    self.__we_class = type(
+                        'CallableObject',
+                        (ProxyObject, ),
+                        {'__call__': self.__call},
+                    )
 
     def __getattr__(self, item):
         # for IDE only
@@ -77,8 +106,8 @@ class PageObject(object):
         if self.__cached and id(self) in page.cache:
             result = page.cache[id(self)]
         else:
-            if self.__obj_class:
-                result = self.__obj_class(page.area)
+            if self.__class:
+                result = self.__class(page.area)
             else:
                 we = None
 
@@ -120,14 +149,19 @@ class PageObject(object):
 
         obj = self.__make_object__(instance)
 
-        if self.__handler:
-            return self.__handler(obj)
+        if self.__we_class:
+            if self.__is_list:
+                for o in obj:
+                    index = obj.index(o)
+                    obj[index] = self.__we_class(o)
+            else:
+                obj = self.__we_class(obj)
 
-        if self.__action:
-            return lambda *a, **k: self.__action(obj, *a, **k)
+        if self.__list_class:
+            obj = self.__list_class(obj)
 
-        if self.__proxy:
-            return self.__proxy(obj)
+        if self.__property:
+            return self.__property(obj)
 
         return obj
 
@@ -166,7 +200,7 @@ class PageMeta(type):
             for a in dir(cls)
             if not a.startswith('_')
             and
-            isinstance(getattr(cls, a, None), PageObject)
+            isinstance(getattr(cls, a, None), PageElement)
         )
 
         for atr_name, page_object in page_objects:
@@ -221,6 +255,7 @@ class Page(with_metaclass(PageMeta, object)):
 
     def show(self, **kwargs):
         if self.__url_path__:
+            self.__cache.clear()
             self.driver.router.go_to(
                 self.__url_path__.format(**kwargs),
             )
@@ -238,59 +273,3 @@ class Page(with_metaclass(PageMeta, object)):
 
 
 PageItem = Page
-
-
-class TableProxy(PageObjectProxy):
-
-    def apply_row_class(self, cls):
-        for row in self._wrapped:
-            index = self._wrapped.index(row)
-            self._wrapped[index] = cls(row)
-
-    def get_row(self, **kwargs):
-        return self._wrapped.get_by(**kwargs)
-
-
-class PageT(PageObject):
-
-    def __init__(self, *args, **kwargs):
-        self.__row_class = kwargs.pop('row_class', None)
-
-        kwargs.update(is_list=True)
-        kwargs.update(proxy=TableProxy)
-
-        super(PageT, self).__init__(*args, **kwargs)
-
-    def __make_object__(self, page):
-        result = super(PageT, self).__make_object__(page)
-        if self.__row_class:
-            result.apply_row_class(self.__row_class)
-        return result
-
-
-class PageTable(PageItem):
-
-    __row_class__ = None
-
-    rows = None
-
-    def get_rows(self):
-        rows = self.rows
-
-        if rows is None:
-            raise NotImplementedError(
-                'Property "rows" does not implemented in "{}"'.format(
-                    self.__class__.__name__,
-                ),
-            )
-
-        if self.__row_class__:
-            for row in rows:
-                index = rows.index(row)
-                rows[index] = self.__row_class__(row)
-
-        return rows
-
-    def get_row(self, **kwargs):
-        rows = self.get_rows()
-        return rows.get_by(**kwargs)

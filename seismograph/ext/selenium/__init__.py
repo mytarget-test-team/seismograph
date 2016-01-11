@@ -10,13 +10,11 @@ from .pageobject import Page
 from .router import add_route
 from .utils import re_raise_exc
 from .pageobject import PageItem
-from .pageobject import PageTable
 from .case import require_browser
-from .pageobject import PageObject
+from .pageobject import PageElement
 from .case import SeleniumAssertion
 from .case import make_with_browsers
 from .case import SeleniumCase as Case
-from .pageobject import PageObjectProxy
 from .suite import SeleniumSuite as Suite
 from .browser import change_config as change_browser_config
 
@@ -151,20 +149,12 @@ __all__ = (
     'query',
     'Suite',
     'PageItem',
-    'PageTable',
     'add_route',
     'assertion',
-    'PageObject',
+    'PageElement',
     're_raise_exc',
     'inject_driver',
-    'PageObjectProxy',
     'SeleniumAssertion',
     'make_with_browsers',
     'change_browser_config',
 )
-
-
-from .proxy import make_patch
-
-make_patch()
-del make_patch

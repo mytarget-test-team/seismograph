@@ -115,7 +115,8 @@ def execute(proxy, css, list_result=False, disable_polling=False):
     if disable_polling:
         with proxy.disable_polling():
             method = get_execute_method(proxy, list_result)
-            return method(css)
+            result = method(css)
+        return result
 
     method = get_execute_method(proxy, list_result)
     return method(css)
@@ -128,8 +129,7 @@ class QueryResult(object):
         self.__css = css
 
     def __getattr__(self, item):
-        obj = self.first()
-        return getattr(obj.query, item)
+        return make_result(self.first(), item)
 
     @property
     def css(self):

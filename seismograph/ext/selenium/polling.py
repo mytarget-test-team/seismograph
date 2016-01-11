@@ -48,7 +48,7 @@ def do(callback,
                     )
                     return f(*args, **kwargs)
                 except socket.error:  # if connection will be refused,
-                    # that we not need to continue polling
+                    # then we not need to continue polling
                     raise
                 except exceptions as error:
                     exc = error

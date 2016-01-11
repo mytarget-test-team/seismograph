@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import time
-from abc import ABCMeta
 from functools import wraps
 from types import MethodType
-from six import add_metaclass
 from collections import OrderedDict
 from contextlib import contextmanager
 
@@ -29,17 +27,6 @@ METHOD_ALIASES = {
     'go_to': 'get',
     'set': 'send_keys',
 }
-
-
-def make_patch():
-    from selenium.webdriver.remote import webdriver
-    from selenium.webdriver.remote import webelement
-
-    webdriver.WebDriver = add_metaclass(ABCMeta)(webdriver.WebDriver)
-    webelement.WebElement = add_metaclass(ABCMeta)(webelement.WebElement)
-
-    webdriver.WebDriver.register(WebDriverProxy)
-    webelement.WebElement.register(WebElementProxy)
 
 
 def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
@@ -68,6 +55,7 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
                     we_list.append(
                         WebElementProxy(
                             obj,
+                            driver=driver,
                             config=config,
                             allow_polling=allow_polling,
                             reason_storage=reason_storage,
@@ -136,11 +124,15 @@ class BaseProxy(object):
             area = self.body().first()
 
         try:
-            with self.disable_polling():
-                length = len(area.attr.innerHTML)
-            return length
-        except WebDriverException:
+            return len(area.attr.innerHTML)
+        except (TypeError, WebDriverException):
             return 0
+
+    def __nonzero__(self):
+        return True
+
+    def __bool__(self):  # please python 3
+        return self.__nonzero__()
 
     def __dir__(self):
         return list((dir(self._wrapped) + dir(self.__class__)))
@@ -394,9 +386,9 @@ class ActionProxy(object):
     def __init__(self, proxy, cls):
         self.__action = cls(proxy.driver)
 
-    def __call__(self, proxy):
+    def __call__(self, proxy=None):
         return self.__class__(
-            proxy.driver,
+            proxy.driver if proxy else self.__action._driver,
             cls=self.__action.__class__,
         )
 
@@ -446,9 +438,9 @@ class WebElementToObject(object):
     def __setattr__(self, key, value):
         self.__dict__['__proxy__'].parent.execute_script(
             'arguments[0].setAttribute(arguments[1], arguments[2]);',
-            self.__dict__['__proxy__'],
+            self.__dict__['__proxy__']._wrapped,
             change_name_from_python_to_html(key),
-            value
+            value,
         )
 
 
@@ -465,7 +457,7 @@ class WebElementCssToObject(object):
     def __setattr__(self, key, value):
         self.__dict__['__proxy__'].parent.execute_script(
             'arguments[0].style[arguments[1]] = arguments[2];',
-            self.__dict__['__proxy__'],
+            self.__dict__['__proxy__']._wrapped,
             change_name_from_python_to_html(key),
-            value
+            value,
         )
