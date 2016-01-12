@@ -142,6 +142,10 @@ class FormField(object):
     def attr(self):
         return self.we.attr
 
+    @property
+    def css(self):
+        return self.we.css
+
 
 class Input(FormField, SimpleFieldInterface):
 
@@ -237,13 +241,9 @@ class Select(FormField, SimpleFieldInterface):
     @fill_field_handler
     def fill(self, value=None):
         value = value or self.value
+        option = self.we.option().all().get_by(value=value)
 
-        options = filter(
-            lambda opt: opt.get_attribute('value') == value,
-            self.we.find_elements_by_tag_name('option'),
-        )
-
-        for option in options:
+        if option:
             option.click()
         else:
             raise NoSuchElementException(

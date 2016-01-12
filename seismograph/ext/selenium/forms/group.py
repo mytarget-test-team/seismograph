@@ -129,7 +129,7 @@ class FieldsGroupMeta(pageobject.PageMeta):
 
 class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
 
-    __wrapper__ = None
+    __area__ = None
     __remember__ = True
     __exclude__ = tuple()
     __allow_raises__ = True
@@ -148,17 +148,23 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
         return getattr(self.area, item)
 
     @property
+    def we(self):
+        if self.__proxy.is_web_element:
+            return self.__proxy
+        return None
+
+    @property
     def driver(self):
         return self.__proxy.driver
 
     @property
     def area(self):
-        if self.__wrapper__:
-            if not isinstance(self.__wrapper__, QueryObject):
+        if self.__area__:
+            if not isinstance(self.__area__, QueryObject):
                 raise TypeError(
-                    '"__wrapper__" can be instance of QueryObject only',
+                    '"__area__" can be instance of QueryObject only',
                 )
-            return self.__wrapper__(self.__proxy).first()
+            return self.__area__(self.__proxy).first()
 
         return self.__proxy
 

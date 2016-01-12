@@ -89,9 +89,6 @@ class LogCapture(object):
     stream = CaptureStream()
 
     def __init__(self, config):
-        if not config.NO_CAPTURE:
-            self.do_capture()
-
         self.__config = config
 
     def __bool__(self):

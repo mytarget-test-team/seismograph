@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 EX_NAME = 'selenium'
+DEFAULT_GET_BROWSER_DELAY = 0.5
 DEFAULT_GET_BROWSER_TIMEOUT = 10
 DEFAULT_BROWSER = drivers.FIREFOX
 
@@ -96,31 +97,27 @@ class Selenium(object):
                     'Incorrect browser name "{}"'.format(browser_name),
                 )
 
-            delay = delay or self.__config.get('POLLING_DELAY')
+            delay = delay or self.__config.get(
+                'POLLING_DELAY', DEFAULT_GET_BROWSER_DELAY,
+            )
             timeout = timeout or self.__config.get(
                 'POLLING_TIMEOUT', DEFAULT_GET_BROWSER_TIMEOUT,
             )
+            args = {
+                True: (self.remote, self.__browser_name),
+                False: (get_local_browser, self.__browser_name),
+            }
 
-            if self.__config.get('USE_REMOTE', False):
-                self.__browser = waiting_for(
-                    lambda: get_browser(self.remote, self.__browser_name),
-                    delay=delay,
-                    timeout=timeout,
-                    exc_cls=SeleniumExError,
-                    message='Browser "{}" has not been started for "{}" sec.'.format(
-                        self.__browser_name, timeout,
-                    ),
-                )
-            else:
-                self.__browser = waiting_for(
-                    lambda: get_browser(get_local_browser, self.__browser_name),
-                    delay=delay,
-                    timeout=timeout,
-                    exc_cls=SeleniumExError,
-                    message='Browser "{}" has not been started for "{}" sec.'.format(
-                        self.__browser_name, timeout,
-                    ),
-                )
+            self.__browser = waiting_for(
+                get_browser,
+                delay=delay,
+                timeout=timeout,
+                exc_cls=SeleniumExError,
+                args=args[bool(self.__config.get('USE_REMOTE', False))],
+                message='Browser "{}" has not been started for "{}" sec.'.format(
+                    self.__browser_name, timeout,
+                ),
+            )
 
             self.__is_running = True
 

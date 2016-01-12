@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
+
 from six import with_metaclass
 
 from ...utils import pyv
@@ -30,6 +32,26 @@ class ProxyObject(object):
 
     def __dir__(self):
         return dir(self.__we)
+
+
+class PageCache(dict):
+
+    def __init__(self, *args, **kwargs):
+        super(PageCache, self).__init__(*args, **kwargs)
+
+        self.eternal = False
+
+    @contextmanager
+    def restore(self):
+        current_data = self.copy()
+        try:
+            yield
+        finally:
+            self.update(current_data)
+
+    def clear(self):
+        if not self.eternal:
+            super(PageCache, self).clear()
 
 
 class PageElement(object):
@@ -212,13 +234,14 @@ class PageMeta(type):
 
 class Page(with_metaclass(PageMeta, object)):
 
-    __wrapper__ = None
+    __area__ = None
+    __nested__ = True
     __url_path__ = None
     __api_class__ = PageApi
 
     def __init__(self, proxy=None):
-        self.__cache = {}
         self.__proxy = proxy
+        self.__cache = PageCache()
         self.__api = self.__api_class__(self)
 
     def __getitem__(self, item):
@@ -235,19 +258,29 @@ class Page(with_metaclass(PageMeta, object)):
         return self.__api
 
     @property
-    def area(self):
-        if self.__wrapper__:
-            if not isinstance(self.__wrapper__, QueryObject):
-                raise TypeError(
-                    '"__wrapper__" can be instance of QueryObject only',
-                )
-            return self.__wrapper__(self.__proxy).first()
+    def we(self):
+        if self.__proxy and self.__proxy.is_web_element:
+            return self.__proxy
+        return None
 
-        return self.__proxy
+    @property
+    def area(self):
+        proxy = self.__proxy if self.__nested__ else self.__proxy.driver
+
+        if self.__area__:
+            if not isinstance(self.__area__, QueryObject):
+                raise TypeError(
+                    '"__area__" can be instance of QueryObject only',
+                )
+            return self.__area__(proxy).first()
+
+        return proxy
 
     @property
     def driver(self):
-        return self.__proxy.driver
+        if self.__proxy:
+            return self.__proxy.driver
+        return None
 
     @property
     def cache(self):

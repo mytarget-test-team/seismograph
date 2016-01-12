@@ -6,6 +6,7 @@ from .exceptions import ExtensionNotFound
 
 
 _TMP = {}
+_WAS_CLEAR = False
 
 
 def install(ext, program):
@@ -60,6 +61,10 @@ def get(name):
     try:
         container = _TMP[name]
     except KeyError:
+        if _WAS_CLEAR:
+            raise RuntimeError(
+                'Extension tmp was cleared',
+            )
         raise ExtensionNotFound(name)
 
     if isinstance(container, ExtensionContainer):
@@ -83,4 +88,7 @@ def set(ext, name, is_data=False, singleton=False, args=None, kwargs=None):
 
 
 def clear():
+    global _WAS_CLEAR
+
     _TMP.clear()
+    _WAS_CLEAR = True

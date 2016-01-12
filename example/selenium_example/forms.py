@@ -14,15 +14,15 @@ class SearchForm(selenium.forms.UIForm):
         selector=selenium.forms.fields.selector(name='q'),
     )
 
-    submit = selenium.PageObject(
+    submit = selenium.PageElement(
         selenium.query('button', name='btnG'),
-        action=lambda b: b.click(),
+        call=lambda b: b.click(),
     )
 
 
 class SearchPage(selenium.Page):
 
-    search = selenium.PageObject(
+    search = selenium.PageElement(
         SearchForm,
     )
 
@@ -34,4 +34,4 @@ def test_search_form(case, browser):
     page.search.fill()
     page.search.submit()
 
-    case.assertion.text_in(browser, page.search.search_field.value)
+    case.assertion.text_exist(browser, page.search.search_field.value)

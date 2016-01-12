@@ -784,7 +784,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
         )
 
     def __repr__(self):
-        class_path = '{}.{}'.format(
+        class_path = '{}:{}'.format(
             self.__mount_data__.suite_name, self.__class__.__name__,
         )
         return '<{} method_name={} stopped_on={}>'.format(

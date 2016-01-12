@@ -9,17 +9,17 @@ suite = Suite(__name__)
 @suite.register(skip='reason')
 def skip_function_test_on_register(case):
     # function test can be static. use static=True
-    pass
+    raise Exception
 
 
 @suite.register(skip='reason')
 class SkipAllClass(Case):
 
     def test_one(self):
-        pass
+        raise Exception
 
     def test_two(self):
-        pass
+        raise Exception
 
 
 @suite.register
@@ -27,15 +27,15 @@ class SkipDecoratorsExample(Case):
 
     @skip('reason')
     def test_two(self):
-        pass
+        raise Exception
 
     @skip_if(1 == 1, 'reason')
     def test_two(self):
-        pass
+        raise Exception
 
     @skip_unless(1 != 1, 'reason')
     def test_three(self):
-        pass
+        raise Exception
 
 
 @skip('reason')  # can be also skip_if, skip_unless
@@ -43,4 +43,4 @@ class SkipDecoratorsExample(Case):
 class SkipAllClassWithDecorator(Case):
 
     def test_one(self):
-        pass
+        raise Exception

@@ -98,7 +98,9 @@ class WebElementListProxy(list):
 
     def filter(self, **kwargs):
         def check_equal(we, attr, value):
-            attr_value = getattr(we, attr, None) or getattr(we.attr, attr)
+            attr_value = getattr(we, attr, None)
+            if callable(attr_value) or attr_value is None:
+                attr_value = getattr(we.attr, attr)
             return attr_value == value
 
         for we in self:
@@ -211,6 +213,14 @@ class BaseProxy(object):
 
         return get_text()
 
+    @property
+    def is_web_element(self):
+        raise NotImplementedError(
+            'Property "is_web_element" does not implemented in "{}"'.format(
+                self.__class__.__name__,
+            ),
+        )
+
     @contextmanager
     def polling(self,
                 func=None,
@@ -299,6 +309,10 @@ class WebElementProxy(BaseProxy):
     def attr(self):
         return WebElementToObject(self, allow_raise=False)
 
+    @property
+    def is_web_element(self):
+        return True
+
     def double_click(self):
         with self.driver.action_chains as action:
             action.double_click(self)
@@ -361,6 +375,10 @@ class WebDriverProxy(BaseProxy):
                 'Can not calculate current path. PROJECT_URL is not set.',
             )
         return self.current_url.replace(self.config.PROJECT_URL, '')
+
+    @property
+    def is_web_element(self):
+        return False
 
 
 class AlertProxy(object):
