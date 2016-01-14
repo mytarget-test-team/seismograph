@@ -39,7 +39,7 @@ class PageCache(dict):
     def __init__(self, *args, **kwargs):
         super(PageCache, self).__init__(*args, **kwargs)
 
-        self.eternal = False
+        self.is_eternal = False
 
     @contextmanager
     def restore(self):
@@ -50,7 +50,7 @@ class PageCache(dict):
             self.update(current_data)
 
     def clear(self):
-        if not self.eternal:
+        if not self.is_eternal:
             super(PageCache, self).clear()
 
 

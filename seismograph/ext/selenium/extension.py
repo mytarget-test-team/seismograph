@@ -144,7 +144,7 @@ class Selenium(object):
         if not remote_config.get('desired_capabilities'):
             capabilities = get_capabilities(driver_name)
             capabilities.update(
-                remote_config.get('capabilities', {}).get(driver_name, {}),
+                remote_config.pop('capabilities', {}).get(driver_name, {}),
             )
             remote_config['desired_capabilities'] = capabilities
 

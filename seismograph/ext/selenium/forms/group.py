@@ -107,22 +107,41 @@ class FieldsGroupMeta(pageobject.PageMeta):
 
     def __call__(self, *args, **kwargs):
         instance = super(FieldsGroupMeta, self).__call__(*args, **kwargs)
-        attributes = (
-            a for a in dir(instance.__class__) if not a.startswith('_')
+        fields_data = (
+            (n, getattr(instance.__class__, n))
+            for n in dir(instance.__class__)
+            if not n.startswith('_')
+            and isinstance(
+                getattr(instance.__class__, n, None),
+                (FormField, GroupContainer),
+            )
         )
 
-        for attr_name in attributes:
-            attr_value = getattr(instance.__class__, attr_name, None)
+        def delete_field(name):
+            try:
+                delattr(instance, name)
+            except AttributeError as warn:
+                logger.warn(warn, exc_info=True)
 
-            if isinstance(attr_value, (FormField, GroupContainer)):
-                if attr_value.name in instance.__exclude__:
-                    try:
-                        delattr(instance, attr_name)
-                    except AttributeError as warn:
-                        logger.warn(warn, exc_info=True)
-                    continue
+        def need_skip(name):
+            return (
+                (
+                    instance.__fields_set__
+                    and
+                    name not in instance.__fields_set__
+                )
+                or
+                (
+                    name in instance.__exclude__
+                )
+            )
 
-                instance.add_field(attr_name, attr_value)
+        for field_name, field in fields_data:
+            if need_skip(field_name):
+                delete_field(field_name)
+                continue
+
+            instance.add_field(field_name, field)
 
         return instance
 
@@ -132,6 +151,7 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
     __area__ = None
     __remember__ = True
     __exclude__ = tuple()
+    __fields_set__ = None
     __allow_raises__ = True
 
     def __init__(self, proxy, weight=None, name=None, parent=None):
@@ -184,15 +204,11 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
         self.__proxy = proxy
 
     def add_field(self, name, field):
-        if isinstance(field, GroupContainer):
-            field = field(self)
-            setattr(self, name, field)
-        elif isinstance(field, FormField):
-            field = field(self)
-            setattr(self, name, field)
+        field = field(self)
+        setattr(self, name, field)
+
+        if isinstance(field, FormField):
             self.__memento.add_field(field)
-        else:
-            raise TypeError('Unknown field type')
 
         self.__fields.append(field)
         self.__fields.sort(key=lambda f: f.weight)
