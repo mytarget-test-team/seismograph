@@ -74,21 +74,21 @@ def attribute_by_alias(atr_name):
 
 def make_result(proxy, tag):
     def handle(**selector):
-        query = [tag_by_alias(tag)]
+        css = [tag_by_alias(tag)]
 
         def get_format(value):
             if isinstance(value, Contains):
                 return u'[{}*="{}"]'
             return u'[{}="{}"]'
 
-        query.extend(
+        css.extend(
             (
                 get_format(val).format(attribute_by_alias(atr), val)
                 for atr, val in selector.items()
             ),
         )
 
-        return QueryResult(proxy, ''.join(query))
+        return QueryResult(proxy, ''.join(css))
 
     return handle
 
@@ -125,11 +125,22 @@ def execute(proxy, css, list_result=False, disable_polling=False):
 class QueryResult(object):
 
     def __init__(self, proxy, css):
-        self.__proxy = proxy
+        self.__we = None
+
         self.__css = css
+        self.__proxy = proxy
+
+    def __repr__(self):
+        return 'QueryResult({}): {}'.format(self.__css, repr(self.__proxy))
 
     def __getattr__(self, item):
-        return make_result(self.first(), item)
+        if not self.__we:
+            self.__we = self.first()
+        return getattr(self.__we, item)
+
+    @property
+    def we(self):
+        return self.__we
 
     @property
     def css(self):
@@ -171,7 +182,8 @@ class QueryResult(object):
         :param index: index of element
         """
         try:
-            return execute(self.__proxy, self.__css, list_result=True)[index]
+            self.__we = execute(self.__proxy, self.__css, list_result=True)[index]
+            return self.__we
         except IndexError:
             raise NoSuchElementException(
                 'Result does not have element with index "{}". Css query: "{}".'.format(
@@ -183,13 +195,15 @@ class QueryResult(object):
         """
         Get first element of query
         """
-        return execute(self.__proxy, self.__css)
+        self.__we = execute(self.__proxy, self.__css)
+        return self.__we
 
     def all(self):
         """
         Get all elements of query
         """
-        return execute(self.__proxy, self.__css, list_result=True)
+        self.__we = execute(self.__proxy, self.__css, list_result=True)
+        return self.__we
 
 
 class Query(object):

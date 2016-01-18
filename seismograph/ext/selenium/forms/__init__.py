@@ -11,8 +11,15 @@ from .group import preserve_original
 
 class UIForm(FieldsGroup):
 
-    def __init__(self, proxy):
-        super(UIForm, self).__init__(proxy)
+    def __init__(self, proxy, **kw):
+        super(UIForm, self).__init__(proxy, **kw)
+
+    def submit(self, *a, **k):
+        raise NotImplementedError(
+            'Method "submit" does not implemented in "{}"'.format(
+                self.__class__.__name__,
+            ),
+        )
 
 
 __all__ = (

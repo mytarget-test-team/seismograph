@@ -15,6 +15,7 @@ from .pageobject import PageElement
 from .case import SeleniumAssertion
 from .case import make_with_browsers
 from .case import SeleniumCase as Case
+from ...utils.common import waiting_for
 from .suite import SeleniumSuite as Suite
 from .browser import change_config as change_browser_config
 
@@ -151,6 +152,7 @@ __all__ = (
     'PageItem',
     'add_route',
     'assertion',
+    'waiting_for',
     'PageElement',
     're_raise_exc',
     'inject_driver',

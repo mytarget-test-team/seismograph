@@ -117,12 +117,6 @@ class FieldsGroupMeta(pageobject.PageMeta):
             )
         )
 
-        def delete_field(name):
-            try:
-                delattr(instance, name)
-            except AttributeError as warn:
-                logger.warn(warn, exc_info=True)
-
         def need_skip(name):
             return (
                 (
@@ -138,7 +132,6 @@ class FieldsGroupMeta(pageobject.PageMeta):
 
         for field_name, field in fields_data:
             if need_skip(field_name):
-                delete_field(field_name)
                 continue
 
             instance.add_field(field_name, field)
