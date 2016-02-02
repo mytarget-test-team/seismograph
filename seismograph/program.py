@@ -256,6 +256,7 @@ class Program(runnable.RunnableObject):
                  layers=None,
                  argv=None,
                  exit=True,
+                 stream=None,
                  suites=None):
         super(Program, self).__init__()
 
@@ -269,6 +270,7 @@ class Program(runnable.RunnableObject):
         self.__scripts = []
         self.__exit = exit
         self.__is_run = False
+        self.__stream = stream
 
         self.__context = ProgramContext(self.setup, self.teardown)
 
@@ -399,6 +401,8 @@ class Program(runnable.RunnableObject):
                     self.__config.OUTPUT,
                 ),
             )
+        elif self.__stream:
+            stream = self.__stream
         else:
             stream = sys.stdout
 

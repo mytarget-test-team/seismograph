@@ -134,7 +134,7 @@ def __install__(program):
 
     if (config.get('POLLING_TIMEOUT') and config.get('IMPLICITLY_WAIT')) \
             and config.get('POLLING_TIMEOUT') >= config.get('IMPLICITLY_WAIT'):
-        warn_message = 'POLLING_TIMEOUT >= IMPLICITLY_WAIT it will be work so slowly. ' \
+        warn_message = 'POLLING_TIMEOUT >= IMPLICITLY_WAIT it will be working so slowly. ' \
                        'Please set IMPLICITLY_WAIT larger POLLING_TIMEOUT'
         warn(warn_message, RuntimeWarning)
 
