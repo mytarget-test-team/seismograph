@@ -4,6 +4,7 @@ from warnings import warn
 from optparse import OptionGroup
 
 from . import forms
+from . import polling
 from .query import query
 from .case import assertion
 from .pageobject import Page
@@ -149,6 +150,7 @@ __all__ = (
     'forms',
     'query',
     'Suite',
+    'polling',
     'PageItem',
     'add_route',
     'assertion',

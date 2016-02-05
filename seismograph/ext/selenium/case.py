@@ -45,10 +45,9 @@ def require_browser(f):
 def make_setup(case, browser_name=None):
     selenium = case.ext(EX_NAME)
     selenium.start(browser_name)
+
     if case.__page_class__:
-        case.page = case.__page_class__(
-            selenium.browser,
-        )
+        case.checkout_page(case.__page_class__)
 
 
 def save_logs(case):
@@ -392,3 +391,6 @@ class SeleniumCase(case.Case):
         else:
             make_setup(self)
             yield
+
+    def checkout_page(self, page_cls):
+        self.page = page_cls(self.ext(EX_NAME).browser)

@@ -148,6 +148,7 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
     __allow_raises__ = True
 
     def __init__(self, proxy, weight=None, name=None, parent=None):
+        self.__cache = pageobject.PageCache()
         self.name = name or self.__class__.__name__
 
         self.__fields = []
@@ -159,6 +160,10 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
 
     def __getattr__(self, item):
         return getattr(self.area, item)
+
+    @property
+    def cache(self):
+        return self.__cache
 
     @property
     def we(self):
