@@ -27,7 +27,7 @@ class IndexPage(selenium.Page):
 selenium.add_route('/', IndexPage)
 
 
-@suite.register
+@suite.register(skip='to make fix')
 def test_google_search(case, browser):
     page = browser.router.get('/')
     page.search_field.fill('python')

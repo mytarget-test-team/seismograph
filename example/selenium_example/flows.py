@@ -26,7 +26,7 @@ class TestGoogleSearch(selenium.Case):
         self.assertion.text_exist(browser, ctx.text)
 
 
-@suite.register
+@suite.register(skip='to make flow')
 class TestStepsForSelenium(selenium.Case):
 
     __flows__ = (
