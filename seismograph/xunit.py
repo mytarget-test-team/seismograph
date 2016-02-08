@@ -72,7 +72,7 @@ class XUnitData(object):
 
     @property
     def exc_message(self):
-        return self.__exc_message
+        return self.__exc_message or 'Exception was raised without message. Look at reason.'
 
     @exc_message.setter
     def exc_message(self, value):
