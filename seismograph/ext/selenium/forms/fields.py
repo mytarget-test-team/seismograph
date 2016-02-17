@@ -113,8 +113,8 @@ class FormField(object):
         )
 
     @property
-    def driver(self):
-        return self.group.driver
+    def browser(self):
+        return self.group.browser
 
     @property
     def group(self):

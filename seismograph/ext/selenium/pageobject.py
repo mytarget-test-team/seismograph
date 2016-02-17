@@ -265,7 +265,7 @@ class Page(with_metaclass(PageMeta, object)):
 
     @property
     def area(self):
-        proxy = self.__proxy if self.__nested__ else self.__proxy.driver
+        proxy = self.__proxy if self.__nested__ else self.__proxy.browser
 
         if self.__area__:
             if not isinstance(self.__area__, QueryObject):
@@ -277,9 +277,9 @@ class Page(with_metaclass(PageMeta, object)):
         return proxy
 
     @property
-    def driver(self):
+    def browser(self):
         if self.__proxy:
-            return self.__proxy.driver
+            return self.__proxy.browser
         return None
 
     @property
@@ -289,7 +289,7 @@ class Page(with_metaclass(PageMeta, object)):
     def open(self, **kwargs):
         if self.__url_path__:
             self.__cache.clear()
-            self.driver.router.go_to(
+            self.browser.router.go_to(
                 self.__url_path__.format(**kwargs),
             )
         else:
@@ -302,7 +302,7 @@ class Page(with_metaclass(PageMeta, object)):
 
     def refresh(self):
         self.__cache.clear()
-        self.__proxy.driver.refresh()
+        self.__proxy.browser.refresh()
 
 
 PageItem = Page

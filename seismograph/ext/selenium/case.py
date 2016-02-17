@@ -123,7 +123,7 @@ class SeleniumAssertion(case.AssertionBase):
             check_exist,
             exc_cls=AssertionError,
             message=msg or u'Not of those texts was not found on page by URL "{}". Texts: [{}]'.format(
-                proxy.driver.current_url,
+                proxy.browser.current_url,
                 u', '.join(texts),
             ),
             delay=proxy.config.POLLING_DELAY,
@@ -142,7 +142,7 @@ class SeleniumAssertion(case.AssertionBase):
             check_text,
             exc_cls=AssertionError,
             message=msg or u'Text "{}" not found on page by URL "{}"'.format(
-                text, proxy.driver.current_url,
+                text, proxy.browser.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
@@ -158,7 +158,7 @@ class SeleniumAssertion(case.AssertionBase):
             lambda: query(proxy).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was not found on page by URL "{}"'.format(
-                proxy.driver.current_url,
+                proxy.browser.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
@@ -170,7 +170,7 @@ class SeleniumAssertion(case.AssertionBase):
             lambda: not query(proxy).exist,
             exc_cls=AssertionError,
             message=msg or u'Web element was found on page by URL "{}"'.format(
-                proxy.driver.current_url,
+                proxy.browser.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
@@ -182,7 +182,7 @@ class SeleniumAssertion(case.AssertionBase):
             lambda: len(query(proxy).first().text) > 0,
             exc_cls=AssertionError,
             message=msg or 'Content is not exist inside element on page by URL "{}"'.format(
-                proxy.driver.current_url,
+                proxy.browser.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
@@ -194,7 +194,7 @@ class SeleniumAssertion(case.AssertionBase):
             lambda: len(query(proxy).first().text) == 0,
             exc_cls=AssertionError,
             message=msg or 'Content is exist inside element on page by URL "{}"'.format(
-                proxy.driver.current_url,
+                proxy.browser.current_url,
             ),
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
@@ -262,7 +262,7 @@ class SeleniumAssertion(case.AssertionBase):
             exc_cls=AssertionError,
             message=msg or u'Text for field "{}" not found on page by URL "{}". Text list: [{}]'.format(
                 field.name,
-                field.group.area.driver.current_url,
+                field.group.area.browser.current_url,
                 u', '.join(texts),
             ),
             delay=field.config.POLLING_DELAY,
@@ -276,7 +276,7 @@ class SeleniumAssertion(case.AssertionBase):
     def text_for_field_exist(self, field, text, msg=None, timeout=None):
         error_message = msg or u'Text for field "{}" not found on page by URL "{}". Text: "{}"'.format(
             field.name,
-            field.group.area.driver.current_url,
+            field.group.area.browser.current_url,
             text,
         )
 

@@ -54,8 +54,8 @@ def change_name_from_python_to_html(name):
     return name
 
 
-def is_ready_state_complete(driver):
-    state = driver.execute_script(
+def is_ready_state_complete(browser):
+    state = browser.execute_script(
         'return document.readyState',
     )
     return state == 'complete'

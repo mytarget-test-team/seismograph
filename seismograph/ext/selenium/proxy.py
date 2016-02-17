@@ -29,7 +29,7 @@ METHOD_ALIASES = {
 }
 
 
-def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
+def factory_method(f, browser, config, allow_polling=True, reason_storage=None):
     @wraps(f)
     def wrapper(*args, **kwargs):
         result = f(*args, **kwargs)
@@ -38,14 +38,14 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
             return WebElementProxy(
                 result,
                 config=config,
-                driver=driver,
+                browser=browser,
                 allow_polling=allow_polling,
                 reason_storage=reason_storage,
             )
 
         if isinstance(result, (list, tuple)):
             we_list = WebElementListProxy(
-                driver,
+                browser,
                 config,
                 reason_storage=reason_storage,
             )
@@ -55,7 +55,7 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
                     we_list.append(
                         WebElementProxy(
                             obj,
-                            driver=driver,
+                            browser=browser,
                             config=config,
                             allow_polling=allow_polling,
                             reason_storage=reason_storage,
@@ -71,16 +71,16 @@ def factory_method(f, driver, config, allow_polling=True, reason_storage=None):
 
 class WebElementListProxy(list):
 
-    def __init__(self, driver, config, reason_storage=None):
+    def __init__(self, browser, config, reason_storage=None):
         super(WebElementListProxy, self).__init__()
 
-        self.__driver = driver
+        self.__browser = browser
         self.__config = config
         self.__reason_storage = reason_storage or OrderedDict()
 
     @property
-    def driver(self):
-        return self.__driver
+    def browser(self):
+        return self.__browser
 
     @property
     def config(self):
@@ -110,11 +110,11 @@ class WebElementListProxy(list):
 
 class BaseProxy(object):
 
-    def __init__(self, wrapped, config=None, driver=None, reason_storage=None, allow_polling=True):
-        self.__driver = driver
+    def __init__(self, wrapped, config=None, browser=None, reason_storage=None, allow_polling=True):
+        self.__browser = browser
         self.__config = config
         self.__wrapped = wrapped
-        self.__allow_polling = allow_polling
+        self._allow_polling = allow_polling
         self.__reason_storage = reason_storage or OrderedDict()
 
         assert self.__class__ != BaseProxy, 'This is base class only. Can not be instanced.'
@@ -155,7 +155,7 @@ class BaseProxy(object):
                 return polling.do(
                     factory_method(
                         attr,
-                        self.driver,
+                        self.browser,
                         self.config,
                         allow_polling=self.allow_polling,
                         reason_storage=self.reason_storage,
@@ -166,7 +166,7 @@ class BaseProxy(object):
 
             return factory_method(
                 attr,
-                self.driver,
+                self.browser,
                 self.config,
                 allow_polling=self.allow_polling,
                 reason_storage=self.reason_storage,
@@ -183,13 +183,13 @@ class BaseProxy(object):
         return self.__config
 
     @property
-    def driver(self):
-        return self.__driver
+    def browser(self):
+        return self.__browser
 
     @property
     def allow_polling(self):
         return (
-            bool(self.config.POLLING_TIMEOUT) and self.__allow_polling
+            bool(self.config.POLLING_TIMEOUT) and self._allow_polling
         )
 
     @property
@@ -255,15 +255,15 @@ class BaseProxy(object):
     @contextmanager
     def disable_polling(self):
         try:
-            self.__allow_polling = False
+            self._allow_polling = False
             yield
         finally:
-            self.__allow_polling = True
+            self._allow_polling = True
 
     def wait_ready(self, tries=15, delay=0.01):
         waiting_for(
             is_ready_state_complete,
-            args=(self.driver, ),
+            args=(self.browser, ),
             delay=self.config.POLLING_DELAY,
             timeout=self.config.POLLING_TIMEOUT,
             message='Timeout waiting for load page',
@@ -301,11 +301,11 @@ class WebElementProxy(BaseProxy):
         return True
 
     def double_click(self):
-        with self.driver.action_chains as action:
+        with self.browser.action_chains as action:
             action.double_click(self)
 
     def context_click(self):
-        with self.driver.action_chains as action:
+        with self.browser.action_chains as action:
             action.context_click(self)
 
 
@@ -324,7 +324,7 @@ class WebDriverProxy(BaseProxy):
         self.__touch_actions = ActionProxy(self, TouchActions)
 
     @property
-    def driver(self):
+    def browser(self):
         return self
 
     @property
@@ -371,13 +371,13 @@ class WebDriverProxy(BaseProxy):
 class AlertProxy(object):
 
     def __init__(self, proxy):
-        self.__alert = Alert(proxy.driver)
+        self.__alert = Alert(proxy.browser)
 
     def __dir__(self):
         return dir(self.__alert)
 
     def __call__(self, proxy):
-        return self.__class__(proxy.driver)
+        return self.__class__(proxy.browser)
 
     def __getattr__(self, item):
         return getattr(self.__alert, item)
@@ -389,11 +389,11 @@ class AlertProxy(object):
 class ActionProxy(object):
 
     def __init__(self, proxy, cls):
-        self.__action = cls(proxy.driver)
+        self.__action = cls(proxy.browser)
 
     def __call__(self, proxy=None):
         return self.__class__(
-            proxy.driver if proxy else self.__action._driver,
+            proxy.browser if proxy else self.__action._driver,
             cls=self.__action.__class__,
         )
 
@@ -416,7 +416,7 @@ class ActionProxy(object):
         return repr(self.__action)
 
     @property
-    def driver(self):
+    def browser(self):
         return self.__action._driver
 
     def reset(self):
