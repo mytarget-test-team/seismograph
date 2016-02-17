@@ -1,5 +1,14 @@
 # -*- coding: utf-8 -*-
 
+"""
+Environments:
+
+SIMPLE_SEISMOGRAPH - to install library without requirements of extensions
+SEISMOGRAPH_EXTENSIONS - names of extensions separated by commas
+"""
+
+import os
+
 from setuptools import setup
 from setuptools import find_packages
 
@@ -7,13 +16,53 @@ from setuptools import find_packages
 __version__ = '0.1.3'
 
 
-REQUIREMENTS = (
+REQUIREMENTS = [
     'six>=1.4',
-    'requests',
-    'flask>=0.7',
-    'selenium>=2.46',
-    'sqlalchemy>=0.8',
-)
+]
+
+EX_REQUIREMENTS = {
+    'mocker': [
+        'requests',
+        'flask>=0.7',
+    ],
+    'selenium': [
+        'selenium>=2.46',
+    ],
+    'alchemy': [
+        'sqlalchemy>=0.8',
+    ],
+}
+
+SIMPLE_INSTALL = os.getenv('SIMPLE_SEISMOGRAPH')
+EXTENSIONS_TO_INSTALL = os.getenv('SEISMOGRAPH_EXTENSIONS', '')
+
+
+def get_requirements():
+    requirements = []
+    requirements.extend(REQUIREMENTS)
+
+    if SIMPLE_INSTALL:
+        return requirements
+
+    extensions_to_install = [
+        n.strip()
+        for n in EXTENSIONS_TO_INSTALL.split(',')
+        if n.strip()
+    ]
+
+    if extensions_to_install:
+        for ex_name in extensions_to_install:
+            try:
+                requirements.extend(
+                    EX_REQUIREMENTS[ex_name],
+                )
+            except KeyError:
+                raise RuntimeError('Unknown extension name: {}'.format(ex_name))
+    else:
+        for ex_name in EX_REQUIREMENTS:
+            requirements.extend(EX_REQUIREMENTS[ex_name])
+
+    return requirements
 
 
 def install_package():
@@ -31,11 +80,11 @@ def install_package():
         include_package_data=True,
         zip_safe=False,
         platforms='any',
-        install_requires=REQUIREMENTS,
+        install_requires=get_requirements(),
         entry_points={
             'console_scripts': (
                 'seismograph = seismograph.__main__:main',
-                'seismograph.mock_server = seismograph.ext.mock_server.__main__:main',
+                'seismograph.mocker = seismograph.ext.mocker.__main__:main',
             ),
         },
         test_suite='tests',
