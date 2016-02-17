@@ -165,7 +165,7 @@ class SeleniumAssertion(case.AssertionBase):
         )
 
     @staticmethod
-    def web_element_not_exist(proxy, query, timeout=None, msg=None):
+    def web_element_not_exist(proxy, query, msg=None, timeout=None):
         waiting_for(
             lambda: not query(proxy).exist,
             exc_cls=AssertionError,

@@ -153,7 +153,7 @@ class BaseProxy(object):
         if callable(attr) and type(attr) == MethodType:
             if self.allow_polling:
                 return polling.do(
-                    callback=factory_method(
+                    factory_method(
                         attr,
                         self.driver,
                         self.config,
