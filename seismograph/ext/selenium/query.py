@@ -6,6 +6,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
 from ...utils.common import waiting_for
+from .exceptions import PollingTimeoutExceeded
 from .utils import change_name_from_python_to_html
 
 
@@ -126,6 +127,7 @@ class QueryResult(object):
 
     def __init__(self, proxy, css):
         self.__we = None
+        self.__we_list = None
 
         self.__css = css
         self.__proxy = proxy
@@ -134,17 +136,22 @@ class QueryResult(object):
         return 'QueryResult({}): {}'.format(self.__css, repr(self.__proxy))
 
     def __getattr__(self, item):
-        if not self.__we:
-            self.__we = self.first()
-        return getattr(self.__we, item)
+        return getattr(self.we, item)
+
+    def __css_string__(self):
+        return self.__css
 
     @property
     def we(self):
+        if not self.__we:
+            self.__we = self.first()
         return self.__we
 
     @property
-    def css(self):
-        return self.__css
+    def list(self):
+        if not self.__we_list:
+            self.__we_list = self.all()
+        return self.__we_list
 
     @property
     def exist(self):
@@ -171,7 +178,7 @@ class QueryResult(object):
         """
         return waiting_for(
             lambda: self.exist,
-            exc_cls=NoSuchElementException,
+            exc_cls=PollingTimeoutExceeded,
             timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
             message='Could not wait web element by css "{}"'.format(self.__css),
         )
@@ -203,8 +210,8 @@ class QueryResult(object):
         """
         Get all elements of query
         """
-        self.__we = execute(self.__proxy, self.__css, list_result=True)
-        return self.__we
+        self.__we_list = execute(self.__proxy, self.__css, list_result=True)
+        return self.__we_list
 
 
 class Query(object):
@@ -263,6 +270,10 @@ class Query(object):
     ANY = '*'
 
     contains = Contains
+
+    @staticmethod
+    def css_string(query_result):
+        return query_result.__css_string__()
 
     def __call__(self, tag, **selector):
         return QueryObject(tag, **selector)
