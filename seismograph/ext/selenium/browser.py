@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from .proxy import WebDriverProxy
 
 
-DEFAULT_WAIT_TIMEOUT = 15
+DEFAULT_WAIT_TIMEOUT = None
 DEFAULT_POLLING_TIMEOUT = 10
 DEFAULT_POLLING_DELAY = None
 DEFAULT_LOAD_PAGE_TIMEOUT = 10
