@@ -286,7 +286,7 @@ class Page(with_metaclass(PageMeta, object)):
     def cache(self):
         return self.__cache
 
-    def show(self, **kwargs):
+    def open(self, **kwargs):
         if self.__url_path__:
             self.__cache.clear()
             self.driver.router.go_to(
