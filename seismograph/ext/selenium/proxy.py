@@ -222,32 +222,35 @@ class BaseProxy(object):
         )
 
     @contextmanager
-    def polling(self,
-                func=None,
-                exc_cls=None,
-                message=None,
-                timeout=None,
-                delay=None,
-                args=None,
-                kwargs=None):
-        to_restore = self.__allow_polling
-        self.__allow_polling = True
+    def do_polling(self,
+                   callback,
+                   exceptions=None,
+                   timeout=None,
+                   delay=None):
+        return polling.do(
+            callback,
+            exceptions=exceptions or polling.POLLING_EXCEPTIONS,
+            delay=delay or self.config.POLLING_DELAY,
+            timeout=timeout or self.config.POLLING_TIMEOUT,
+        )
 
-        try:
-            if func:
-                yield waiting_for(
-                    func,
-                    args=args,
-                    kwargs=kwargs,
-                    exc_cls=exc_cls,
-                    message=message,
-                    delay=delay or self.config.POLLING_DELAY,
-                    timeout=timeout or self.config.POLLING_TIMEOUT,
-                )
-            else:
-                yield
-        finally:
-            self.__allow_polling = to_restore
+    def waiting_for(self,
+                    callback,
+                    timeout=None,
+                    exc_cls=None,
+                    message=None,
+                    delay=None,
+                    args=None,
+                    kwargs=None):
+        return waiting_for(
+            callback,
+            args=args,
+            kwargs=kwargs,
+            delay=delay or self.config.POLLING_DELAY,
+            timeout=timeout or self.config.POLLING_TIMEOUT,
+            exc_cls=exc_cls or polling.PollingTimeoutExceeded,
+            message=message or 'Wait timeout "{}" has been exceeded'.format(timeout),
+        )
 
     @contextmanager
     def disable_polling(self):
@@ -256,22 +259,6 @@ class BaseProxy(object):
             yield
         finally:
             self.__allow_polling = True
-
-    @contextmanager
-    def confirm_action(self, callback, timeout=None, delay=None):
-        delay = delay or self.config.POLLING_DELAY
-        timeout = timeout or self.config.POLLING_TIMEOUT
-
-        try:
-            yield
-        finally:
-            waiting_for(
-                callback,
-                delay=delay,
-                timeout=timeout,
-                exc_cls=polling.PollingTimeoutExceeded,
-                message='Action has not been confirmed for "{}" sec.'.format(timeout),
-            )
 
     def wait_ready(self, tries=15, delay=0.01):
         waiting_for(
