@@ -115,8 +115,13 @@ def execute(proxy, css, list_result=False, disable_polling=False):
 
     if disable_polling:
         with proxy.disable_polling():
-            method = get_execute_method(proxy, list_result)
-            result = method(css)
+            wait_timeout = proxy.config.WAIT_TIMEOUT
+            proxy.config.WAIT_TIMEOUT = 0
+            try:
+                method = get_execute_method(proxy, list_result)
+                result = method(css)
+            finally:
+                proxy.config.WAIT_TIMEOUT = wait_timeout
         return result
 
     method = get_execute_method(proxy, list_result)
@@ -143,12 +148,19 @@ class QueryResult(object):
 
     @property
     def we(self):
+        """
+        First element by query
+        """
         if not self.__we:
             self.__we = self.first()
         return self.__we
 
     @property
     def list(self):
+        """
+        List of elements by query
+        :return:
+        """
         if not self.__we_list:
             self.__we_list = self.all()
         return self.__we_list
@@ -194,7 +206,7 @@ class QueryResult(object):
             return self.__we
         except IndexError:
             raise NoSuchElementException(
-                'Result does not have element with index "{}". Css query: "{}".'.format(
+                'Result does not have element by index "{}". Css query: "{}".'.format(
                     index, self.__css,
                 ),
             )
