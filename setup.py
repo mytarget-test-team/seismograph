@@ -82,7 +82,7 @@ def prepare_data():
         for ex_name in extensions_to_install:
             prepare_extension_data(ex_name)
     else:
-        for ex_name in EX_REQUIREMENTS:
+        for ex_name in EXTENSIONS:
             prepare_extension_data(ex_name)
 
 
