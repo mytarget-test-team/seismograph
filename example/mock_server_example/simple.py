@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from seismograph import Case, Suite
-from seismograph.ext.mock_server import JsonMock
+from seismograph.ext.mocker import JsonMock
 
 
-suite = Suite(__name__, require=['mock_server'])
+suite = Suite(__name__, require=['mocker'])
 
 
 @suite.register
@@ -19,7 +19,7 @@ class TestSimpleMocks(Case):
     __repeatable__ = False
 
     def setup(self):
-        self.server = self.ext('mock_server')
+        self.server = self.ext('mocker')
         self.server.start()
 
     def teardown(self):

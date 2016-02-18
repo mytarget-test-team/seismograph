@@ -3,7 +3,7 @@
 from seismograph import Case, Suite
 
 
-suite = Suite(__name__, require=['mock_server'])
+suite = Suite(__name__, require=['mocker'])
 
 
 @suite.register
@@ -12,7 +12,7 @@ class TestMocksFromFiles(Case):
     server = None
 
     def setup(self):
-        self.server = self.ext('mock_server')
+        self.server = self.ext('mocker')
         self.server.start()
 
     def teardown(self):

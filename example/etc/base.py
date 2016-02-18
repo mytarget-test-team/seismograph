@@ -35,7 +35,7 @@ else:
     os.mkdir(TMP_FOLDER)
 
 
-MOCK_SERVER_EX = {
+MOCKER_EX = {
     'PORT': 5000,
     'DEBUG': False,
     'HOST': '127.0.0.1',
