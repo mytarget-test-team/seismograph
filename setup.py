@@ -16,8 +16,18 @@ from setuptools import find_packages
 __version__ = '0.1.3'
 
 
+EXTENSIONS = [
+    'mocker',
+    'alchemy',
+    'selenium',
+]
+
 REQUIREMENTS = [
     'six>=1.4',
+]
+
+CONSOLE_SCRIPTS = [
+    'seismograph = seismograph.__main__:main',
 ]
 
 EX_REQUIREMENTS = {
@@ -33,36 +43,47 @@ EX_REQUIREMENTS = {
     ],
 }
 
+EX_CONSOLE_SCRIPTS = {
+    'mocker': [
+        'seismograph.mocker = seismograph.ext.mocker.__main__:main',
+    ],
+}
+
 SIMPLE_INSTALL = os.getenv('SIMPLE_SEISMOGRAPH')
-EXTENSIONS_TO_INSTALL = os.getenv('SEISMOGRAPH_EXTENSIONS', '')
+EXTENSIONS_TO_INSTALL = os.getenv('SEISMOGRAPH_EXTENSIONS')
 
 
-def get_requirements():
-    requirements = []
-    requirements.extend(REQUIREMENTS)
+def prepare_extension_data(ex_name):
+    if ex_name not in EXTENSIONS:
+        raise RuntimeError(
+            'Unknown extension name: {}'.format(ex_name),
+        )
 
+    requirements = EX_REQUIREMENTS.get(ex_name)
+    console_scripts = EX_CONSOLE_SCRIPTS.get(ex_name)
+
+    if requirements:
+        REQUIREMENTS.extend(requirements)
+
+    if console_scripts:
+        CONSOLE_SCRIPTS.extend(console_scripts)
+
+
+def prepare_data():
     if SIMPLE_INSTALL:
-        return requirements
+        return
 
-    extensions_to_install = [
-        n.strip()
-        for n in EXTENSIONS_TO_INSTALL.split(',')
-        if n.strip()
-    ]
-
-    if extensions_to_install:
+    if EXTENSIONS_TO_INSTALL:
+        extensions_to_install = [
+            n.strip()
+            for n in EXTENSIONS_TO_INSTALL.split(',')
+            if n.strip()
+        ]
         for ex_name in extensions_to_install:
-            try:
-                requirements.extend(
-                    EX_REQUIREMENTS[ex_name],
-                )
-            except KeyError:
-                raise RuntimeError('Unknown extension name: {}'.format(ex_name))
+            prepare_extension_data(ex_name)
     else:
         for ex_name in EX_REQUIREMENTS:
-            requirements.extend(EX_REQUIREMENTS[ex_name])
-
-    return requirements
+            prepare_extension_data(ex_name)
 
 
 def install_package():
@@ -80,12 +101,9 @@ def install_package():
         include_package_data=True,
         zip_safe=False,
         platforms='any',
-        install_requires=get_requirements(),
+        install_requires=REQUIREMENTS,
         entry_points={
-            'console_scripts': (
-                'seismograph = seismograph.__main__:main',
-                'seismograph.mocker = seismograph.ext.mocker.__main__:main',
-            ),
+            'console_scripts': CONSOLE_SCRIPTS,
         },
         test_suite='tests',
         classifiers=(
@@ -104,4 +122,5 @@ def install_package():
 
 
 if __name__ == '__main__':
+    prepare_data()
     install_package()
