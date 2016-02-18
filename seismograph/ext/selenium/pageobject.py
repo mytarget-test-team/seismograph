@@ -90,7 +90,7 @@ class PageElement(object):
 
         if self.__list_class and not self.__is_list:
             raise ValueError(
-                '"list_class" can not usage without "is_list"',
+                '"list_class" can not be using without "is_list"',
             )
 
         if self.__call:
@@ -206,6 +206,10 @@ class PageApi(object):
     def page(self):
         return self.__page
 
+    @property
+    def browser(self):
+        return self.__page.browser
+
 
 class PageMeta(type):
     """
@@ -232,17 +236,11 @@ class PageMeta(type):
         return cls
 
 
-class Page(with_metaclass(PageMeta, object)):
-
-    __area__ = None
-    __nested__ = True
-    __url_path__ = None
-    __api_class__ = PageApi
+class _Base(with_metaclass(PageMeta, object)):
 
     def __init__(self, proxy=None):
         self.__proxy = proxy
         self.__cache = PageCache()
-        self.__api = self.__api_class__(self)
 
     def __getitem__(self, item):
         try:
@@ -254,18 +252,90 @@ class Page(with_metaclass(PageMeta, object)):
         return getattr(self.area, item)
 
     @property
+    def _proxy(self):
+        return self.__proxy
+
+    @property
+    def area(self):
+        raise NotImplementedError(
+            'Property "area" is not implemented in "{}"'.format(
+                self.__class__.__name__,
+            ),
+        )
+
+    @property
+    def browser(self):
+        if self.__proxy:
+            return self.__proxy.browser
+        return None
+
+    @property
+    def cache(self):
+        return self.__cache
+
+    def bind_to(self, proxy):
+        self.__proxy = proxy
+
+
+class Page(_Base):
+
+    __area__ = None
+    __url_path__ = None
+    __api_class__ = None
+
+    def __init__(self, *args, **kwargs):
+        super(Page, self).__init__(*args, **kwargs)
+
+        if self.__api_class__:
+            self.__api = self.__api_class__(self)
+        else:
+            self.__api = None
+
+    @property
     def api(self):
         return self.__api
 
     @property
+    def area(self):
+        if self.__area__:
+            if not isinstance(self.__area__, QueryObject):
+                raise TypeError(
+                    '"__area__" can be instance of QueryObject only',
+                )
+            return self.__area__(self._proxy).first()
+
+        return self._proxy
+
+    def open(self, **kwargs):
+        if self.__url_path__:
+            self.cache.clear()
+            self.browser.router.go_to(
+                self.__url_path__.format(**kwargs),
+            )
+        else:
+            raise RuntimeError(
+                'You should to set "__url_path__" attribute value for usage "show" method',
+            )
+
+    def refresh(self):
+        self.cache.clear()
+        self._proxy.browser.refresh()
+
+
+class PageItem(_Base):
+
+    __area__ = None
+    __nested__ = True
+
+    @property
     def we(self):
-        if self.__proxy and self.__proxy.is_web_element:
-            return self.__proxy
+        if self._proxy and self._proxy.is_web_element:
+            return self._proxy
         return None
 
     @property
     def area(self):
-        proxy = self.__proxy if self.__nested__ else self.__proxy.driver
+        proxy = self._proxy if self.__nested__ else self._proxy.browser
 
         if self.__area__:
             if not isinstance(self.__area__, QueryObject):
@@ -275,34 +345,3 @@ class Page(with_metaclass(PageMeta, object)):
             return self.__area__(proxy).first()
 
         return proxy
-
-    @property
-    def driver(self):
-        if self.__proxy:
-            return self.__proxy.driver
-        return None
-
-    @property
-    def cache(self):
-        return self.__cache
-
-    def show(self, **kwargs):
-        if self.__url_path__:
-            self.__cache.clear()
-            self.driver.router.go_to(
-                self.__url_path__.format(**kwargs),
-            )
-        else:
-            raise RuntimeError(
-                'You should to set "__url_path__" attribute value for usage "show" method',
-            )
-
-    def bind_to(self, proxy):
-        self.__proxy = proxy
-
-    def refresh(self):
-        self.__cache.clear()
-        self.__proxy.driver.refresh()
-
-
-PageItem = Page

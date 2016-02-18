@@ -1,19 +1,89 @@
 # -*- coding: utf-8 -*-
 
+"""
+Environments:
+
+SIMPLE_SEISMOGRAPH - to install library without requirements of extensions
+SEISMOGRAPH_EXTENSIONS - names of extensions separated by commas
+"""
+
+import os
+
 from setuptools import setup
 from setuptools import find_packages
 
 
-__version__ = '0.1.3'
+__version__ = '0.2.0'
 
 
-REQUIREMENTS = (
+EXTENSIONS = [
+    'mocker',
+    'alchemy',
+    'selenium',
+]
+
+REQUIREMENTS = [
     'six>=1.4',
-    'requests',
-    'flask>=0.7',
-    'selenium>=2.46',
-    'sqlalchemy>=0.8',
-)
+]
+
+CONSOLE_SCRIPTS = [
+    'seismograph = seismograph.__main__:main',
+]
+
+EX_REQUIREMENTS = {
+    'mocker': [
+        'requests',
+        'flask>=0.7',
+    ],
+    'selenium': [
+        'selenium>=2.46',
+    ],
+    'alchemy': [
+        'sqlalchemy>=0.8',
+    ],
+}
+
+EX_CONSOLE_SCRIPTS = {
+    'mocker': [
+        'seismograph.mocker = seismograph.ext.mocker.__main__:main',
+    ],
+}
+
+SIMPLE_INSTALL = os.getenv('SIMPLE_SEISMOGRAPH')
+EXTENSIONS_TO_INSTALL = os.getenv('SEISMOGRAPH_EXTENSIONS')
+
+
+def prepare_extension_data(ex_name):
+    if ex_name not in EXTENSIONS:
+        raise RuntimeError(
+            'Unknown extension name: {}'.format(ex_name),
+        )
+
+    requirements = EX_REQUIREMENTS.get(ex_name)
+    console_scripts = EX_CONSOLE_SCRIPTS.get(ex_name)
+
+    if requirements:
+        REQUIREMENTS.extend(requirements)
+
+    if console_scripts:
+        CONSOLE_SCRIPTS.extend(console_scripts)
+
+
+def prepare_data():
+    if SIMPLE_INSTALL:
+        return
+
+    if EXTENSIONS_TO_INSTALL:
+        extensions_to_install = [
+            n.strip()
+            for n in EXTENSIONS_TO_INSTALL.split(',')
+            if n.strip()
+        ]
+        for ex_name in extensions_to_install:
+            prepare_extension_data(ex_name)
+    else:
+        for ex_name in EX_REQUIREMENTS:
+            prepare_extension_data(ex_name)
 
 
 def install_package():
@@ -33,10 +103,7 @@ def install_package():
         platforms='any',
         install_requires=REQUIREMENTS,
         entry_points={
-            'console_scripts': (
-                'seismograph = seismograph.__main__:main',
-                'seismograph.mock_server = seismograph.ext.mock_server.__main__:main',
-            ),
+            'console_scripts': CONSOLE_SCRIPTS,
         },
         test_suite='tests',
         classifiers=(
@@ -55,4 +122,5 @@ def install_package():
 
 
 if __name__ == '__main__':
+    prepare_data()
     install_package()

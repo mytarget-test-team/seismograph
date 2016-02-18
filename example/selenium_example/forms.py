@@ -15,16 +15,17 @@ class SearchForm(selenium.forms.UIForm):
     )
 
     submit = selenium.PageElement(
-        selenium.query('button', name='btnG'),
-        call=lambda b: b.click(),
+        selenium.query(
+            selenium.query.BUTTON,
+            name='btnG',
+        ),
+        call=lambda we: we.click(),
     )
 
 
 class SearchPage(selenium.Page):
 
-    search = selenium.PageElement(
-        SearchForm,
-    )
+    search = selenium.PageElement(SearchForm)
 
 
 @suite.register

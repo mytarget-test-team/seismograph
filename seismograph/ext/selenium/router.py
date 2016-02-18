@@ -44,7 +44,7 @@ class Router(object):
                 'Can not go to the URL. Project URL is not set to config.',
             )
 
-        self.__proxy.driver.get(
+        self.__proxy.browser.get(
             '{}{}'.format(
                 self.__proxy.config.PROJECT_URL.strip('/'), path,
             ),

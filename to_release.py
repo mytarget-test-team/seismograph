@@ -105,8 +105,8 @@ def rebuild_docs():
 def main():
     check_git_branch()
     delete_old_files()
-    run_tests()
-    run_tests('3.4')
+    run_tests(pyv='2.7')
+    run_tests(pyv='3.4')
     rebuild_docs()
     upload_to_pip()
 

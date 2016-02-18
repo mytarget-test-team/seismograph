@@ -66,7 +66,7 @@ class GroupContainer(object):
 
     def __call__(self, group):
         return self.__group_class(
-            group.driver,
+            group.browser,
             parent=group,
             name=self.__name,
             weight=self.__weight,
@@ -172,8 +172,8 @@ class FieldsGroup(with_metaclass(FieldsGroupMeta, SimpleFieldInterface)):
         return None
 
     @property
-    def driver(self):
-        return self.__proxy.driver
+    def browser(self):
+        return self.__proxy.browser
 
     @property
     def area(self):

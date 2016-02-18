@@ -6,6 +6,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
 from ...utils.common import waiting_for
+from .exceptions import PollingTimeoutExceeded
 from .utils import change_name_from_python_to_html
 
 
@@ -114,8 +115,13 @@ def execute(proxy, css, list_result=False, disable_polling=False):
 
     if disable_polling:
         with proxy.disable_polling():
-            method = get_execute_method(proxy, list_result)
-            result = method(css)
+            wait_timeout = proxy.config.WAIT_TIMEOUT
+            proxy.config.WAIT_TIMEOUT = 0
+            try:
+                method = get_execute_method(proxy, list_result)
+                result = method(css)
+            finally:
+                proxy.config.WAIT_TIMEOUT = wait_timeout
         return result
 
     method = get_execute_method(proxy, list_result)
@@ -135,15 +141,10 @@ class QueryResult(object):
 
     def __getattr__(self, item):
         if not self.__we:
-            self.__we = self.first()
+           self.first()
         return getattr(self.__we, item)
 
-    @property
-    def we(self):
-        return self.__we
-
-    @property
-    def css(self):
+    def __css_string__(self):
         return self.__css
 
     @property
@@ -163,15 +164,16 @@ class QueryResult(object):
         except WebDriverException:
             return False
 
-    def wait(self, timeout=None):
+    def wait(self, timeout=None, delay=None):
         """
-        Wait first element of query while timeout doesn't exceeded
+        Wait for first element of query while timeout doesn't exceeded
 
         :param timeout: time for wait in seconds
         """
         return waiting_for(
             lambda: self.exist,
-            exc_cls=NoSuchElementException,
+            exc_cls=PollingTimeoutExceeded,
+            delay=delay or self.__proxy.config.POLLING_DELAY,
             timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
             message='Could not wait web element by css "{}"'.format(self.__css),
         )
@@ -187,7 +189,7 @@ class QueryResult(object):
             return self.__we
         except IndexError:
             raise NoSuchElementException(
-                'Result does not have element with index "{}". Css query: "{}".'.format(
+                'Result does not have element by index "{}". Css query: "{}".'.format(
                     index, self.__css,
                 ),
             )
@@ -203,8 +205,7 @@ class QueryResult(object):
         """
         Get all elements of query
         """
-        self.__we = execute(self.__proxy, self.__css, list_result=True)
-        return self.__we
+        return execute(self.__proxy, self.__css, list_result=True)
 
 
 class Query(object):
@@ -263,6 +264,10 @@ class Query(object):
     ANY = '*'
 
     contains = Contains
+
+    @staticmethod
+    def css_string(query_result):
+        return query_result.__css_string__()
 
     def __call__(self, tag, **selector):
         return QueryObject(tag, **selector)

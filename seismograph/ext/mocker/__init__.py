@@ -10,8 +10,8 @@ from .json_api_mock import JsonApiMockServer
 from ...exceptions import EmergencyStop
 
 
-EX_NAME = 'mock_server'
-CONFIG_KEY = 'MOCK_SERVER_EX'
+EX_NAME = 'mocker'
+CONFIG_KEY = 'MOCKER_EX'
 DEFAULT_SERVER_TYPE = 'json_api'
 
 SERVER_TYPES = {

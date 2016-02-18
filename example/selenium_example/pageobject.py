@@ -15,19 +15,25 @@ class SearchField(selenium.PageItem):
 class IndexPage(selenium.Page):
 
     search_field = selenium.PageElement(
-        selenium.query('input', name='q'),
+        selenium.query(
+            selenium.query.INPUT,
+            name='q',
+        ),
         we_class=SearchField,
     )
 
     search_button = selenium.PageElement(
-        selenium.query('button', name='btnG'),
+        selenium.query(
+            selenium.query.BUTTON,
+            name='btnG',
+        ),
     )
 
 
 selenium.add_route('/', IndexPage)
 
 
-@suite.register(skip='to make fix')
+@suite.register
 def test_google_search(case, browser):
     page = browser.router.get('/')
     page.search_field.fill('python')

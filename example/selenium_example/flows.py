@@ -16,17 +16,13 @@ class TestGoogleSearch(selenium.Case):
 
     def test_search(self, browser, ctx):
         browser.router.go_to('/')
-
-        search = browser.input(name='q').first()
-        search.set(ctx.text)
-
-        button = browser.button(name='btnG').first()
-        button.click()
+        browser.input(name='q').set(ctx.text)
+        browser.button(name='btnG').click()
 
         self.assertion.text_exist(browser, ctx.text)
 
 
-@suite.register(skip='to make flow')
+@suite.register
 class TestStepsForSelenium(selenium.Case):
 
     __flows__ = (
@@ -39,10 +35,8 @@ class TestStepsForSelenium(selenium.Case):
 
     @step(2, 'To fill search form')
     def fill_search_form(self, browser, ctx):
-        search = browser.input(name='q').first()
-        search.set(ctx.text)
-        button = browser.button(name='btnG').first()
-        button.click()
+        browser.input(name='q').set(ctx.text)
+        browser.button(name='btnG').click()
 
     @step(3, 'To check result')
     def check_result(self, browser, ctx):
