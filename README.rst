@@ -31,9 +31,19 @@ Features
 Installation
 ------------
 
-::
+Full installation::
 
     pip install seismograph
+
+
+Simple install(for unit testing, without extensions)::
+
+    SIMPLE_SEISMOGRAPH=true pip install seismograph
+
+
+With choice extensions::
+
+    SEISMOGRAPH_EXTENSIONS='selenium, mocker' pip install seismograph
 
 
 Quick start
