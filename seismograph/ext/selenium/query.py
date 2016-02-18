@@ -132,7 +132,6 @@ class QueryResult(object):
 
     def __init__(self, proxy, css):
         self.__we = None
-        self.__we_list = None
 
         self.__css = css
         self.__proxy = proxy
@@ -141,29 +140,12 @@ class QueryResult(object):
         return 'QueryResult({}): {}'.format(self.__css, repr(self.__proxy))
 
     def __getattr__(self, item):
-        return getattr(self.we, item)
+        if not self.__we:
+           self.first()
+        return getattr(self.__we, item)
 
     def __css_string__(self):
         return self.__css
-
-    @property
-    def we(self):
-        """
-        First element by query
-        """
-        if not self.__we:
-            self.__we = self.first()
-        return self.__we
-
-    @property
-    def list(self):
-        """
-        List of elements by query
-        :return:
-        """
-        if not self.__we_list:
-            self.__we_list = self.all()
-        return self.__we_list
 
     @property
     def exist(self):
@@ -182,15 +164,16 @@ class QueryResult(object):
         except WebDriverException:
             return False
 
-    def wait(self, timeout=None):
+    def wait(self, timeout=None, delay=None):
         """
-        Wait first element of query while timeout doesn't exceeded
+        Wait for first element of query while timeout doesn't exceeded
 
         :param timeout: time for wait in seconds
         """
         return waiting_for(
             lambda: self.exist,
             exc_cls=PollingTimeoutExceeded,
+            delay=delay or self.__proxy.config.POLLING_DELAY,
             timeout=timeout or self.__proxy.config.POLLING_TIMEOUT,
             message='Could not wait web element by css "{}"'.format(self.__css),
         )
@@ -222,8 +205,7 @@ class QueryResult(object):
         """
         Get all elements of query
         """
-        self.__we_list = execute(self.__proxy, self.__css, list_result=True)
-        return self.__we_list
+        return execute(self.__proxy, self.__css, list_result=True)
 
 
 class Query(object):

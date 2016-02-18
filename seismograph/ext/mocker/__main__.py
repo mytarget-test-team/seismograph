@@ -81,7 +81,7 @@ def main():
         from gevent.monkey import patch_all
         patch_all(thread=False)
 
-    from seismograph.ext.mock_server import SERVER_TYPES
+    from seismograph.ext.mocker import SERVER_TYPES
 
     try:
         mock_server_class = SERVER_TYPES[options.SERVER_TYPE]
