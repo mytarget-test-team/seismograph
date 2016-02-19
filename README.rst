@@ -5,11 +5,10 @@ Seismograph
 About
 -----
 
-This is framework for functional test development.
-Who is needing to him?
-The target audience is test developers.
-You can use the framework for unit testing and how you wish but him made
-for functional testing web servers and web applications.
+This is framework for test development.
+It makes life so easy because have flexible structure.
+If you are needing for extension which is not, that you can make
+issue on github or implemented it and send merge request.
 
 
 Features
