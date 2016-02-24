@@ -8,12 +8,15 @@ SEISMOGRAPH_EXTENSIONS - names of extensions separated by commas
 """
 
 import os
+import re
 
 from setuptools import setup
 from setuptools import find_packages
 
 
-__version__ = '0.2.0'
+with open('seismograph/__init__.py') as _:
+    __version__ = re.search(r"__version__\s*=\s*'(.*)'", _.read(), re.M).group(1)
+assert __version__
 
 
 EXTENSIONS = [
