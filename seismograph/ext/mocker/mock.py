@@ -6,6 +6,13 @@ from contextlib import contextmanager
 from flask import Response
 from flask import abort as _abort
 
+from ...utils import pyv
+
+if pyv.IS_PYTHON_2:
+    import urlparse
+else:
+    from urllib import parse
+
 
 DEFAULT_STATUS_CODE = 200
 DEFAULT_HTTP_METHOD = 'GET'
@@ -114,6 +121,13 @@ class BaseMock(object):
 
         self._body = u''.join(body)
 
+    @classmethod
+    def from_file(cls, file_path):
+        with open(file_path, 'r') as fp:
+            mock = cls(file_path, None)
+            on_file(mock, fp)
+        return mock
+
     @property
     def body(self):
         return self._body
@@ -129,6 +143,16 @@ class BaseMock(object):
     @property
     def url_rule(self):
         return self._url_rule
+
+    @property
+    def params(self):
+        if pyv.IS_PYTHON_2:
+            return urlparse.parse_qs(
+                urlparse.urlparse(self.url_rule).query,
+            )
+        return parse.parse_qs(
+            parse.urlparse(self._url_rule).query,
+        )
 
     @property
     def status_code(self):

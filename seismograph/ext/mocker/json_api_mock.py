@@ -20,6 +20,10 @@ class JsonMock(BaseMock):
     def body(self):
         return json.dumps(self._body)
 
+    @property
+    def json(self):
+        return self._body
+
     def __on_file__(self, fp):
         super(JsonMock, self).__on_file__(fp)
 
