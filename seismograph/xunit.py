@@ -111,7 +111,7 @@ class XUnitData(object):
 def dict_to_tag_attributes(dct):
     string = u' ' + u' '.join(
         (
-            u'{}="{}"'.format(k, screening_line(str(v)))
+            u'{}="{}"'.format(k, screening_line(pyv.unicode(v)))
             for k, v in dct.items() if v is not None
         )
     )
