@@ -1,7 +1,7 @@
 Mock file
 =========
 
-Mock file have own format for writing mocks and should have extension ".resp" or ".json".
+Mock file has own format for writing mocks and has to extension ".resp" or ".json".
 This is for example.
 
 
@@ -10,7 +10,7 @@ This is for example.
     # This is comment line
     #
     # Order of lines is not important in reality
-    # but body should be in the end of file
+    # but body has to be in the end of file
     #
     # Meta data for response
     # URL is url rule from flask lib
@@ -22,7 +22,7 @@ This is for example.
     #
     Server: nginx/1.2.1
     #
-    # Remind, body should be in the end
+    # Remind, body has to be in the end
     #
     {
         "hello": "hello world!",

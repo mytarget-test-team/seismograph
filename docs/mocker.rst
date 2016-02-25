@@ -4,9 +4,9 @@ Mock server
 .. toctree::
     :maxdepth: 2
 
-   mock_server_usage
-   mock_server_mock_file
-   mock_server_config
+   mocker_usage
+   mocker_mock_file
+   mocker_config
 
 
 Mock server extension based on flask lib. It can to work separately of test program as UWSGI server.

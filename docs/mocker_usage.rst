@@ -4,8 +4,8 @@ Usage as extension for runnable
 Start and stop server
 ---------------------
 
-You can start server from runnable object, but need to remember that extension have
-**single instance** in program context. The best way is start and stop server inside program object.
+You can start server from runnable object, but need to remember that extension has
+**single instance** in program context. The best way is start and stop server on program object.
 
 
 .. code-block:: python
@@ -28,7 +28,7 @@ You can start server from runnable object, but need to remember that extension h
 
 
 
-Mock server instance have self client
+Mock server instance has self client
 
 
 .. code-block:: python
@@ -40,7 +40,7 @@ Mock server instance have self client
 Create mock object
 ------------------
 
-You can to create mock and add him. Mock can be added to running server.
+You can to create mock and add it to server. Mock can be added to running server.
 
 
 .. code-block:: python
@@ -71,6 +71,6 @@ Also, you can rewrite mock on the fly
         # do something
 
 
-Old mock will be restored after exit from with block.
+Old mock will restored after exit from with block.
 If url rules is equals and http methods is equals then mocks is equals.
-If old mock will not be founded by the criterias that None be returned.
+If old mock is not found by the criterias then None be returned.

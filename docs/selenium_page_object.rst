@@ -7,7 +7,7 @@ Page object is common pattern for UI tests development. We offer our implementat
 Simple example
 --------------
 
-This code for demonstration simple usage of page object
+This code for demonstration of simple usage
 
 
 .. code-block:: python
@@ -21,12 +21,18 @@ This code for demonstration simple usage of page object
 
     class GoogleSearchPage(selenium.Page):
 
-        search_input = selenium.PageObject(
-            selenium.query('input', name='q'),
+        search_input = selenium.PageElement(
+            selenium.query(
+                selenium.query.INPUT,
+                name='q',
+            ),
         )
 
-        submit_button = selenium.PageObject(
-            selnium.query('button', name='btnG'),
+        submit_button = selenium.PageElement(
+            selenium.query(
+                selenium.query.INPUT,
+                name='btnG',
+            ),
         )
 
 
@@ -43,11 +49,11 @@ This code for demonstration simple usage of page object
         seismograph.main()
 
 
-Page object result
-------------------
+Page element result
+-------------------
 
-Page object do return first element of query.
-If you want to do it otherwise then should use additional params.
+Page element does return first element of query.
+If you want to do it otherwise then should to use additional params.
 
 
 .. code-block:: python
@@ -58,28 +64,37 @@ If you want to do it otherwise then should use additional params.
     class GoogleSearchPage(selenium.Page):
 
         # get element of query by index
-        some_element = selenium.PageObject(
-            selenium.query('link', _class='some_class'),
+        some_element = selenium.PageElement(
+            selenium.query(
+                selenium.query.A,
+                _class='some_class',
+            ),
             index=0,
         )
 
-        # get list of query
-        some_elements = selenium.PageObject(
-            selenium.query('li', id='some_id'),
+        # get list all elements of query
+        some_elements = selenium.PageElement(
+            selenium.query(
+                selenium.query.LI,
+                id='some_id',
+            ),
             is_list=True,
         )
 
-        # set timeout for waiting for first element of query
-        another_some_element = selenium.PageObject(
-            selenium.query('link', _class='some_class'),
+        # set timeout to wait for first element of query
+        another_some_element = selenium.PageElement(
+            selenium.query(
+                selenium.query.A,
+                _class='some_class',
+            ),
             wait_timeout=5,
         )
 
 
-How to create action for result of query
-----------------------------------------
+How to make element of result as callable
+-----------------------------------------
 
-If you want to do result as function, should to wrap him for that.
+If you want to create call method for result, should to use "call" keyword argument for that.
 
 
 .. code-block:: python
@@ -89,13 +104,19 @@ If you want to do result as function, should to wrap him for that.
 
     class GoogleSearchPage(selenium.Page):
 
-        search_input = selenium.PageObject(
-            selenium.query('input', name='q'),
+        search_input = selenium.PageElement(
+            selenium.query(
+                selenium.query.INPUT,
+                name='q',
+            ),
         )
 
-        submit = selenium.PageObject(
-            selenium.query('button', name='btnG'),
-            action=lambda button: button.click(),
+        submit = selenium.PageElement(
+            selenium.query(
+                selenium.query.BUTTON,
+                name='btnG',
+            ),
+            call=lambda we: we.click(),
         )
 
 
@@ -107,10 +128,10 @@ It's working so
 >>> page.submit()
 
 
-How to create proxy for result
-------------------------------
+How to create web element class
+-------------------------------
 
-If you want to wrap result of query then use proxy for that.
+If you want to wrap result then use decorator class for that.
 
 
 .. code-block:: python
@@ -118,21 +139,27 @@ If you want to wrap result of query then use proxy for that.
     from seismograph import selenium
 
 
-    class SubmitButtonProxy(selenium.PageObjectProxy):
+    class SubmitButton(selenium.PageItem):
 
         def do_search(self):
-            self._wrapped.click()
+            self.we.click()
 
 
     class GoogleSearchPage(selenium.Page):
 
-        search_input = selenium.PageObject(
-            selenium.query('input', name='q'),
+        search_input = selenium.PageElement(
+            selenium.query(
+                selenium.query.INPUT,
+                name='q',
+            ),
         )
 
-        submit_button = selenium.PageObject(
-            selenium.query('button', name='btnG'),
-            proxy=SubmitButtonProxy,
+        submit_button = selenium.PageElement(
+            selenium.query(
+                selenium.query.BUTTON,
+                name='btnG',
+            ),
+            we_class=SubmitButton,
         )
 
 
@@ -144,10 +171,59 @@ It's working so
 >>> page.submit_button.do_search()
 
 
+How to restrict area of DOM tree for query
+------------------------------------------
+
+You can to restrict area of DOM tree for search elements on page.
+
+
+.. code-block:: python
+
+    from seismograph import selenium
+
+
+    class MyPage(selenium.Page):
+
+        __area__ = selenium.query(
+            selenium.query.DIV,
+            _class='some-class',
+        )
+
+
 Routing
 -------
 
-Page can be related to URL ule. URL rule is regexp pattern.
+Page class can has url path for open page.
+
+
+.. code-block:: python
+
+    from seismograph import selenium
+
+
+    class MyPage(selenium.Page):
+
+        __url_path__ = '/path/to/page'
+
+
+Url path can has params for format string
+
+
+.. code-block:: python
+
+    from seismograph import selenium
+
+
+    class MyPage(selenium.Page):
+
+        __url_path__ = '/path/to/page/{id}'
+
+
+    page = MyPage(browser)
+    page.open(id=1)
+
+
+Page class can to be related to URL ule. URL rule is regexp pattern.
 
 
 .. code-block:: python

@@ -32,8 +32,8 @@ Simple example
 How to use setup and teardown callbacks
 ---------------------------------------
 
-Program class have setup teardown callbacks also like suite and case.
-You can use their so...
+Program class has setup teardown callbacks like also suite and case.
+You can to use it so...
 
 .. code-block:: python
 
@@ -87,10 +87,10 @@ How to use extensions
     class ExampleProgram(seismograph.Program):
 
         def setup(self):
-            self.ext('mock_server').start()
+            self.ext('mocker').start()
 
         def teardown(self):
-            self.ext('mock_server').stop()
+            self.ext('mocker').stop()
 
 
     suite = seismograph.Suite(__name__)

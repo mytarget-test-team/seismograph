@@ -1,7 +1,7 @@
 Simple usage
 ============
 
-You can create you test script in context selenium extension. Browser will be started and stopped automatically.
+You can to create you test script in context selenium extension. Browser will started and stopped by automatically.
 
 
 .. code-block:: python

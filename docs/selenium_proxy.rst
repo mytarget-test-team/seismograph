@@ -2,16 +2,15 @@ Proxy
 =====
 
 Web driver, web element and web element list is wrapped to proxy object.
-It implemented for expand logic and get control over him.
-You can get driver from any proxy object, he is available as **driver** property. It be driver proxy always.
-Origin driver not available for public api but he available as **_wrapped** property.
-Proxy objects is adapter for original also.
+This implemented for expand logic and get control over it.
+You can get driver from any proxy object, it is available as **driver** property. It is driver proxy always.
+Origin driver not available for public api but it available as **_wrapped** property.
 
 
 Web driver proxy
 ----------------
 
-Where is him? Let get look...
+Where is it? Let get look...
 
 
 .. code-block:: python
@@ -32,7 +31,7 @@ Where is him? Let get look...
 Web element proxy
 -----------------
 
-Where is him?
+Where is it?
 
 
 .. code-block:: python
@@ -52,7 +51,7 @@ Where is him?
         # it's WebElementProxy in reality
 
 
-You can get tag attribute like
+You can to get tag attribute like
 
 
 .. code-block:: python
@@ -82,7 +81,7 @@ Also, you can working with css property
 Web element list proxy
 ----------------------
 
-Web element list like base list in python but he have additional methods.
+Web element list like base list in python but it has additional methods.
 Let look at examples...
 
 
@@ -112,7 +111,7 @@ Let get element by..
         some_element = some_elements.get_by(text='some text')
 
 
-If element will not found then **None** be returned
+If element will doesn't found then **None** will returned
 
 
 Let apply filter to list...

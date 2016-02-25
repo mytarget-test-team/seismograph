@@ -1,7 +1,7 @@
 Case
 ====
 
-Selenium case give away browser for test method and started on setup and stopped on teardown him.
+Selenium case give away browser for test method and started on setup and stopped on teardown it.
 If you use selenium case or suite that you can not require extension.
 
 
@@ -48,7 +48,7 @@ If you use selenium case or suite that you can not require extension.
 
 
 
-if you want to get browser for other methods that you can use decorator for that.
+if you want to get browser for other methods that you can to use "require_browser" decorator for that.
 
 
 .. code-block:: python
@@ -77,11 +77,29 @@ if you want to get browser for other methods that you can use decorator for that
         seismograph.main()
 
 
+That perhaps shut off
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    @suite.register
+    class CaseExample(selenium.Case):
+
+        __require_browser__ = False
+
+        def test(self):
+            pass
+
+
 How to use flows
 ----------------
 
-Browser will be injected like first argument after case instance always.
-You can get context as second argument.
+Browser will injected like first argument after case instance always.
+You can to get context as second argument.
 
 
 .. code-block:: python
@@ -110,3 +128,57 @@ You can get context as second argument.
 
     if __name__ == '__main__':
         seismograph.main()
+
+
+How to set page class to case
+-----------------------------
+
+Page class can be related to case.
+
+
+.. code-block:: python
+
+    from seismograph.ext import selenium
+
+
+    class ExamplePage(selenium.Page):
+        pass
+
+
+    class ExampleCase(selenium.Case):
+
+        __page_class__ = ExamplePage
+
+        def test(self):
+            self.page
+
+
+How to checkout page
+--------------------
+
+You can to switch page on test script. Case class implemented "checkout_page" method for that.
+
+
+.. code-block:: python
+
+    from seismograph.ext import selenium
+
+
+    class ExamplePage(selenium.Page):
+        pass
+
+
+    class ExamplePage2(selenium.Page):
+        pass
+
+
+    class ExampleCase(selenium.Case):
+
+        __page_class__ = ExamplePage
+
+        def test(self):
+            self.page
+
+            self.checkout_page(ExamplePage2)
+
+            self.page

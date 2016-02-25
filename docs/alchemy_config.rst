@@ -8,7 +8,7 @@ Common settings
 ---------------
 
 +-----------------+----------------------------------------------------+
-| **PROTOCOL**    | This is protocol for dns URL to database.          |
+| **PROTOCOL**    | This is protocol to dns URL.                       |
 |                 | For example: "mysql+mysqlconnector"                |
 +-----------------+----------------------------------------------------+
 | **HOST**        | Database host                                      |

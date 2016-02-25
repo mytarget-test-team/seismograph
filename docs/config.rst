@@ -1,8 +1,8 @@
 Config
 ======
 
-Program have config object he always available for all runnable objects after mounting to parent as **config property**.
-You can expand him with help python module. Use environment variable **SEISMOGRAPH_CONF** for that.
+Program has config object who always available for all runnable objects as **config property** after mounting to parent.
+You can to expand it with help python module. Use environment variable **SEISMOGRAPH_CONF** for that.
 Path can be import path and absolute path to python file.
 
 
@@ -40,7 +40,7 @@ Config path can be set with creating instance of program.
     program = seismograph.Program(config_path='project.etc.base')
 
 
-If you will be use config path with creating instance of program that config path be default value for environment variable.
+If you will use config path with creating instance of program that config path is default value of environment variable.
 In this way config path is path by default for your program.
 
 
@@ -56,7 +56,7 @@ Available sections
 | **ALCHEMY_EX**       | dict config for alchemy extension         |
 |                      | `details... <alchemy_config.html>`_       |
 +----------------------+-------------------------------------------+
-| **MOCK_SERVER_EX**   | dict config for mock server extension     |
+| **MOCKER_EX**        | dict config for mocker extension          |
 |                      | `details... <mock_server_config.html>`_   |
 +----------------------+-------------------------------------------+
 
@@ -65,7 +65,7 @@ How can i add options to command line?
 --------------------------------------
 
 
-Options parser not store in program context but you can get him with help layer of program.
+Options parser doesn't store in program context but you can to get it with help layer of program.
 
 
 .. code-block:: python
