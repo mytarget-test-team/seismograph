@@ -305,6 +305,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
     __create_reason__ = True
     __case_class__ = case.Case
     __case_group_class__ = None
+    __case_box_class__ = case.CaseBox
 
     #
     # Base components of runnable object
@@ -420,7 +421,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     cls,
                     config=self.config,
                     method_name=test_name,
-                    box_class=case.CaseBox,
+                    box_class=self.__case_box_class__,
                 ),
             )
         else:
@@ -429,7 +430,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     loader.load_tests_from_case(
                         cls,
                         config=self.config,
-                        box_class=case.CaseBox,
+                        box_class=self.__case_box_class__,
                     ),
                 )
 
