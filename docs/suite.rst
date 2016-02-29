@@ -21,7 +21,7 @@ Suite can be called by namespaces, however, how you wish...
 How to register test case
 -------------------------
 
-Case should be related to suite if you want to run him.
+Case should be related to suite if you want to run it.
 This is doing so...
 
 
@@ -45,7 +45,7 @@ This is doing so...
 How to use setup and teardown callbacks
 ---------------------------------------
 
-Suite can have many setup and teardown callbacks.
+Suite can has many setup and teardown callbacks.
 Let look at realization...
 
 
@@ -88,7 +88,7 @@ Let look at realization...
 How to require extensions
 -------------------------
 
-Seismograph have extensions for test development. It's our feature, we are differ of other by that.
+Seismograph has extensions for test development. It's our feature, we are differ of other by that.
 
 
 .. code-block:: python
@@ -155,7 +155,7 @@ How can i add info to reason storage?
 -------------------------------------
 
 This is reason of crash by any problem.
-She will be save to xunit report and write to console.
+It will save to xunit report and write to console.
 
 
 .. code-block:: python

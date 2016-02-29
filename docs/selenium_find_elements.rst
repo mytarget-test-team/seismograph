@@ -1,15 +1,15 @@
 Find elements
 =============
 
-You can use origin api from selenium lib but we offer do it easy.
+You can to use origin api from selenium lib but we offer to do it easy.
 
 
 Easy query by css selector
 --------------------------
 
-You can use tag name as method name and tag attributes as keyword arguments.
-If you want to use class attribute or id or another attributes which have conflict
-with python global names so you can use "_" as prefix or suffix for that.
+You can to use tag name as method name and tag attributes as keyword arguments.
+If you want to use class attribute or id or another attributes which has conflict
+with python's global names so you can to use "_" as prefix or suffix for that.
 
 
 .. code-block:: python
@@ -38,7 +38,7 @@ with python global names so you can use "_" as prefix or suffix for that.
 Query object
 ------------
 
-You can create query separately of browser and to get result by request of.
+You can to create query separately of browser and to get result by request of.
 
 
 .. code-block:: python
@@ -51,7 +51,7 @@ You can create query separately of browser and to get result by request of.
 
 
     def get_some_element(browser):
-        query = selenium.query('div', _class='some_class')
+        query = selenium.query(selenium.query.DIV, _class='some_class')
         result = query(browser)
         result.wait()
         return result.first()
@@ -66,7 +66,7 @@ You can create query separately of browser and to get result by request of.
 Contains marker
 ---------------
 
-If you want create css query with contains class or some other then you can use contains marker.
+If you want to create css query with contains class or some other then you can to use contains marker.
 
 
 .. code-block:: python
@@ -90,7 +90,7 @@ If you want create css query with contains class or some other then you can use 
 Chain of query
 --------------
 
-If you want follow into DOM tree then you can do it like
+If you want to follow into DOM tree then you can to do it like
 
 
 .. code-block:: python

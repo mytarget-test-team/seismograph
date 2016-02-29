@@ -1,7 +1,7 @@
 Forms
 =====
 
-You can use declarative approach for description UI forms.
+You can to use declarative approach for description UI forms.
 
 
 Simple UI form
@@ -22,9 +22,12 @@ Simple UI form
             selector=forms.fields.selector(id='some_id'),
         )
 
-        submit = selenium.PageObject(
-            selenium.query('button', name='some_button'),
-            action=lambda button: button.click(),
+        submit = selenium.PageElement(
+            selenium.query(
+                selenium.query.BUTTON,
+                name='some_button',
+            ),
+            call=lambda we: we.click(),
         )
 
 
@@ -67,7 +70,7 @@ Also, value can be set for instance of field
     form.submit()
 
 
-if you want save default values for fields after changed that you can use **preserve_original** function as context manager
+if you want to save default values for fields after changed that you can use **preserve_original** function as context manager
 
 
 .. code-block:: python
@@ -81,7 +84,7 @@ if you want save default values for fields after changed that you can use **pres
         form.submit()
 
 
-Field can be fill by self method. Value is not required param.
+Field can be filling by self method. Value is not required param.
 
 
 .. code-block:: python
@@ -89,13 +92,13 @@ Field can be fill by self method. Value is not required param.
     form.some_field.fill('some value')
 
 
-Default value not got change
+Default value doesn't got change
 
 
-Mount form to page as page object
----------------------------------
+Mount form to page as page element
+----------------------------------
 
-You can use form as page object.
+You can to use form as page element.
 
 
 .. code-block:: python
@@ -103,9 +106,7 @@ You can use form as page object.
 
     class ExamplePage(selenium.Page):
 
-        example_form = selenium.PageObject(
-            ExampleForm,
-        )
+        example_form = selenium.PageElement(ExampleForm)
 
 
 It's working so
@@ -119,7 +120,7 @@ It's working so
 Required flag
 -------------
 
-You can get marker for field about as required for fill.
+You can to get marker for field about as required for fill.
 
 
 .. code-block:: python
@@ -137,7 +138,7 @@ You can get marker for field about as required for fill.
 Values for validation field
 ---------------------------
 
-When you want to validate form then you can use different values for that.
+When you want to validate form that you can to use different values for that.
 
 
 .. code-block:: python
@@ -155,7 +156,7 @@ When you want to validate form then you can use different values for that.
 Iterators
 ---------
 
-You can iterated by fields.
+You can to iterate by fields.
 
 
 .. code-block:: python
@@ -173,7 +174,7 @@ You can iterated by fields.
         # do something
 
 
-Also, you can use "exclude" keyword argument for iterator.
+Also, you can to use "exclude" keyword argument for iterator.
 
 
 .. code-block:: python
@@ -185,7 +186,7 @@ Also, you can use "exclude" keyword argument for iterator.
 How to do remember for fill field
 ---------------------------------
 
-Form does remember fill field and you can find usage for that.
+Form does remember fill field and you can to find usage for that.
 
 
 .. code-block:: python

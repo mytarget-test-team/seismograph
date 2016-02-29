@@ -7,7 +7,7 @@ Yuo can tune global context, within a reasonable of course :)
 Layers matching
 ---------------
 
-This is way to create relationship layer to class and him heirs.
+This is way to creating relationships of layer to class and it heirs.
 
 
 .. code-block:: python
