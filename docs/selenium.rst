@@ -33,7 +33,7 @@ If you make configure for screenshots that it will saved by any problem.
 * Polling
 
 Is know, selenium work unstable when we are testing ajax interfaces, it's exactly. We need to waiting for elements.
-Polling give a chance to work with selenium objects and not think about this.
+Polling give a chance to work with selenium objects (web element, web driver) and not think about this.
 All methods will wait for correct execution while timeout doesn't exceeded.
 
 * Easy query
@@ -56,4 +56,4 @@ Declarative approach to description UI forms. It can be related to page object.
 
 * Routing
 
-Pages can be related to url rule.
+Pages can be related to url rule for auto creating from browser.router and can has url path for open.

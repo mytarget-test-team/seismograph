@@ -1,7 +1,7 @@
 Mock file
 =========
 
-Mock file has own format for writing mocks and has to extension ".resp" or ".json".
+Mock file has own format for creating mocks and has extension ".resp" or ".json".
 This is for example.
 
 

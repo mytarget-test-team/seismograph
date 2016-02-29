@@ -12,7 +12,7 @@ Alchemy
 
 Alchemy extension is wrapper over *sqlalchemy* lib.
 This make for work with database and not think about session, engine and etc...
-All what you need is configure extension and working with it.
+All what you need is configure extension and work with it.
 See `config documentation <alchemy_config.html>`_ for that.
 
 You can to use db connection from *sqlalchemy* engine.

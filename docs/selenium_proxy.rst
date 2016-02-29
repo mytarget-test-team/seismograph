@@ -3,8 +3,8 @@ Proxy
 
 Web driver, web element and web element list is wrapped to proxy object.
 This implemented for expand logic and get control over it.
-You can get driver from any proxy object, it is available as **driver** property. It is driver proxy always.
-Origin driver not available for public api but it available as **_wrapped** property.
+You can to get driver from any proxy object, it is available as **driver** property. It is driver proxy always.
+Origin driver isn't available for public api but it available as **_wrapped** property.
 
 
 Web driver proxy

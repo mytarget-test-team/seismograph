@@ -1,7 +1,7 @@
 Program
 =======
 
-This is only one entry point to test program.
+This is only one entry point to a test program.
 
 
 Simple example
@@ -34,6 +34,7 @@ How to use setup and teardown callbacks
 
 Program class has setup teardown callbacks like also suite and case.
 You can to use it so...
+
 
 .. code-block:: python
 

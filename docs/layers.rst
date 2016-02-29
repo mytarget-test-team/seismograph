@@ -1,8 +1,8 @@
 Layers
 ======
 
-Any of runnable objects can get layers for expanded logic on different levels.
-Layers is chain of callbacks. Context object call to chain of layers, he is responsible for that.
+Any of runnable objects can has layers for expanded logic on different levels.
+Layers is chain of callbacks. Context object call to chain of layers, it is responsible for that.
 
 
 Program layer

@@ -4,8 +4,8 @@ Usage as extension for runnable
 Start and stop server
 ---------------------
 
-You can start server from runnable object, but need to remember that extension has
-**single instance** in program context. The best way is start and stop server on program object.
+You can start server from runnable object, but need to remember what extension has
+**single instance** in program context. The best way is start and stop server from program instance.
 
 
 .. code-block:: python
@@ -17,23 +17,23 @@ You can start server from runnable object, but need to remember that extension h
 
 
     @program.add_setup
-    def start_mock_server():
-        mock_server = program.ext('mock_server')
-        mock_server.start()
+    def start_mocker():
+        mocker = program.ext('mocker')
+        mocker.start()
 
     @program.add_teardown
-    def stop_mock_server():
-        mock_server = program.ext('mock_server')
-        mock_server.stop()
+    def stop_mocker():
+        mocker = program.ext('mocker')
+        mocker.stop()
 
 
 
-Mock server instance has self client
+Mocker instance has self client
 
 
 .. code-block:: python
 
-    resp = mock_server.client.get('/some/path/')
+    resp = mocker.client.get('/some/path/')
     # this is response object from requests lib
 
 
@@ -45,7 +45,7 @@ You can to create mock and add it to server. Mock can be added to running server
 
 .. code-block:: python
 
-    from seismograph.ext.mock_server import JsonMock
+    from seismograph.ext.mocker import JsonMock
 
 
      mock = JsonMock(
@@ -59,18 +59,18 @@ You can to create mock and add it to server. Mock can be added to running server
         },
     )
 
-    mock_server.add_mock(mock)
+    mocker.add_mock(mock)
 
 
-Also, you can rewrite mock on the fly
+Also, you can to rewrite mock on the fly
 
 
 .. code-block:: python
 
-    with mock_server.mock(mock) as old_mock:
+    with mocker.mock(mock) as old_mock:
         # do something
 
 
-Old mock will restored after exit from with block.
+Old mock will be restored after exit from with block.
 If url rules is equals and http methods is equals then mocks is equals.
 If old mock is not found by the criterias then None be returned.

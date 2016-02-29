@@ -1,7 +1,7 @@
 Case
 ====
 
-Selenium case give away browser for test method and started on setup and stopped on teardown it.
+Selenium case give away browser to test method and started on setup and stopped on teardown it.
 If you use selenium case or suite that you can not require extension.
 
 
@@ -98,7 +98,7 @@ That perhaps shut off
 How to use flows
 ----------------
 
-Browser will injected like first argument after case instance always.
+Browser will be injecting like first argument after case instance always.
 You can to get context as second argument.
 
 

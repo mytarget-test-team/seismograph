@@ -2,13 +2,13 @@ Case
 ====
 
 Case class is abstraction platform for your test script.
-It can be as function for usability only. So, example usage is below.
+It can to be as function for usability only. So, example usage is below.
 
 
 Simple usage
 ------------
 
-Case can be as:
+Case can to be as:
     * class
     * function
     * static function
@@ -225,7 +225,7 @@ This is xunit ideology. We support it.
 Ho to use case by steps
 -----------------------
 
-This can be useful for case with complex logic.
+This can to be useful for case with complex logic.
 Let look at this...
 
 
@@ -264,14 +264,14 @@ Let look at this...
         seismograph.main()
 
 
-Begin method will called after setup and finish before teardown.
-Need to remember, finish method can't be called if any exception raised before.
+Begin method will be called after setup and finish before teardown.
+Need to remember, finish method can't to be called if any exception was raised before.
 
 
 Step performer
 --------------
 
-if you want get control for execution step method then you should to use performer function.
+if you want to get control for execution step method then you should to use performer function.
 It's easy, look at this... :)
 
 
@@ -480,7 +480,7 @@ How to use case log. What is it?
 --------------------------------
 
 Log object does store output in buffer for a while test case is running.
-Log will flushed to stream after run.
+Log will be flushed to stream after run.
 This give a chance to get sorted output while program is async running.
 
 

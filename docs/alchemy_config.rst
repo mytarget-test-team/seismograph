@@ -35,7 +35,7 @@ Common settings
 Database settings
 -----------------
 
-All settings of common can be changed into DATABASES.
+Any settings of common can to be changed through DATABASES key.
 
 .. code-block:: python
 

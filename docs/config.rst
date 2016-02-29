@@ -16,7 +16,7 @@ How to create and switch config
     MY_OPTION = None
 
 
-Give away config
+Give away config to program
 
 ::
 
@@ -40,8 +40,8 @@ Config path can be set with creating instance of program.
     program = seismograph.Program(config_path='project.etc.base')
 
 
-If you will use config path with creating instance of program that config path is default value of environment variable.
-In this way config path is path by default for your program.
+If you will be using config_path param that config path will default value of environment variable.
+Config path is path by default for your program in this way.
 
 
 Available sections
@@ -57,7 +57,7 @@ Available sections
 |                      | `details... <alchemy_config.html>`_       |
 +----------------------+-------------------------------------------+
 | **MOCKER_EX**        | dict config for mocker extension          |
-|                      | `details... <mock_server_config.html>`_   |
+|                      | `details... <mocker_config.html>`_        |
 +----------------------+-------------------------------------------+
 
 

@@ -2,7 +2,7 @@ Simple usage
 ============
 
 Any of runnable objects can to work with db client.
-Extension do wraps *sqlalchemy* engine and utilizes some operations.
+Extension wraps *sqlalchemy* engine and utilizes some operations.
 
 
 .. code-block:: python
