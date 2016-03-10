@@ -110,7 +110,7 @@ def install_package():
         },
         test_suite='tests',
         classifiers=(
-            'Development Status :: 3 - Alpha',
+            'Development Status :: 4 - Beta',
             'Framework :: Seismograph',
             'Natural Language :: Russian',
             'Intended Audience :: Developers',
