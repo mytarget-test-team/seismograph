@@ -242,14 +242,19 @@ class BaseProxy(object):
                     delay=None,
                     args=None,
                     kwargs=None):
+        delay = delay or self.config.POLLING_DELAY
+        timeout = timeout or self.config.POLLING_TIMEOUT
+        exc_cls = exc_cls or polling.PollingTimeoutExceeded
+        message = message or 'Wait timeout "{}" has been exceeded'.format(timeout)
+
         return waiting_for(
             callback,
             args=args,
             kwargs=kwargs,
-            delay=delay or self.config.POLLING_DELAY,
-            timeout=timeout or self.config.POLLING_TIMEOUT,
-            exc_cls=exc_cls or polling.PollingTimeoutExceeded,
-            message=message or 'Wait timeout "{}" has been exceeded'.format(timeout),
+            delay=delay,
+            timeout=timeout,
+            exc_cls=exc_cls,
+            message=message,
         )
 
     @contextmanager
