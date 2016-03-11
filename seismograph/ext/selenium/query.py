@@ -158,7 +158,6 @@ class QueryResult(object):
             el = execute(self.__proxy, self.__css, disable_polling=True)
 
             if el:
-                self.__we = el
                 return True
             return False
         except WebDriverException:

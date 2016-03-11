@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
 import logging
 from functools import wraps
+from pprint import PrettyPrinter
 
 try:
     from httplib import HTTPException
 except ImportError:  # please python 3
     from http.client import HTTPException
 
+from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import StaleElementReferenceException
 
 from ... import case
 from ... import steps
 from ... import reason
 from ... import runnable
-from ...utils import pyv
 from .extension import EX_NAME
 from .utils import random_file_name
 from ...utils.common import waiting_for
@@ -52,60 +52,33 @@ def make_setup(case, browser_name=None):
 
 def save_logs(case):
     selenium = case.ext(EX_NAME)
-    log_file_name = lambda lt: '{}-{}({}:{}).log'.format(
+    log_file_name = lambda log_type: '{}-{}({}:{}).log'.format(
         selenium.browser_name,
-        lt,
+        log_type,
         runnable.class_name(case),
         runnable.method_name(case),
     )
+    try:
+        with selenium.browser.disable_polling():
+            for log_type in selenium.browser.log_types:
+                log = selenium.browser.get_log(log_type)
+                if not log:
+                    continue
 
-    def log_to_string(log):
-        def create_string_from_item(item, tab=0, break_line=False):
-            if isinstance(item, pyv.basestring):
+                log_file_path = os.path.join(
+                    selenium.config.get('LOGS_PATH'),
+                    log_file_name(log_type),
+                )
+
                 try:
-                    item = json.loads(item)
-                except BaseException:
-                    pass
-
-            if isinstance(item, dict):
-                return ('\n' if break_line else '') + u'\n'.join(
-                    u'{}{}: {}'.format(
-                        ('  ' * tab), k, create_string_from_item(v, tab=(tab + 1), break_line=True)
-                    ) for k, v in item.items()
-                )
-            elif isinstance(item, (list, tuple)):
-                return ('\n' if break_line else '') + u'\n'.join(
-                    u'{}{}'.format(
-                        ('  ' * tab), create_string_from_item(i, tab=(tab + 1), break_line=True),
-                    ) for i in item
-                )
-            else:
-                item = pyv.unicode_string(item)
-
-            return item.strip()
-
-        string = create_string_from_item(log).strip()
-
-        if pyv.IS_PYTHON_2:
-            return string.encode('utf-8')
-        return string
-
-    with selenium.browser.disable_polling():
-        for log_type in selenium.browser.log_types:
-            log = selenium.browser.get_log(log_type)
-            if not log:
-                continue
-
-            log_file_path = os.path.join(
-                selenium.config.get('LOGS_PATH'),
-                log_file_name(log_type),
-            )
-
-            try:
-                with open(log_file_path, 'w') as f:
-                    f.write(log_to_string(log))
-            except BaseException as error:
-                logger.error(error, exc_info=True)
+                    with open(log_file_path, 'w') as f:
+                        PrettyPrinter(stream=f).pprint(log)
+                except BaseException as error:
+                    logger.error(error, exc_info=True)
+    except WebDriverException as warn:
+        logger.warn(warn, exc_info=True)
+    except BaseException as error:
+        logger.er(error, exc_info=True)
 
 
 class SeleniumAssertion(case.AssertionBase):
@@ -372,7 +345,7 @@ class SeleniumCase(case.Case):
                 ),
             )
         except BaseException as error:
-            logger.warn(error, exc_info=True)
+            logger.error(error, exc_info=True)
 
         return reason.join(reasons)
 
