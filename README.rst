@@ -6,8 +6,8 @@ About
 -----
 
 This is framework for test development.
-It makes life so easy because have flexible structure.
-If you are needing for extension which is not, that you can make
+It makes life so easy because has flexible structure.
+If you are needing for extension which is not, that you can to create
 issue on github or implemented it and send merge request.
 
 
@@ -43,6 +43,12 @@ Simple install(for unit testing, without extensions)::
 With choice extensions::
 
     SEISMOGRAPH_EXTENSIONS='selenium, mocker' pip install seismograph
+
+
+Documentation
+-------------
+
+http://pythonhosted.org/seismograph/
 
 
 Quick start
