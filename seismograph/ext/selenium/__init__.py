@@ -5,20 +5,33 @@ from optparse import OptionGroup
 
 from . import forms
 from . import polling
-from .query import query
+
 from .case import assertion
-from .pageobject import Page
-from .router import add_route
-from .utils import re_raise_exc
-from .pageobject import PageItem
 from .case import require_browser
-from .pageobject import PageElement
 from .case import SeleniumAssertion
 from .case import make_with_browsers
 from .case import SeleniumCase as Case
-from ...utils.common import waiting_for
+
 from .suite import SeleniumSuite as Suite
+
+from .proxy.actions import Alert
+from .proxy.actions import ActionChains
+from .proxy.actions import TouchActions
+
+from .pageobject import Page
+from .pageobject import PageItem
+from .pageobject import PageElement
+
+from .query import query
+
+from .router import add_route
+
+from .utils import re_raise_exc
+
 from .browser import change_config as change_browser_config
+
+# rudiment
+from ...utils.common import waiting_for
 
 
 CONFIG_KEY = 'SELENIUM_EX'
@@ -149,6 +162,7 @@ __all__ = (
     'Page',
     'forms',
     'query',
+    'Alert',
     'Suite',
     'polling',
     'PageItem',
@@ -156,6 +170,8 @@ __all__ = (
     'assertion',
     'waiting_for',
     'PageElement',
+    'ActionChains',
+    'TouchActions',
     're_raise_exc',
     'inject_driver',
     'SeleniumAssertion',

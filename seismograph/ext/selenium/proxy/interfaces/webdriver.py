@@ -1,31 +1,9 @@
 # -*- coding: utf-8 -*-
 
-
-class _DebuggingInterfaces(object):
-    """
-    Class for debugging call methods
-    """
-
-    _DEBUG = False
-
-    if _DEBUG:
-        def __getattr_from_webdriver_or_webelement__(self, item):
-            try:
-                import ipdb
-            except ImportError:
-                import pdb as ipdb
-            ipdb.set_trace()
-            return lambda *a, **k: None
-
-        def __setattr_to_webdriver_or_webelement__(self, item, value):
-            try:
-                import ipdb
-            except ImportError:
-                import pdb as ipdb
-            ipdb.set_trace()
+from .base import BaseInterface
 
 
-class CommonWebDriverInterface(_DebuggingInterfaces):
+class CommonWebDriverInterface(BaseInterface):
     """
     Common interface for all drivers
     """
@@ -112,6 +90,9 @@ class CommonWebDriverInterface(_DebuggingInterfaces):
         return self.__getattr_from_webdriver_or_webelement__('execute')(*args, **kwargs)
 
     def get(self, *args, **kwargs):
+        return self.__getattr_from_webdriver_or_webelement__('get')(*args, **kwargs)
+
+    def go_to(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('get')(*args, **kwargs)
 
     def find_element_by_id(self, *args, **kwargs):
@@ -259,7 +240,7 @@ class CommonWebDriverInterface(_DebuggingInterfaces):
         return self.__getattr_from_webdriver_or_webelement__('get_log')(*args, **kwargs)
 
 
-class ChromeWebDriverInterface(_DebuggingInterfaces):
+class ChromeWebDriverInterface(BaseInterface):
     """
     Specific methods of chrome driver
     """
@@ -268,14 +249,14 @@ class ChromeWebDriverInterface(_DebuggingInterfaces):
         return self.__getattr_from_webdriver_or_webelement__('launch_app')(*args, **kwargs)
 
 
-class OperaWebDriverInterface(_DebuggingInterfaces):
+class OperaWebDriverInterface(BaseInterface):
     """
     Specific methods of opera driver
     """
     pass
 
 
-class FirefoxWebDriverInterface(_DebuggingInterfaces):
+class FirefoxWebDriverInterface(BaseInterface):
     """
     Specific methods of firefox driver
     """
@@ -288,14 +269,14 @@ class FirefoxWebDriverInterface(_DebuggingInterfaces):
         return self.__getattr_from_webdriver_or_webelement__('set_context')(*args, **kwargs)
 
 
-class PhantomJSWebDriverInterface(_DebuggingInterfaces):
+class PhantomJSWebDriverInterface(BaseInterface):
     """
     Specific methods of phantomjs driver
     """
     pass
 
 
-class IEWebDriverInterface(_DebuggingInterfaces):
+class IEWebDriverInterface(BaseInterface):
     """
     Specific methods of ie driver
     """

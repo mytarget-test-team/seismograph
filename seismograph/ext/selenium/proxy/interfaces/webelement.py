@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from .webdriver import _DebuggingInterfaces
+from .base import BaseInterface
 
 
-class WebElementInterface(_DebuggingInterfaces):
+class WebElementInterface(BaseInterface):
 
     def __hash__(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('__hash__')(*args, **kwargs)
