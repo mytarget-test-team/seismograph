@@ -15,8 +15,8 @@ Selenium
     selenium_forms
 
 
-Selenium extension is wrapper for *selenium* lib.
-You can to use the extension but you should configure him for that. See `config documentation <selenium_config.html>`_ for that.
+Selenium extension is wrapper over *selenium* lib.
+You can to use the extension but you should to configure it for that. See `config documentation <selenium_config.html>`_
 
 
 Features
@@ -24,17 +24,17 @@ Features
 
 * Auto start and stop browser on selenium case
 
-Selenium case give usage browser instance and not think about started and stopped.
+Selenium case give usage browser's instance and not think about started and stopped.
 
 * Auto save screenshot by any problem
 
-If you make configure for screensots so they will saved by any problem.
+If you make configure for screenshots that it will saved by any problem.
 
 * Polling
 
 Is know, selenium work unstable when we are testing ajax interfaces, it's exactly. We need to waiting for elements.
-Polling give a chance to work with selenium objects and not think about this.
-All methods will be waiting for correct execution while timeout doesn't exceeded.
+Polling give a chance to work with selenium objects (web element, web driver) and not think about this.
+All methods will wait for correct execution while timeout doesn't exceeded.
 
 * Easy query
 
@@ -46,14 +46,14 @@ All methods will be waiting for correct execution while timeout doesn't exceeded
 
 * Page object
 
-You can do outline of page as python class and use him in your test scripts.
+You can to do outline of page as python class and use it in your test scripts.
 
 
 * Forms
 
-Declarative approach to description UI forms. They can related to page object.
+Declarative approach to description UI forms. It can be related to page object.
 
 
 * Routing
 
-Pages can be related to url rule.
+Pages can be related to url rule for auto creating from browser.router and can has url path for open.

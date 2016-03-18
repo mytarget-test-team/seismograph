@@ -7,26 +7,21 @@ from collections import OrderedDict
 from contextlib import contextmanager
 
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.common.touch_actions import TouchActions
-from selenium.webdriver.common.action_chains import ActionChains
 
-from . import polling
-from ...utils import pyv
-from .router import Router
-from .query import make_result
-from ...utils.common import waiting_for
-from .utils import is_ready_state_complete
-from .utils import change_name_from_python_to_html
-
-
-METHOD_ALIASES = {
-    'go_to': 'get',
-    'set': 'send_keys',
-}
+from . import tools
+from . import actions
+from .. import polling
+from ....utils import pyv
+from ..router import Router
+from ..query import make_result
+from ....utils.common import waiting_for
+from .interfaces import WebDriverInterface
+from .interfaces import WebElementInterface
+from ..utils import is_ready_state_complete
+from .interfaces import HTML_TAGS_ALLOWED_AS_METHOD
 
 
 def factory_method(f, browser, config, allow_polling=True, reason_storage=None):
@@ -44,7 +39,7 @@ def factory_method(f, browser, config, allow_polling=True, reason_storage=None):
             )
 
         if isinstance(result, (list, tuple)):
-            we_list = WebElementListProxy(
+            we_list = WebElementList(
                 browser,
                 config,
                 reason_storage=reason_storage,
@@ -69,10 +64,10 @@ def factory_method(f, browser, config, allow_polling=True, reason_storage=None):
     return wrapper
 
 
-class WebElementListProxy(list):
+class WebElementList(list):
 
     def __init__(self, browser, config, reason_storage=None):
-        super(WebElementListProxy, self).__init__()
+        super(WebElementList, self).__init__()
 
         self.__browser = browser
         self.__config = config
@@ -143,12 +138,17 @@ class BaseProxy(object):
         return repr(self._wrapped)
 
     def __getattr__(self, item):
-        attr = getattr(
-            self._wrapped, METHOD_ALIASES.get(item, item), None,
+        if item in HTML_TAGS_ALLOWED_AS_METHOD:
+            return make_result(self, item)
+
+        raise AttributeError(
+            '"{}" has not attribute "{}"'.format(
+                self.__class__.__name__, item,
+            ),
         )
 
-        if attr is None:
-            return make_result(self, item)
+    def __getattr_from_webdriver_or_webelement__(self, item):
+        attr = getattr(self._wrapped, item)
 
         if callable(attr) and type(attr) == MethodType:
             if self.allow_polling:
@@ -173,6 +173,9 @@ class BaseProxy(object):
             )
 
         return attr
+
+    def __setattr_to_webdriver_or_webelement__(self, item, value):
+        setattr(self._wrapped, item, value)
 
     @property
     def _wrapped(self):
@@ -242,14 +245,19 @@ class BaseProxy(object):
                     delay=None,
                     args=None,
                     kwargs=None):
+        delay = delay or self.config.POLLING_DELAY
+        timeout = timeout or self.config.POLLING_TIMEOUT
+        exc_cls = exc_cls or polling.PollingTimeoutExceeded
+        message = message or 'Wait timeout "{}" has been exceeded'.format(timeout)
+
         return waiting_for(
             callback,
             args=args,
             kwargs=kwargs,
-            delay=delay or self.config.POLLING_DELAY,
-            timeout=timeout or self.config.POLLING_TIMEOUT,
-            exc_cls=exc_cls or polling.PollingTimeoutExceeded,
-            message=message or 'Wait timeout "{}" has been exceeded'.format(timeout),
+            delay=delay,
+            timeout=timeout,
+            exc_cls=exc_cls,
+            message=message,
         )
 
     @contextmanager
@@ -281,7 +289,7 @@ class BaseProxy(object):
             time.sleep(delay)
 
 
-class WebElementProxy(BaseProxy):
+class WebElementProxy(BaseProxy, WebElementInterface):
 
     def __init__(self, *args, **kwargs):
         super(WebElementProxy, self).__init__(*args, **kwargs)
@@ -290,11 +298,11 @@ class WebElementProxy(BaseProxy):
 
     @property
     def css(self):
-        return WebElementCssToObject(self)
+        return tools.WebElementCssToObject(self)
 
     @property
     def attr(self):
-        return WebElementToObject(self, allow_raise=False)
+        return tools.WebElementToObject(self, allow_raise=False)
 
     @property
     def is_web_element(self):
@@ -309,7 +317,7 @@ class WebElementProxy(BaseProxy):
             action.context_click(self)
 
 
-class WebDriverProxy(BaseProxy):
+class WebDriverProxy(BaseProxy, WebDriverInterface):
 
     keys = Keys
 
@@ -319,9 +327,9 @@ class WebDriverProxy(BaseProxy):
         assert isinstance(self._wrapped, WebDriver), 'This is proxy to WebDriver only'
 
         self.__router = Router(self)
-        self.__alert = AlertProxy(self)
-        self.__action_chains = ActionProxy(self, ActionChains)
-        self.__touch_actions = ActionProxy(self, TouchActions)
+        self.__alert = actions.Alert(self)
+        self.__action_chains = actions.ActionChains(self)
+        self.__touch_actions = actions.TouchActions(self)
 
     @property
     def browser(self):
@@ -366,103 +374,3 @@ class WebDriverProxy(BaseProxy):
     @property
     def is_web_element(self):
         return False
-
-
-class AlertProxy(object):
-
-    def __init__(self, proxy):
-        self.__alert = Alert(proxy.browser)
-
-    def __dir__(self):
-        return dir(self.__alert)
-
-    def __call__(self, proxy):
-        return self.__class__(proxy.browser)
-
-    def __getattr__(self, item):
-        return getattr(self.__alert, item)
-
-    def __repr__(self):
-        return repr(self.__alert)
-
-
-class ActionProxy(object):
-
-    def __init__(self, proxy, cls):
-        self.__action = cls(proxy.browser)
-
-    def __call__(self, proxy=None):
-        return self.__class__(
-            proxy.browser if proxy else self.__action._driver,
-            cls=self.__action.__class__,
-        )
-
-    def __dir__(self):
-        return list(set(dir(self.__action) + dir(self.__class__)))
-
-    def __getattr__(self, item):
-        return getattr(self.__action, item)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args, **kwargs):
-        try:
-            self.perform()
-        finally:
-            self.reset()
-
-    def __repr__(self):
-        return repr(self.__action)
-
-    @property
-    def browser(self):
-        return self.__action._driver
-
-    def reset(self):
-        self.__action._actions = []
-
-
-class WebElementToObject(object):
-
-    def __init__(self, proxy, allow_raise=True):
-        self.__dict__['__proxy__'] = proxy
-        self.__dict__['__allow_raise__'] = allow_raise
-
-    def __getattr__(self, item):
-        atr = self.__dict__['__proxy__'].get_attribute(
-            change_name_from_python_to_html(item),
-        )
-
-        if atr:
-            return atr
-
-        if self.__dict__['__allow_raise__']:
-            raise AttributeError(item)
-
-    def __setattr__(self, key, value):
-        self.__dict__['__proxy__'].parent.execute_script(
-            'arguments[0].setAttribute(arguments[1], arguments[2]);',
-            self.__dict__['__proxy__']._wrapped,
-            change_name_from_python_to_html(key),
-            value,
-        )
-
-
-class WebElementCssToObject(object):
-
-    def __init__(self, proxy):
-        self.__dict__['__proxy__'] = proxy
-
-    def __getattr__(self, item):
-        return self.__dict__['__proxy__'].value_of_css_property(
-            change_name_from_python_to_html(item),
-        )
-
-    def __setattr__(self, key, value):
-        self.__dict__['__proxy__'].parent.execute_script(
-            'arguments[0].style[arguments[1]] = arguments[2];',
-            self.__dict__['__proxy__']._wrapped,
-            change_name_from_python_to_html(key),
-            value,
-        )

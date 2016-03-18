@@ -17,11 +17,7 @@ Welcome to documentation
 About
 -----
 
-This is framework for functional test development.
-Who is needing to him?
-The target audience is test developers.
-You can use the framework for unit testing and how you wish but him made
-for functional testing web servers and web applications.
+This is framework for test development.
 
 
 Features
@@ -43,9 +39,19 @@ Features
 Installation
 ------------
 
-::
+Full installation::
 
     pip install seismograph
+
+
+Simple install(for unit testing, without extensions)::
+
+    SIMPLE_SEISMOGRAPH=true pip install seismograph
+
+
+With choice extensions::
+
+    SEISMOGRAPH_EXTENSIONS='selenium, mocker' pip install seismograph
 
 
 Quick start

@@ -1,58 +1,61 @@
 Config
 ======
 
-You need to use **SELENIUM_EX** option in config for configure extension.
-Config is python dictionary which have structure. Description is below.
+You should to use **SELENIUM_EX** option in config for configure extension.
+Config is python dictionary which has structure. Description is below.
 
 
 Config description
 ------------------
 
-+---------------------+-----------------------------------------------------------------+
-| **USE_REMOTE**      | Bool option. If will be set on True that be use remote driver.  |
-+---------------------+-----------------------------------------------------------------+
-| **POLLING_TIMEOUT** | This is time to waiting for correct execution method            |
-+---------------------+-----------------------------------------------------------------+
-| **POLLING_DELAY**   | Time for sleep. If you need to sleep between iterations of      |
-|                     | execution method then you can set delay for that.               |
-+---------------------+-----------------------------------------------------------------+
-| **SCRIPT_TIMEOUT**  | This is value for **set_script_timeout** method of selenium lib |
-+---------------------+-----------------------------------------------------------------+
-| **IMPLICITLY_WAIT** | Value for set implicitly wait to web driver                     |
-+---------------------+-----------------------------------------------------------------+
-| **WINDOW_SIZE**     | Tuple value for set size of window                              |
-+---------------------+-----------------------------------------------------------------+
-| **MAXIMIZE_WINDOW** | Bool value. If True then maximize window will be set.           |
-+---------------------+-----------------------------------------------------------------+
-| **DEFAULT_BROWSER** | Browser name by default.                                        |
-|                     | Can be in ("ie", "opera", "chrome", "firefox", "phantomjs")     |
-+---------------------+-----------------------------------------------------------------+
-| **PROJECT_URL**     | Base URL of your project.                                       |
-|                     | Without slash in the end (it's recommendation only)             |
-+---------------------+-----------------------------------------------------------------+
-| **SCREEN_PATH**     | Absolute path to directory for save screenshots on problem      |
-+---------------------+-----------------------------------------------------------------+
-| **LOGS_PATH**       | Absolute path to directory for save logs from driver            |
-|                     | in the end of test                                              |
-+---------------------+-----------------------------------------------------------------+
-| **IE**              | Dict value. Settings for internet explorer driver.              |
-|                     | `Description is below <#internet-explorer-settings>`_.          |
-+---------------------+-----------------------------------------------------------------+
-| **OPERA**           | Dict value. Settings for opera driver.                          |
-|                     | `Description is below <#opera-settings>`_.                      |
-+---------------------+-----------------------------------------------------------------+
-| **FIREFOX**         | Dict value. Settings for firefox driver.                        |
-|                     | `Description is below <#firefox-settings>`_.                    |
-+---------------------+-----------------------------------------------------------------+
-| **PHANTOMJS**       | Dict value. Settings for phantomjs driver.                      |
-|                     | `Description is below <#phantomjs-settings>`_.                  |
-+---------------------+-----------------------------------------------------------------+
-| **CHROME**          | Dict value. Settings for chrome driver.                         |
-|                     | `Description is below <#chrome-settings>`_.                     |
-+---------------------+-----------------------------------------------------------------+
-| **REMOTE**          | Dict value. Settings for remote driver.                         |
-|                     | `Description is below <#remote-settings>`_.                     |
-+---------------------+-----------------------------------------------------------------+
++-----------------------+---------------------------------------------------------------------+
+| **USE_REMOTE**        | Bool option. If will set True that to use remote driver.            |
++-----------------------+---------------------------------------------------------------------+
+| **POLLING_TIMEOUT**   | This is time to wait for correct execution method                   |
++-----------------------+---------------------------------------------------------------------+
+| **POLLING_DELAY**     | Time for sleep. If you need to sleep between iterations of          |
+|                       | execution method then you can to set delay for that.                |
++-----------------------+---------------------------------------------------------------------+
+| **SCRIPT_TIMEOUT**    | This is value for **set_script_timeout**                            |
+|                       | method from selenium lib                                            |
++-----------------------+---------------------------------------------------------------------+
+| **WAIT_TIMEOUT**      | Value for set implicitly wait to web driver                         |
++-----------------------+---------------------------------------------------------------------+
+| **PAGE_LOAD_TIMEOUT** | Value for **set_page_load_timeout** method from selenium lib        |
++-----------------------+---------------------------------------------------------------------+
+| **WINDOW_SIZE**       | Tuple value for set size of window                                  |
++-----------------------+---------------------------------------------------------------------+
+| **MAXIMIZE_WINDOW**   | Bool value. If True then maximize window will set.                  |
++-----------------------+---------------------------------------------------------------------+
+| **DEFAULT_BROWSER**   | Browser name by default.                                            |
+|                       | Can be in ("ie", "opera", "chrome", "firefox", "phantomjs")         |
++-----------------------+---------------------------------------------------------------------+
+| **PROJECT_URL**       | Base URL of your project.                                           |
+|                       | Without slash in the end (it's recommendation only)                 |
++-----------------------+---------------------------------------------------------------------+
+| **SCREEN_PATH**       | Absolute path to directory for save screenshots on problem          |
++-----------------------+---------------------------------------------------------------------+
+| **LOGS_PATH**         | Absolute path to directory for save logs from driver                |
+|                       | in the end of test                                                  |
++-----------------------+---------------------------------------------------------------------+
+| **IE**                | Dict value. Settings for internet explorer driver.                  |
+|                       | `Description is below <#internet-explorer-settings>`_.              |
++-----------------------+---------------------------------------------------------------------+
+| **OPERA**             | Dict value. Settings for opera driver.                              |
+|                       | `Description is below <#opera-settings>`_.                          |
++-----------------------+---------------------------------------------------------------------+
+| **FIREFOX**           | Dict value. Settings for firefox driver.                            |
+|                       | `Description is below <#firefox-settings>`_.                        |
++-----------------------+---------------------------------------------------------------------+
+| **PHANTOMJS**         | Dict value. Settings for phantomjs driver.                          |
+|                       | `Description is below <#phantomjs-settings>`_.                      |
++-----------------------+---------------------------------------------------------------------+
+| **CHROME**            | Dict value. Settings for chrome driver.                             |
+|                       | `Description is below <#chrome-settings>`_.                         |
++-----------------------+---------------------------------------------------------------------+
+| **REMOTE**            | Dict value. Settings for remote driver.                             |
+|                       | `Description is below <#remote-settings>`_.                         |
++-----------------------+---------------------------------------------------------------------+
 
 
 Internet explorer settings

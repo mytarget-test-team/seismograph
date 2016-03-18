@@ -53,7 +53,7 @@ Usage by models
         )
 
 
-Yuo can change bind key on the fly
+Yuo can to change bind key on the fly
 
 
 .. code-block:: python
@@ -72,7 +72,7 @@ Yuo can change bind key on the fly
             ExampleModel.create(name='some name')
 
 
-or that...
+or like...
 
 
 .. code-block:: python

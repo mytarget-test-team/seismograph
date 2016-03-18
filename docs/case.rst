@@ -2,13 +2,13 @@ Case
 ====
 
 Case class is abstraction platform for your test script.
-He can be as function for usability only. So, example usage is below.
+It can to be as function for usability only. So, example usage is below.
 
 
 Simple usage
 ------------
 
-Case can be as:
+Case can to be as:
     * class
     * function
     * static function
@@ -58,8 +58,8 @@ Case can be as:
 How to use assertion
 --------------------
 
-You can to check result of test with help assertion object.
-See example...
+You can to check result of test script with help assertion object.
+Look at example...
 
 
 .. code-block:: python
@@ -91,8 +91,8 @@ See example...
         seismograph.main()
 
 
-Assertion class. How to change him?
------------------------------------
+Assertion class. How to change it?
+----------------------------------
 
 .. autoclass:: seismograph.case.AssertionBase
     :members:
@@ -101,7 +101,7 @@ Assertion class. How to change him?
     :special-members:
 
 
-If you use case as function then you want to change him, maybe, you can do it so...
+If you use case as function then you want to change assertion class, maybe, you can do it so...
 
 
 .. code-block:: python
@@ -136,10 +136,10 @@ If you use case as function then you want to change him, maybe, you can do it so
         seismograph.main()
 
 
-Case class. How to change him during registration?
---------------------------------------------------
+Case class. How to change it during registration?
+-------------------------------------------------
 
-Let you be write test as simple function then you want to change case class maybe :)
+Let you be writing test as simple function then you want to change case class maybe :)
 This is doing so...
 
 
@@ -183,7 +183,7 @@ This is doing so...
 How to use setup and teardown callbacks
 ---------------------------------------
 
-It's xunit ideology. We support that.
+This is xunit ideology. We support it.
 
 
 .. code-block:: python
@@ -225,7 +225,7 @@ It's xunit ideology. We support that.
 Ho to use case by steps
 -----------------------
 
-This can be useful for case with complex logic.
+This can to be useful for case with complex logic.
 Let look at this...
 
 
@@ -265,13 +265,13 @@ Let look at this...
 
 
 Begin method will be called after setup and finish before teardown.
-Need to remember, finish method can't be called if any exception will be raised before.
+Need to remember, finish method can't to be called if any exception was raised before.
 
 
 Step performer
 --------------
 
-if you want get control for execution step method so you can use performer function.
+if you want to get control for execution step method then you should to use performer function.
 It's easy, look at this... :)
 
 
@@ -308,7 +308,7 @@ It's easy, look at this... :)
 How to use flows. What is it?
 -----------------------------
 
-If you have only one test script and many context for that, so you can use flows of execution.
+If you have only one test script and many context for it, so you can to use flows for execution.
 
 
 .. code-block:: python
@@ -445,13 +445,13 @@ I think, it's no problem for you :)
         seismograph.main()
 
 
-Also, you can use simple skip on registration case. Should use keyword argument "skip" for that.
+Also, you can to use simple skip on registration case. Should to use keyword argument "skip" for that.
 
 
 How to require extensions
 -------------------------
 
-You can use extensions for your tests script. Extensions should be configure in config.
+You can to use extensions for your tests script. Extensions should to configure in config.
 
 
 .. code-block:: python
@@ -466,10 +466,8 @@ You can use extensions for your tests script. Extensions should be configure in 
     def test_google_search(case):
         with case.ext('selenium') as browser:
             browser.go_to('http://google.com')
-            search = browser.input(name='q').first()
-            search.set('python')
-            button = browser.button(name='btnG').first()
-            button.click()
+            browser.input(name='q').set('python')
+            browser.button(name='btnG').click()
 
             selenium.assertion.text_in(browser, 'python')
 
@@ -507,7 +505,7 @@ How can i add info to error reason?
 -----------------------------------
 
 This is reason of crash by any problem.
-She will be save to xunit report and write to console.
+It will save to xunit report and write to console.
 
 
 .. code-block:: python
@@ -586,7 +584,7 @@ This is for example only...
 How to prepare test method?
 ---------------------------
 
-Sometimes we are needing to change test method and wrap him.
+Sometimes we are needing to change test method and wrap it.
 You can do it so...
 
 

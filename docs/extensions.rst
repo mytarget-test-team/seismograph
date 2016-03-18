@@ -7,10 +7,10 @@ Extensions
 
     selenium
     alchemy
-    mock_server
+    mocker
 
 
-Extensions is tools for test development. You can to require their.
+Extensions is tools for test development. You can to require it.
 
 
 .. code-block:: python
@@ -18,11 +18,11 @@ Extensions is tools for test development. You can to require their.
     import seismograph
 
 
-    suite = seismograph.Suite(__name__, require=['selenium', 'mock_server'])
+    suite = seismograph.Suite(__name__, require=['selenium', 'mocker'])
 
 
     selenium = suite.ext('selenium')
-    mock_server = suite.ext('mock_server')
+    mock_server = suite.ext('mocker')
 
 
 or for case only

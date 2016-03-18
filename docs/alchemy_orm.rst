@@ -1,7 +1,7 @@
 ORM
 ===
 
-You can use column and types from *sqlalchemy* lib, but should to use BaseModel class from extension.
+You can to use column and types from *sqlalchemy* lib, but should to use BaseModel class from extension.
 Sqlalchemy session query is available as query property on BaseModel class.
 
 

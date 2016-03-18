@@ -1,7 +1,7 @@
 Config
 ======
 
-You should to use **MOCK_SERVER_EX** option in config for configure extension.
+You should to use **MOCKER_EX** option in config for configure extension.
 Config is python dictionary.
 
 +------------------+----------------------------------------------------------+
