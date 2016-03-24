@@ -8,6 +8,10 @@ from ..query import make_result
 from ..exceptions import FieldError
 
 
+class EmptyFieldValue(object):
+    pass
+
+
 def selector(**kwargs):
     """
     proxy for tag attributes
@@ -18,7 +22,16 @@ def selector(**kwargs):
 def fill_field_handler(f):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
+        if not self.is_value():
+            return
+
+        if callable(self.before_fill_trigger):
+            self.before_fill_trigger(self)
+
         result = f(self, *args, **kwargs)
+
+        if callable(self.after_fill_trigger):
+            self.after_fill_trigger(self)
 
         self.group.fill_memo.add(self)
 
@@ -74,13 +87,15 @@ class FormField(object):
 
     def __init__(self,
                  name,
-                 value=None,
+                 value=EmptyFieldValue,
                  group=None,
                  weight=None,
                  selector=None,
                  required=False,
                  error_mess=None,
-                 invalid_value=None):
+                 invalid_value=None,
+                 before_fill_trigger=None,
+                 after_fill_trigger=None):
 
         self.name = name
 
@@ -91,6 +106,9 @@ class FormField(object):
         self.required = required
         self.error_mess = error_mess
         self.invalid_value = invalid_value
+
+        self.before_fill_trigger = before_fill_trigger
+        self.after_fill_trigger = after_fill_trigger
 
         self.__group = group
 
@@ -108,6 +126,8 @@ class FormField(object):
             selector=self.selector,
             required=self.required,
             error_mess=self.error_mess,
+            before_fill_trigger=self.before_fill_trigger,
+            after_fill_trigger=self.after_fill_trigger,
             value=self.value() if callable(self.value) else self.value,
             invalid_value=self.invalid_value() if callable(self.invalid_value) else self.invalid_value,
         )
@@ -145,6 +165,9 @@ class FormField(object):
     @property
     def css(self):
         return self.we.css
+
+    def is_value(self):
+        return self.value != EmptyFieldValue
 
 
 class Input(FormField, SimpleFieldInterface):
