@@ -17,14 +17,14 @@ def selector(**kwargs):
 
 def fill_field_handler(f):
     @wraps(f)
-    def wrapper(self, *args, **kwargs):
-        if self.value is None:
+    def wrapper(self, value=None):
+        if self.value is None and value is None:
             return
 
         if callable(self.before_fill_trigger):
             self.before_fill_trigger(self)
 
-        result = f(self, *args, **kwargs)
+        result = f(self, value=value)
 
         if callable(self.after_fill_trigger):
             self.after_fill_trigger(self)
