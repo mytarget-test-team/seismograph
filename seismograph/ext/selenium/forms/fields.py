@@ -8,10 +8,6 @@ from ..query import make_result
 from ..exceptions import FieldError
 
 
-class EmptyFieldValue(object):
-    pass
-
-
 def selector(**kwargs):
     """
     proxy for tag attributes
@@ -22,7 +18,7 @@ def selector(**kwargs):
 def fill_field_handler(f):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        if not self.is_value():
+        if self.value is None:
             return
 
         if callable(self.before_fill_trigger):
@@ -87,7 +83,7 @@ class FormField(object):
 
     def __init__(self,
                  name,
-                 value=EmptyFieldValue,
+                 value=None,
                  group=None,
                  weight=None,
                  selector=None,
@@ -165,9 +161,6 @@ class FormField(object):
     @property
     def css(self):
         return self.we.css
-
-    def is_value(self):
-        return self.value != EmptyFieldValue
 
 
 class Input(FormField, SimpleFieldInterface):
