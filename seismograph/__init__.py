@@ -35,7 +35,7 @@ from .steps import step
 from .datastructures import Context
 
 
-__version__ = '0.2.9'
+__version__ = '0.2.10'
 
 
 __all__ = (
