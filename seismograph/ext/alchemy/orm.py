@@ -3,6 +3,7 @@
 import logging
 from contextlib import contextmanager
 
+from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -125,7 +126,11 @@ class ModelCRUD(object):
         with session_scope(rollback=True) as session:
             session.add(instance)
             session.commit()
-            session.refresh(instance)
+            try:
+                session.refresh(instance)
+            except InvalidRequestError as error:
+                if not getattr(cls, '__disable_worn__', None):
+                    logger.warn(error, exc_info=True)
 
         return instance
 
@@ -144,7 +149,12 @@ class ModelCRUD(object):
 
             session.add(self)
             session.commit()
-            session.refresh(self)
+
+            try:
+                session.refresh(self)
+            except InvalidRequestError as error:
+                if not getattr(self, '__disable_worn__', None):
+                    logger.warn(error, exc_info=True)
 
     def remove(self):
         with session_scope() as session:
