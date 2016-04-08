@@ -48,19 +48,68 @@ class QueryObject(object):
         )
 
 
-class Contains(object):
+class ValueFormat(object):
+
+    __format__ = None
 
     def __init__(self, value):
         self.value = value
 
-    def __repr__(self):
-        return self.value
+    def __call__(self, tag_attr_name):
+        if not self.__format__:
+            raise ValueError('Unknown format')
 
-    def __str__(self):
-        return str(self.value)
+        return self.__format__.format(
+            attribute_by_alias(tag_attr_name), self.value,
+        )
 
-    def __unicode__(self):
-        return unicode(self.value)
+
+class Equal(ValueFormat):
+
+    __format__ = '[{}="{}"]'
+
+
+class NotEqual(ValueFormat):
+
+    __format__ = ':not([{}="{}"])'
+
+
+class Contains(ValueFormat):
+
+    __format__ = '[{}*="{}"]'
+
+
+class NotContains(ValueFormat):
+
+    __format__ = ':not([{}*="{}"])'
+
+
+class Expression(object):
+
+    def __init__(self, value=None, value_format=Equal):
+        self._expressions = []
+
+        if value:
+            self.expression(value, value_format=value_format)
+
+    def expression(self, value, value_format=Equal):
+        if isinstance(value, ValueFormat):
+            self._add_format(value)
+        else:
+            self._expressions.append(value_format(value))
+
+        return self
+
+    def _add_format(self, fmt):
+        self._expressions.append(fmt)
+
+    def __call__(self, tag_attr_name):
+        css_selector = []
+
+        for fmt in self._expressions:
+            css_selector.append(fmt(tag_attr_name))
+
+        return ''.join(css_selector)
 
 
 def tag_by_alias(tag_name):
@@ -77,17 +126,12 @@ def make_result(proxy, tag):
     def handle(**selector):
         css = [tag_by_alias(tag)]
 
-        def get_format(value):
-            if isinstance(value, Contains):
-                return u'[{}*="{}"]'
-            return u'[{}="{}"]'
-
-        css.extend(
-            (
-                get_format(val).format(attribute_by_alias(atr), val)
-                for atr, val in selector.items()
-            ),
-        )
+        for tag_attr_name, value in selector.items():
+            if isinstance(value, Expression):
+                css.append(value(tag_attr_name))
+            else:
+                expression = Expression(value)
+                css.append(expression(tag_attr_name))
 
         return QueryResult(proxy, ''.join(css))
 
@@ -262,11 +306,23 @@ class Query(object):
 
     ANY = '*'
 
+    equal = Equal
+    not_equal = NotEqual
     contains = Contains
+    not_contains = NotContains
 
     @staticmethod
     def css_string(query_result):
         return query_result.__css_string__()
+
+    @staticmethod
+    def expression(*args):
+        expression = Expression()
+
+        for fmt in args:
+            expression.expression(fmt)
+
+        return expression
 
     def __call__(self, tag, **selector):
         return QueryObject(tag, **selector)
