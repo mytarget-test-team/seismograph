@@ -6,6 +6,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from ..query import make_result
 from ..exceptions import FieldError
+from ..utils import declare_standard_callback
 
 
 def selector(**kwargs):
@@ -103,13 +104,13 @@ class FormField(object):
         self.error_mess = error_mess
         self.invalid_value = invalid_value
 
-        self.before_fill_trigger = before_fill_trigger
-        self.after_fill_trigger = after_fill_trigger
-
         self.__group = group
 
         self.__weight = weight
         self.__selector = selector
+
+        self.before_fill_trigger = declare_standard_callback(before_fill_trigger)
+        self.after_fill_trigger = declare_standard_callback(after_fill_trigger)
 
     def __getattr__(self, item):
         return getattr(self.we, item)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import time
+import inspect
 from random import randint
 from functools import wraps
 
@@ -59,3 +60,27 @@ def is_ready_state_complete(browser):
         'return document.readyState',
     )
     return state == 'complete'
+
+
+def declare_standard_callback(func):
+    """
+    Check for signature of function which should
+    has only one argument in signature and return it.
+    """
+    if not callable(func):
+        return func
+
+    try:
+        signature = inspect.getargspec(func)
+    except TypeError:  # if function isn't python function we can not know about it
+        return func
+
+    if 0 < len(signature.args) < 2:
+        return func
+
+    raise TypeError(
+        'Incorrect signature of function "{0}" -> "{1}". Should be "{0}" -> "[\'instance\']".'.format(
+            pyv.get_func_name(func), str(signature.args),
+
+        ),
+    )
