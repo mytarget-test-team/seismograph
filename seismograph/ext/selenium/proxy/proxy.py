@@ -311,10 +311,12 @@ class WebElementProxy(BaseProxy, WebElementInterface):
     def double_click(self):
         with self.browser.action_chains as action:
             action.double_click(self)
+            action.perform()
 
     def context_click(self):
         with self.browser.action_chains as action:
             action.context_click(self)
+            action.perform()
 
 
 class WebDriverProxy(BaseProxy, WebDriverInterface):

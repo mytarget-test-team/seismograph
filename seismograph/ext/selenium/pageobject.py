@@ -87,7 +87,7 @@ class PageElement(object):
         self.__list_class = options.get('list_class', None)
         self.__wait_timeout = options.get('wait_timeout', None)
 
-        self.__call = declare_standard_callback(options.get('call', None))
+        self.__call = options.get('call', None)
         self.__property = declare_standard_callback(options.get('property', None))
 
         if self.__list_class and not self.__is_list:

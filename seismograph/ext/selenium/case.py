@@ -257,7 +257,7 @@ class SeleniumAssertion(case.AssertionBase):
             field.group.area,
             text,
             timeout=timeout,
-            msg=msg or error_message,
+            msg=error_message,
         )
 
 

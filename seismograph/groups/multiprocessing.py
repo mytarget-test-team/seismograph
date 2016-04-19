@@ -161,9 +161,9 @@ class Multiprocessing(object):
         waiting_for(
             self.is_release,
             timeout=self.release_timeout,
-            message='Process list have not been release for "{}" sec.'.format(
+            message='Process list has not been release for "{}" sec.'.format(
                 self.release_timeout,
-            )
+            ),
         )
 
     def join_all(self):

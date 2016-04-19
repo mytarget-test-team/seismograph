@@ -3,6 +3,9 @@
 from ...query import Query
 
 
+ANY_TAG_METHOD_NAME = 'any'
+
+
 # Tag's names when is allowed as attribute name on proxy object instance
 HTML_TAGS_ALLOWED_AS_METHOD = (
     Query.A, Query.B, Query.P, Query.U, Query.UL,
@@ -13,7 +16,7 @@ HTML_TAGS_ALLOWED_AS_METHOD = (
     Query.META, Query.SMALL, Query.TABLE, Query.INPUT, Query.LABEL,
     Query.FRAME, Query.EMBED, Query.BLINK, Query.IFRAME, Query.CENTER,
     Query.STRONG, Query.BUTTON, Query.OBJECT, Query.OPTION, Query.SELECT,
-    Query.TEXTAREA, Query.OPTGROUP, Query.FRAMESET,
+    Query.TEXTAREA, Query.OPTGROUP, Query.FRAMESET, ANY_TAG_METHOD_NAME,
 )
 
 

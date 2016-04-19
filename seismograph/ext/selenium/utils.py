@@ -10,6 +10,9 @@ from .exceptions import ReRaiseException
 
 
 def re_raise_exc(callback=None, exc_cls=ReRaiseException, message=None):
+    """
+    Decorator for except any exception and reraise it.
+    """
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
@@ -38,6 +41,9 @@ def re_raise_exc(callback=None, exc_cls=ReRaiseException, message=None):
 
 
 def random_file_name(file_ex=None):
+    """
+    Generate random file name
+    """
     file_ex = file_ex or ''
     file_name = str(
         int(time.time() + randint(0, 1000)),
@@ -47,6 +53,11 @@ def random_file_name(file_ex=None):
 
 
 def change_name_from_python_to_html(name):
+    """
+    Attribute name from DOM tree has different
+    format than python style.
+    This function help with that problem.
+    """
     name = name.replace('_', '-')
     if name.startswith('-'):
         return name[1:]
@@ -56,6 +67,10 @@ def change_name_from_python_to_html(name):
 
 
 def is_ready_state_complete(browser):
+    """
+    Do return True if document ready
+    state is complete else False
+    """
     state = browser.execute_script(
         'return document.readyState',
     )
