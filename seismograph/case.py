@@ -334,6 +334,23 @@ class AssertionBase(object):
         """
         self.__unittest__.assertIsNotNone(obj, msg=msg)
 
+    def equal_by_iter(self, seq1, seq2, msg=None):
+        """
+        Compare two iterable objects.
+
+        Example::
+
+            assertion.equal_by_iter(['hello', 'world'], set(['hello', 'world'])).
+            assertion.equal_by_iter(dict(a=1, b=2), ('a', 'b))
+        """
+        compare_error = 'compare by iter: {} != {}'.format(seq1, seq2)
+        len_error = 'discrepancy of objects length: {} != {}'.format(len(seq1), len(seq2))
+
+        self.equal(len(seq1), len(seq2), msg=msg or len_error)
+
+        for first, second in zip(seq1, seq2):
+            self.equal(first, second, msg=msg or compare_error)
+
 
 class CaseLayer(runnable.LayerOfRunnableObject):
 
