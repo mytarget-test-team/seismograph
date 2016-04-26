@@ -43,10 +43,7 @@ from .scope import set_default_suite_layers
 from .scope import set_default_program_layers
 
 
-VERSION = (0, 2, 12)
-
-
-__version__ = '.'.join(map(str, VERSION))
+__version__ = '0.2.12'
 
 
 __all__ = (
