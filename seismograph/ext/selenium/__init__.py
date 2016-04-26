@@ -30,9 +30,6 @@ from .utils import re_raise_exc
 
 from .browser import change_config as change_browser_config
 
-# rudiment
-from ...utils.common import waiting_for
-
 
 CONFIG_KEY = 'SELENIUM_EX'
 
