@@ -10,12 +10,12 @@ _WAS_CLEAR = False
 
 
 def install(ext, program):
-    if hasattr(ext, '__install__'):
+    if getattr(ext, '__install__', None):
         ext.__install__(program)
 
 
 def add_options(ext, parser):
-    if hasattr(ext, '__add_options__'):
+    if getattr(ext, '__add_options__', None):
         ext.__add_options__(parser)
 
 

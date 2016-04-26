@@ -35,7 +35,10 @@ from .steps import step
 from .datastructures import Context
 
 
-__version__ = '0.2.11'
+VERSION = (0, 2, 11)
+
+
+__version__ = '.'.join(map(str, VERSION))
 
 
 __all__ = (
