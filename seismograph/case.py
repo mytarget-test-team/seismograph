@@ -351,6 +351,12 @@ class AssertionBase(object):
         for first, second in zip(seq1, seq2):
             self.equal(first, second, msg=msg or compare_error)
 
+    def dict_equal(self, d1, d2, msg=None):
+        """
+        Like assertDictEqual in unittest
+        """
+        self.__unittest__.assertDictEqual(d1, d2, msg=msg)
+
 
 class CaseLayer(runnable.LayerOfRunnableObject):
 

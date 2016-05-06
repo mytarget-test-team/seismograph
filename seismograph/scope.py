@@ -13,6 +13,9 @@ import seismograph.program as _program
 import seismograph.runnable as _runnable
 
 
+_empty_value = object()
+
+
 def add_extension(extension):
     if not getattr(extension, '__install__', None):
         raise NotImplementedError(
@@ -47,6 +50,7 @@ def set_default_program_layers(*layers):
 def configure(
         round_runtime=None,
         config_env_name=None,
+        max_diff=_empty_value,
         test_name_prefix=None,
         case_group_class=None,
         suite_group_class=None,
@@ -59,6 +63,7 @@ def configure(
 
     :param round_runtime:
     :param config_env_name:
+    :param max_diff:
     :param test_name_prefix:
     :param case_group_class:
     :param suite_group_class:
@@ -76,6 +81,9 @@ def configure(
 
     if config_env_name:
         _program.CONFIG_ENV_NAME = config_env_name
+
+    if max_diff != _empty_value:
+        _case.assertion.__unittest__.maxDiff = max_diff
 
     if test_name_prefix:
         _loader.TEST_NAME_PREFIX = test_name_prefix
