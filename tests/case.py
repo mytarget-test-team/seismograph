@@ -13,8 +13,10 @@ from seismograph import exceptions
 from .factories import case_factory
 from .factories import config_factory
 
-from .lib.case import BaseTestCase
-from .lib.case import RunCaseTestCaseMixin
+from .lib.case import (
+    BaseTestCase,
+    RunCaseTestCaseMixin,
+)
 
 
 class CaseLayer(case.CaseLayer):
