@@ -84,7 +84,7 @@ class CaseLayer(case.CaseLayer):
 class TestCaseContext(BaseTestCase):
 
     def setUp(self):
-        self.base_layer = CaseLayer()
+        self.base_layer = case.CaseLayer()
         self.case_layer = CaseLayer()
         self.case = case_factory.create()
         self.context = case.CaseContext(
