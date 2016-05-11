@@ -85,19 +85,19 @@ class TestCaseContext(BaseTestCase):
 
     def setUp(self):
         self.base_layer = CaseLayer()
-        self.empty_layer = CaseLayer()
+        self.case_layer = CaseLayer()
         self.case = case_factory.create()
         self.context = case.CaseContext(
             lambda: None,
             lambda: None,
-            layers=[self.empty_layer],
+            layers=[self.case_layer],
         )
 
     def tearDown(self):
         self.case = None
         self.context = None
         self.base_layer = None
-        self.empty_layer = None
+        self.case_layer = None
 
     def test_on_init_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_init', None))
@@ -111,8 +111,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'case'])
 
         self.context.on_init(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_init')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_init')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_require_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_require', None))
@@ -126,8 +126,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'case'])
 
         self.context.on_require(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_require')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_require')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_setup_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_setup', None))
@@ -138,8 +138,8 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.context, 'start_context', None))
 
         self.context.start_context(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_setup')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_setup')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_teardown_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_teardown', None))
@@ -150,8 +150,8 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.context, 'stop_context', None))
 
         self.context.stop_context(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_teardown')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_teardown')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_skip_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_skip', None))
@@ -165,8 +165,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'case', 'reason', 'result'])
 
         self.context.on_skip(self.case, None, None)
-        self.assertEqual(self.empty_layer.was_called, 'on_skip')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_skip')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_any_error_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_any_error', None))
@@ -180,8 +180,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
 
         self.context.on_any_error(None, self.case, None)
-        self.assertEqual(self.empty_layer.was_called, 'on_any_error')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_any_error')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_error_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
@@ -195,8 +195,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
 
         self.context.on_error(None, self.case, None)
-        self.assertEqual(self.empty_layer.was_called, 'on_error')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_error')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_context_error_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_context_error', None))
@@ -210,8 +210,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
 
         self.context.on_context_error(None, self.case, None)
-        self.assertEqual(self.empty_layer.was_called, 'on_context_error')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_context_error')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_fail_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_fail', None))
@@ -225,8 +225,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'fail', 'case', 'result'])
 
         self.context.on_fail(None, self.case, None)
-        self.assertEqual(self.empty_layer.was_called, 'on_fail')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_fail')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_success_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_success', None))
@@ -240,8 +240,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'case'])
 
         self.context.on_success(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_success')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_success')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_on_run_callback(self):
         self.assertIsNotNone(getattr(self.base_layer, 'on_run', None))
@@ -255,8 +255,8 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(signature.args, ['self', 'case'])
 
         self.context.on_run(self.case)
-        self.assertEqual(self.empty_layer.was_called, 'on_run')
-        self.assertEqual(self.empty_layer.counter, 1)
+        self.assertEqual(self.case_layer.was_called, 'on_run')
+        self.assertEqual(self.case_layer.counter, 1)
 
     def test_init_context(self):
         layer = CaseLayer()
