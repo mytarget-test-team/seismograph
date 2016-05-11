@@ -56,6 +56,7 @@ __all__ = (
     'Case',
     'flows',
     'Suite',
+    'Script',
     'skip_if',
     'Context',
     'Program',
