@@ -432,11 +432,11 @@ class TestMakeCaseClassFromFunction(BaseTestCase):
         def test_function(case):
             pass
 
-        def static_case_function():
+        def static_function():
             pass
 
         self.test_function = test_function
-        self.static_case_function = static_case_function
+        self.static_function = static_function
 
     def test_basic(self):
         class_from_func = case.make_case_class_from_function(
@@ -450,11 +450,11 @@ class TestMakeCaseClassFromFunction(BaseTestCase):
 
     def test_static_flag(self):
         class_from_func = case.make_case_class_from_function(
-            self.static_case_function, case.Case,
+            self.static_function, case.Case,
             static=True,
         )
         self.assertTrue(issubclass(class_from_func, case.Case))
-        self.assertEqual(class_from_func.__name__, 'static_case_function')
+        self.assertEqual(class_from_func.__name__, 'static_function')
 
         signature = inspect.getargspec(class_from_func.test)
         self.assertEqual(signature.args, ['s'])
