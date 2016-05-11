@@ -100,219 +100,159 @@ class TestCaseContext(BaseTestCase):
         self.empty_layer = None
 
     def test_on_init_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_init'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_init', None))
 
         signature = inspect.getargspec(self.base_layer.on_init)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_init'))
+        self.assertIsNotNone(getattr(self.context, 'on_init', None))
 
         signature = inspect.getargspec(self.context.on_init)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_init(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_init')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_require_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_require'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_require', None))
 
         signature = inspect.getargspec(self.base_layer.on_require)
         self.assertEqual(signature.args, ['self', 'require'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_require'))
+        self.assertIsNotNone(getattr(self.context, 'on_require', None))
 
         signature = inspect.getargspec(self.context.on_require)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_require(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_require')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_setup_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_setup'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_setup', None))
 
         signature = inspect.getargspec(self.base_layer.on_setup)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'start_context'))
+        self.assertIsNotNone(getattr(self.context, 'start_context', None))
 
         self.context.start_context(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_setup')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_teardown_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_teardown'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_teardown', None))
 
         signature = inspect.getargspec(self.base_layer.on_teardown)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'stop_context'))
+        self.assertIsNotNone(getattr(self.context, 'stop_context', None))
 
         self.context.stop_context(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_teardown')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_skip_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_skip'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_skip', None))
 
         signature = inspect.getargspec(self.base_layer.on_skip)
         self.assertEqual(signature.args, ['self', 'case', 'reason', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_skip'))
+        self.assertIsNotNone(getattr(self.context, 'on_skip', None))
 
         signature = inspect.getargspec(self.context.on_skip)
         self.assertEqual(signature.args, ['self', 'case', 'reason', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_skip(self.case, None, None)
         self.assertEqual(self.empty_layer.was_called, 'on_skip')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_any_error_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_any_error'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_any_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_any_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_any_error'))
+        self.assertIsNotNone(getattr(self.context, 'on_any_error', None))
 
         signature = inspect.getargspec(self.context.on_any_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_any_error(None, self.case, None)
         self.assertEqual(self.empty_layer.was_called, 'on_any_error')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_error_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_error'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_error'))
+        self.assertIsNotNone(getattr(self.context, 'on_error', None))
 
         signature = inspect.getargspec(self.context.on_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_error(None, self.case, None)
         self.assertEqual(self.empty_layer.was_called, 'on_error')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_context_error_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_context_error'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_context_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_context_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_context_error'))
+        self.assertIsNotNone(getattr(self.context, 'on_context_error', None))
 
         signature = inspect.getargspec(self.context.on_context_error)
         self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_context_error(None, self.case, None)
         self.assertEqual(self.empty_layer.was_called, 'on_context_error')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_fail_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_fail'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_fail', None))
 
         signature = inspect.getargspec(self.base_layer.on_fail)
         self.assertEqual(signature.args, ['self', 'fail', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_fail'))
+        self.assertIsNotNone(getattr(self.context, 'on_fail', None))
 
         signature = inspect.getargspec(self.context.on_fail)
         self.assertEqual(signature.args, ['self', 'fail', 'case', 'result'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_fail(None, self.case, None)
         self.assertEqual(self.empty_layer.was_called, 'on_fail')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_success_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_success'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_success', None))
 
         signature = inspect.getargspec(self.base_layer.on_success)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_success'))
+        self.assertIsNotNone(getattr(self.context, 'on_success', None))
 
         signature = inspect.getargspec(self.context.on_success)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_success(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_success')
         self.assertEqual(self.empty_layer.counter, 1)
 
     def test_on_run_callback(self):
-        self.assertTrue(hasattr(self.base_layer, 'on_run'))
+        self.assertIsNotNone(getattr(self.base_layer, 'on_run', None))
 
         signature = inspect.getargspec(self.base_layer.on_run)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
-        self.assertTrue(hasattr(self.context, 'on_run'))
+        self.assertIsNotNone(getattr(self.context, 'on_run', None))
 
         signature = inspect.getargspec(self.context.on_run)
         self.assertEqual(signature.args, ['self', 'case'])
-        self.assertEqual(signature.varargs, None)
-        self.assertEqual(signature.keywords, None)
-        self.assertEqual(signature.defaults, None)
 
         self.context.on_run(self.case)
         self.assertEqual(self.empty_layer.was_called, 'on_run')
@@ -352,11 +292,11 @@ class TestCaseObject(BaseTestCase):
 
     def test_method_does_not_exist(self):
         with self.assertRaises(AttributeError) as ctx:
-            case_factory.EmptyCase('wow_wow')
+            case_factory.FakeCase('wow_wow')
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
-            '"EmptyCase" does not have attribute "wow_wow"',
+            '"FakeCase" does not have attribute "wow_wow"',
         )
 
     def test_skip_method(self):
@@ -367,7 +307,7 @@ class TestCaseObject(BaseTestCase):
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
-            'Can not call "skip_test" of "tests.factories.case_factory.EmptyCase". Should be run.',
+            'Can not call "skip_test" of "tests.factories.case_factory.FakeCase". Should be run.',
         )
 
         with self.assertRaises(exceptions.Skip) as ctx:
@@ -409,7 +349,7 @@ class TestCaseObject(BaseTestCase):
         class TAssertion(case.AssertionBase):
             pass
 
-        class TCase(case_factory.EmptyCase):
+        class TCase(case_factory.FakeCase):
             __assertion_class__ = TAssertion
 
         case_inst = TCase('__init__')
@@ -438,7 +378,7 @@ class TestCaseObject(BaseTestCase):
 
         expected_reason_from_storage = 'Case (info from test case): \n  hello: world\n\n'
 
-        class StepByStepCase(case_factory.EmptyCase):
+        class StepByStepCase(case_factory.FakeCase):
             @step(1, 'one step')
             def one_step(self):
                 pass
@@ -460,7 +400,7 @@ class TestCaseObject(BaseTestCase):
         case = case_factory.create()
         self.assertEqual(
             case.__class_name__(),
-            'tests.factories.case_factory.EmptyCase',
+            'tests.factories.case_factory.FakeCase',
         )
 
     def test_method_name(self):
@@ -471,14 +411,14 @@ class TestCaseObject(BaseTestCase):
         case = case_factory.create()
         self.assertEqual(
             case.__str__(),
-            'test (tests.factories.case_factory:EmptyCase)',
+            'test (tests.factories.case_factory:FakeCase)',
         )
 
     def test_repr_method(self):
         case = case_factory.create()
         self.assertEqual(
             case.__repr__(),
-            '<tests.factories.case_factory:EmptyCase method_name=test stopped_on=test>',
+            '<tests.factories.case_factory:FakeCase method_name=test stopped_on=test>',
         )
 
     def test_init_context(self):
@@ -545,7 +485,7 @@ class TestMakeCaseClassFromFunction(BaseTestCase):
 class TestFlows(BaseTestCase):
 
     def test_flows_decorator_for_method(self):
-        class TCClass(case_factory.EmptyCase):
+        class TCClass(case_factory.FakeCase):
             counter = 0
             @case.flows(1, 2, 3, 4, 5)
             def test(self, i):
@@ -558,7 +498,7 @@ class TestFlows(BaseTestCase):
 
     def test_flows_decorator_for_class(self):
         @case.flows(1, 2, 3, 4, 5)
-        class TCClass(case_factory.EmptyCase):
+        class TCClass(case_factory.FakeCase):
             counter = 0
             def test(self, i):
                 self.counter += i
@@ -571,7 +511,7 @@ class TestFlows(BaseTestCase):
         self.assertEqual(case_inst.counter, 15)
 
     def test_flows_class_param(self):
-        class TCClass(case_factory.EmptyCase):
+        class TCClass(case_factory.FakeCase):
             __flows__ = (1, 2, 3, 4, 5)
             counter = 0
             def test(self, i):
@@ -596,7 +536,7 @@ class TestBasicRunCase(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestFailCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -623,7 +563,7 @@ class TestFailCase(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestErrorCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -650,7 +590,7 @@ class TestErrorCase(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestSkipCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -678,7 +618,7 @@ class TestSkipCase(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestSkipIfCase(TestSkipCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -691,7 +631,7 @@ class TestSkipIfCase(TestSkipCase):
 
 class TestSkipUnlessCase(TestSkipCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -705,7 +645,7 @@ class TestSkipUnlessCase(TestSkipCase):
 class TestSkipClass(RunCaseTestCaseMixin, BaseTestCase):
 
     @case.skip('reason')
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         layer = CaseLayer()
 
@@ -732,7 +672,7 @@ class TestSkipClass(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestCaseCallbacks(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         calling_story = []
 
@@ -753,8 +693,8 @@ class TestCaseCallbacks(RunCaseTestCaseMixin, BaseTestCase):
         def test(self):
             pass
 
-    def create_case(self):
-        super(TestCaseCallbacks, self).create_case()
+    def make_case(self):
+        super(TestCaseCallbacks, self).make_case()
         self.case = case.CaseBox([self.case])
 
     def runTest(self):
@@ -775,7 +715,7 @@ class TestMountData(BaseTestCase):
 
 class TestRepeat(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         counter = 0
 
@@ -792,7 +732,7 @@ class TestRepeat(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestRepeatMethod(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         counter = 0
 
@@ -809,7 +749,7 @@ class TestRepeatMethod(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         calling_story = []
 
@@ -852,24 +792,21 @@ class TestStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
 class TestFLowsOnStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
 
         __flows__ = (1, 2, 3, 4, 5)
 
-        was_executed = []
+        flows_sum = 0
 
         def begin(self, i):
-            self.was_executed.append(i)
+            self.flows_sum += i
 
         @step(1, 'step one')
         def step_one(self, i):
-            self.was_executed.append(i)
+            self.flows_sum += i
 
         def finish(self, i):
-            self.was_executed.append(i)
+            self.flows_sum += i
 
     def runTest(self):
-        self.assertEqual(
-            self.case.was_executed,
-            [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5],
-        )
+        self.assertEqual(self.case.flows_sum, 45)

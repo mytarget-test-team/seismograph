@@ -6,7 +6,7 @@ from seismograph.case import (
 )
 
 
-class EmptyCase(Case):
+class FakeCase(Case):
 
     __mount_data__ = MountData(__name__)
 
@@ -19,4 +19,4 @@ def mark_is_run(case):
 
 
 def create(*args, **kwargs):
-    return EmptyCase('test', *args, **kwargs)
+    return FakeCase('test', *args, **kwargs)

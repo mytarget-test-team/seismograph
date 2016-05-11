@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+from StringIO import StringIO
 
 from ..factories import case_factory
 from ..factories import config_factory
@@ -18,45 +19,55 @@ class ConfigTestCaseMixin(object):
     def setUp(self):
         super(ConfigTestCaseMixin, self).setUp()
 
-        self.config = config_factory.create(**self.__config_options__)
+        self.make_config()
 
     def tearDown(self):
         super(ConfigTestCaseMixin, self).tearDown()
 
         self.config = None
 
+    def make_config(self):
+        self.config = config_factory.create(**self.__config_options__)
 
-class ResultTestCaseMixin(object):
+
+class ResultTestCaseMixin(ConfigTestCaseMixin):
+
+    __stream__ = None
 
     def setUp(self):
         super(ResultTestCaseMixin, self).setUp()
 
-        self.result = result_factory.create(self.config)
+        self.make_result()
 
     def tearDown(self):
         super(ResultTestCaseMixin, self).tearDown()
 
         self.result = None
+        self.stream = None
+
+    def make_result(self):
+        self.stream = self.__stream__ or StringIO()
+        self.result = result_factory.create(self.config, stream=self.stream)
 
 
-class CaseTestCaseMixin(ResultTestCaseMixin, ConfigTestCaseMixin):
+class CaseTestCaseMixin(ResultTestCaseMixin):
 
     __config_options__ = {}
 
-    class CaseClass(case_factory.EmptyCase):
+    class CaseClass(case_factory.FakeCase):
         pass
 
     def setUp(self):
         super(CaseTestCaseMixin, self).setUp()
 
-        self.create_case()
+        self.make_case()
 
     def tearDown(self):
         super(CaseTestCaseMixin, self).tearDown()
 
         self.case = None
 
-    def create_case(self):
+    def make_case(self):
         self.case = self.CaseClass('test', config=self.config)
 
 
