@@ -1,56 +1,26 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-import unittest
-from StringIO import StringIO
 from collections import OrderedDict
 
-from seismograph.case import (
-    Case,
-    CaseBox,
-    flows,
-    skip,
-    skip_if,
-    skip_unless,
-    MountData,
-    CaseLayer,
-    CaseContext,
-    AssertionBase,
-    make_case_class_from_function,
-)
-from seismograph.exceptions import (
-    Skip,
-    ExtensionNotRequired,
-)
+from seismograph import case
+from seismograph import xunit
+from seismograph import result
 from seismograph.utils import pyv
 from seismograph.steps import step
-from seismograph.result import (
-    Result,
-    Console,
-)
-from seismograph.xunit import XUnitData
+from seismograph import exceptions
+
+from .factories import case_factory
+from .factories import config_factory
+
+from .lib.case import BaseTestCase
+from .lib.case import RunCaseTestCaseMixin
 
 
-def mark_is_run(case):
-    case.__is_run__ = lambda: True
-
-
-def create_empty_case(*args, **kwargs):
-    return EmptyCase('test', *args, **kwargs)
-
-
-class EmptyCase(Case):
-
-    __mount_data__ = MountData('suite')
-
-    def test(self):
-        pass
-
-
-class EmptyLayer(CaseLayer):
+class CaseLayer(case.CaseLayer):
 
     def __init__(self):
-        super(EmptyLayer, self).__init__()
+        super(CaseLayer, self).__init__()
         self.was_called = None
         self.counter = 0
         self.calling_story = []
@@ -111,49 +81,13 @@ class EmptyLayer(CaseLayer):
         self.calling_story.append(self.was_called)
 
 
-class RunTestCaseMixin(object):
-
-    class TCClass(EmptyCase):
-        pass
-
-    class FakeConfig(object):
-        STOP = False
-        REPEAT = False
-        GEVENT = False
-        VERBOSE = False
-        NO_COLOR = True
-        STEPS_LOG = False
-        STEP_BY_STEP = False
-        MULTIPROCESSING = False
-
-    def setUp(self):
-        self.create_case()
-        self.stream = StringIO()
-        self.result = Result(
-            self.FakeConfig(),
-            stream=self.stream,
-        )
-        self.run_case()
-
-    def tearDown(self):
-        self.case = None
-        self.stream = None
-        self.result = None
-
-    def create_case(self):
-        self.case = self.TCClass('test', config=self.FakeConfig())
-
-    def run_case(self):
-        self.case(self.result)
-
-
-class TestCaseContext(unittest.TestCase):
+class TestCaseContext(BaseTestCase):
 
     def setUp(self):
         self.base_layer = CaseLayer()
-        self.empty_layer = EmptyLayer()
-        self.case = create_empty_case()
-        self.context = CaseContext(
+        self.empty_layer = CaseLayer()
+        self.case = case_factory.create()
+        self.context = case.CaseContext(
             lambda: None,
             lambda: None,
             layers=[self.empty_layer],
@@ -389,7 +323,7 @@ class TestCaseContext(unittest.TestCase):
         setup = lambda: None
         teardown = lambda: None
 
-        context = CaseContext(setup, teardown, layers=[layer])
+        context = case.CaseContext(setup, teardown, layers=[layer])
 
         self.assertIn(layer, context.layers)
         self.assertIn(setup, context.setup_callbacks)
@@ -398,17 +332,18 @@ class TestCaseContext(unittest.TestCase):
         self.assertIsInstance(context.extensions, dict)
 
 
-class TestAssertion(unittest.TestCase):
+class TestAssertion(BaseTestCase):
 
     def test_unit_test(self):
-        self.assertIsInstance(AssertionBase.__unittest__, unittest.TestCase)
+        import unittest
+        self.assertIsInstance(case.AssertionBase.__unittest__, unittest.TestCase)
 
 
-class TestCaseObject(unittest.TestCase):
+class TestCaseObject(BaseTestCase):
 
     def test_not_mount(self):
         with self.assertRaises(AssertionError) as ctx:
-            Case('__init__')
+            case.Case('__init__')
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
@@ -417,7 +352,7 @@ class TestCaseObject(unittest.TestCase):
 
     def test_method_does_not_exist(self):
         with self.assertRaises(AttributeError) as ctx:
-            EmptyCase('wow_wow')
+            case_factory.EmptyCase('wow_wow')
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
@@ -425,67 +360,67 @@ class TestCaseObject(unittest.TestCase):
         )
 
     def test_skip_method(self):
-        case = create_empty_case()
+        case = case_factory.create()
 
         with self.assertRaises(AssertionError) as ctx:
             case.skip_test('reason')
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
-            'Can not call "skip_test" of "tests.case.EmptyCase". Should be run.',
+            'Can not call "skip_test" of "tests.factories.case_factory.EmptyCase". Should be run.',
         )
 
-        with self.assertRaises(Skip) as ctx:
-            mark_is_run(case)
+        with self.assertRaises(exceptions.Skip) as ctx:
+            case_factory.mark_is_run(case)
             case.skip_test('reason')
 
         self.assertEqual(pyv.get_exc_message(ctx.exception), 'reason')
 
     def test_extension_not_required(self):
-        case = create_empty_case()
+        case = case_factory.create()
 
-        with self.assertRaises(ExtensionNotRequired) as ctx:
+        with self.assertRaises(exceptions.ExtensionNotRequired) as ctx:
             case.ext('hello')
 
         self.assertEqual(pyv.get_exc_message(ctx.exception), 'hello')
 
     def test_ext(self):
-        case = create_empty_case()
+        case = case_factory.create()
         case.context.require.append('hello')
         case.context.extensions['hello'] = 'world'
 
         self.assertEqual(case.ext('hello'), 'world')
 
     def test_default_class_params(self):
-        self.assertEqual(Case.__flows__, None)
-        self.assertEqual(Case.__layers__, None)
-        self.assertEqual(Case.__static__, False)
-        self.assertEqual(Case.__require__, None)
-        self.assertEqual(Case.__repeatable__, True)
-        self.assertEqual(Case.__create_reason__, True)
-        self.assertEqual(Case.__always_success__, False)
-        self.assertEqual(Case.__assertion_class__, None)
+        self.assertEqual(case.Case.__flows__, None)
+        self.assertEqual(case.Case.__layers__, None)
+        self.assertEqual(case.Case.__static__, False)
+        self.assertEqual(case.Case.__require__, None)
+        self.assertEqual(case.Case.__repeatable__, True)
+        self.assertEqual(case.Case.__create_reason__, True)
+        self.assertEqual(case.Case.__always_success__, False)
+        self.assertEqual(case.Case.__assertion_class__, None)
 
     def test_init_assertion(self):
-        case = create_empty_case()
-        self.assertIsInstance(case.assertion, AssertionBase)
+        case_inst = case_factory.create()
+        self.assertIsInstance(case_inst.assertion, case.AssertionBase)
 
     def test_change_assertion_class(self):
-        class TAssertion(AssertionBase):
+        class TAssertion(case.AssertionBase):
             pass
 
-        class TCase(EmptyCase):
+        class TCase(case_factory.EmptyCase):
             __assertion_class__ = TAssertion
 
-        case = TCase('__init__')
-        self.assertIsInstance(case.assertion, TAssertion)
+        case_inst = TCase('__init__')
+        self.assertIsInstance(case_inst.assertion, TAssertion)
 
     def test_reason_storage(self):
-        case = create_empty_case()
+        case = case_factory.create()
         self.assertIsInstance(case.reason_storage, OrderedDict)
 
     def test_create_reason_for_simple_case(self):
-        case = create_empty_case()
+        case = case_factory.create()
         reason = case.__reason__()
         self.assertEqual(reason, '')
 
@@ -503,16 +438,12 @@ class TestCaseObject(unittest.TestCase):
 
         expected_reason_from_storage = 'Case (info from test case): \n  hello: world\n\n'
 
-        class StepByStepCase(EmptyCase):
+        class StepByStepCase(case_factory.EmptyCase):
             @step(1, 'one step')
             def one_step(self):
                 pass
 
-        class FakeConfig(object):
-            STEPS_LOG = False
-            STEP_BY_STEP = False
-
-        case = StepByStepCase('test', config=FakeConfig())
+        case = StepByStepCase('test', config=config_factory.create())
         case.test()
 
         reason = case.__reason__()
@@ -526,27 +457,36 @@ class TestCaseObject(unittest.TestCase):
         )
 
     def test_class_name(self):
-        case = EmptyCase('test')
-        self.assertEqual(case.__class_name__(), 'suite.EmptyCase')
+        case = case_factory.create()
+        self.assertEqual(
+            case.__class_name__(),
+            'tests.factories.case_factory.EmptyCase',
+        )
 
     def test_method_name(self):
-        case = EmptyCase('test')
+        case = case_factory.create()
         self.assertEqual(case.__method_name__(), 'test')
 
     def test_str_method(self):
-        case = EmptyCase('test')
-        self.assertEqual(case.__str__(), 'test (suite:EmptyCase)')
+        case = case_factory.create()
+        self.assertEqual(
+            case.__str__(),
+            'test (tests.factories.case_factory:EmptyCase)',
+        )
 
     def test_repr_method(self):
-        case = EmptyCase('test')
-        self.assertEqual(case.__repr__(), '<suite:EmptyCase method_name=test stopped_on=test>')
+        case = case_factory.create()
+        self.assertEqual(
+            case.__repr__(),
+            '<tests.factories.case_factory:EmptyCase method_name=test stopped_on=test>',
+        )
 
     def test_init_context(self):
-        case = create_empty_case()
-        self.assertIsInstance(case.context, CaseContext)
+        case_inst = case_factory.create()
+        self.assertIsInstance(case_inst.context, case.CaseContext)
 
 
-class TestMakeCaseClassFromFunction(unittest.TestCase):
+class TestMakeCaseClassFromFunction(BaseTestCase):
 
     def setUp(self):
         def test_function(case):
@@ -559,94 +499,91 @@ class TestMakeCaseClassFromFunction(unittest.TestCase):
         self.static_case_function = static_case_function
 
     def test_basic(self):
-        class_from_func = make_case_class_from_function(
-            self.test_function, Case,
+        class_from_func = case.make_case_class_from_function(
+            self.test_function, case.Case,
         )
-        self.assertTrue(issubclass(class_from_func, Case))
+        self.assertTrue(issubclass(class_from_func, case.Case))
         self.assertEqual(class_from_func.__name__, 'test_function')
 
         signature = inspect.getargspec(class_from_func.test)
         self.assertEqual(signature.args, ['case'])
 
     def test_static_flag(self):
-        class_from_func = make_case_class_from_function(
-            self.static_case_function, Case,
+        class_from_func = case.make_case_class_from_function(
+            self.static_case_function, case.Case,
             static=True,
         )
-        self.assertTrue(issubclass(class_from_func, Case))
+        self.assertTrue(issubclass(class_from_func, case.Case))
         self.assertEqual(class_from_func.__name__, 'static_case_function')
 
         signature = inspect.getargspec(class_from_func.test)
         self.assertEqual(signature.args, ['s'])
 
     def test_doc(self):
-        class_from_func = make_case_class_from_function(
-            self.test_function, Case,
+        class_from_func = case.make_case_class_from_function(
+            self.test_function, case.Case,
             doc='It is doc string',
         )
         self.assertEqual(class_from_func.__doc__, 'It is doc string')
 
     def test_class_name(self):
-        class_from_func = make_case_class_from_function(
-            self.test_function, Case,
+        class_from_func = case.make_case_class_from_function(
+            self.test_function, case.Case,
             class_name='NameForCaseClass',
         )
-        self.assertTrue(issubclass(class_from_func, Case))
+        self.assertTrue(issubclass(class_from_func, case.Case))
         self.assertEqual(class_from_func.__name__, 'NameForCaseClass')
 
     def test_class_name_creator(self):
-        class_from_func = make_case_class_from_function(
-            self.test_function, Case,
+        class_from_func = case.make_case_class_from_function(
+            self.test_function, case.Case,
             class_name_creator=lambda f: 'la_la_la',
         )
         self.assertEqual(class_from_func.__name__, 'la_la_la')
 
 
-class TestFlows(unittest.TestCase):
-
-    class FakeConfig(object):
-        FLOWS_LOG = False
+class TestFlows(BaseTestCase):
 
     def test_flows_decorator_for_method(self):
-        class TCClass(EmptyCase):
+        class TCClass(case_factory.EmptyCase):
             counter = 0
-            @flows(1, 2, 3, 4, 5)
+            @case.flows(1, 2, 3, 4, 5)
             def test(self, i):
                 self.counter += i
 
-        case = TCClass('test', config=self.FakeConfig())
-        case.test()
+        case_inst = TCClass('test', config=config_factory.create())
+        case_inst.test()
 
-        self.assertEqual(case.counter, 15)
+        self.assertEqual(case_inst.counter, 15)
 
     def test_flows_decorator_for_class(self):
-        @flows(1, 2, 3, 4, 5)
-        class TCClass(EmptyCase):
+        @case.flows(1, 2, 3, 4, 5)
+        class TCClass(case_factory.EmptyCase):
             counter = 0
             def test(self, i):
                 self.counter += i
 
         self.assertEqual(TCClass.__flows__, (1, 2, 3, 4, 5))
 
-        case = TCClass('test', config=self.FakeConfig())
-        case.test()
+        case_inst = TCClass('test', config=config_factory.create())
+        case_inst.test()
 
-        self.assertEqual(case.counter, 15)
+        self.assertEqual(case_inst.counter, 15)
 
     def test_flows_class_param(self):
-        class TCClass(EmptyCase):
+        class TCClass(case_factory.EmptyCase):
             __flows__ = (1, 2, 3, 4, 5)
             counter = 0
             def test(self, i):
                 self.counter += i
 
-        case = TCClass('test', config=self.FakeConfig())
-        case.test()
+        case_inst = TCClass('test', config=config_factory.create())
+        case_inst.test()
 
-        self.assertEqual(case.counter, 15)
+        self.assertEqual(case_inst.counter, 15)
 
 
-class TestBasicRunCase(RunTestCaseMixin, unittest.TestCase):
+class TestBasicRunCase(RunCaseTestCaseMixin, BaseTestCase):
 
     def runTest(self):
         self.assertTrue(self.case.__is_run__())
@@ -654,14 +591,14 @@ class TestBasicRunCase(RunTestCaseMixin, unittest.TestCase):
         self.assertFalse(self.result.failures)
         self.assertEqual(len(self.result.successes), 1)
         self.assertEqual(self.result.current_state.tests, 1)
-        self.assertIsInstance(self.case.log, Console.ChildConsole)
+        self.assertIsInstance(self.case.log, result.Console.ChildConsole)
 
 
-class TestFailCase(RunTestCaseMixin, unittest.TestCase):
+class TestFailCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
@@ -674,8 +611,8 @@ class TestFailCase(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.result.current_state.tests, 1)
 
         case, reason = self.result.failures[0]
-        self.assertIsInstance(case, self.TCClass)
-        self.assertIsInstance(reason, XUnitData)
+        self.assertIsInstance(case, self.CaseClass)
+        self.assertIsInstance(reason, xunit.XUnitData)
 
         self.assertEqual(self.case.layer.counter, 6)
         self.assertEqual(
@@ -684,11 +621,11 @@ class TestFailCase(RunTestCaseMixin, unittest.TestCase):
         )
 
 
-class TestErrorCase(RunTestCaseMixin, unittest.TestCase):
+class TestErrorCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
@@ -701,8 +638,8 @@ class TestErrorCase(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.result.current_state.tests, 1)
 
         case, reason = self.result.errors[0]
-        self.assertIsInstance(case, self.TCClass)
-        self.assertIsInstance(reason, XUnitData)
+        self.assertIsInstance(case, self.CaseClass)
+        self.assertIsInstance(reason, xunit.XUnitData)
 
         self.assertEqual(self.case.layer.counter, 7)
         self.assertEqual(
@@ -711,15 +648,15 @@ class TestErrorCase(RunTestCaseMixin, unittest.TestCase):
         )
 
 
-class TestSkipCase(RunTestCaseMixin, unittest.TestCase):
+class TestSkipCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
-        @skip('reason')
+        @case.skip('reason')
         def test(self):
             pass
 
@@ -729,8 +666,8 @@ class TestSkipCase(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.result.current_state.tests, 1)
 
         case, reason = self.result.skipped[0]
-        self.assertIsInstance(case, self.TCClass)
-        self.assertIsInstance(reason, XUnitData)
+        self.assertIsInstance(case, self.CaseClass)
+        self.assertIsInstance(reason, xunit.XUnitData)
 
         self.assertEqual(self.case.layer.counter, 6)
         self.assertEqual(
@@ -741,36 +678,36 @@ class TestSkipCase(RunTestCaseMixin, unittest.TestCase):
 
 class TestSkipIfCase(TestSkipCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
-        @skip_if(True, 'reason')
+        @case.skip_if(True, 'reason')
         def test(self):
             pass
 
 
 class TestSkipUnlessCase(TestSkipCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
-        @skip_unless(False, 'reason')
+        @case.skip_unless(False, 'reason')
         def test(self):
             pass
 
 
-class TestSkipClass(RunTestCaseMixin, unittest.TestCase):
+class TestSkipClass(RunCaseTestCaseMixin, BaseTestCase):
 
-    @skip('reason')
-    class TCClass(EmptyCase):
+    @case.skip('reason')
+    class CaseClass(case_factory.EmptyCase):
 
-        layer = EmptyLayer()
+        layer = CaseLayer()
 
         __layers__ = (layer, )
 
@@ -783,8 +720,8 @@ class TestSkipClass(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.result.current_state.tests, 1)
 
         case, reason = self.result.skipped[0]
-        self.assertIsInstance(case, self.TCClass)
-        self.assertIsInstance(reason, XUnitData)
+        self.assertIsInstance(case, self.CaseClass)
+        self.assertIsInstance(reason, xunit.XUnitData)
 
         self.assertEqual(self.case.layer.counter, 3)
         self.assertEqual(
@@ -793,9 +730,9 @@ class TestSkipClass(RunTestCaseMixin, unittest.TestCase):
         )
 
 
-class TestCaseCallbacks(RunTestCaseMixin, unittest.TestCase):
+class TestCaseCallbacks(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
         calling_story = []
 
@@ -818,7 +755,7 @@ class TestCaseCallbacks(RunTestCaseMixin, unittest.TestCase):
 
     def create_case(self):
         super(TestCaseCallbacks, self).create_case()
-        self.case = CaseBox([self.case])
+        self.case = case.CaseBox([self.case])
 
     def runTest(self):
         self.assertEqual(
@@ -827,18 +764,18 @@ class TestCaseCallbacks(RunTestCaseMixin, unittest.TestCase):
         )
 
 
-class TestMountData(unittest.TestCase):
+class TestMountData(BaseTestCase):
 
     def runTest(self):
-        mount_data = MountData('hello', ['world'])
+        mount_data = case.MountData('hello', ['world'])
 
         self.assertEqual(mount_data.suite_name, 'hello')
         self.assertEqual(mount_data.require, ['world'])
 
 
-class TestRepeat(RunTestCaseMixin, unittest.TestCase):
+class TestRepeat(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
         counter = 0
 
@@ -853,9 +790,9 @@ class TestRepeat(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.case.counter, 5)
 
 
-class TestRepeatMethod(RunTestCaseMixin, unittest.TestCase):
+class TestRepeatMethod(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
         counter = 0
 
@@ -870,9 +807,9 @@ class TestRepeatMethod(RunTestCaseMixin, unittest.TestCase):
         self.assertEqual(self.case.counter, 5)
 
 
-class TestStepByStepCase(RunTestCaseMixin, unittest.TestCase):
+class TestStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
         calling_story = []
 
@@ -913,9 +850,9 @@ class TestStepByStepCase(RunTestCaseMixin, unittest.TestCase):
         )
 
 
-class TestFLowsOnStepByStepCase(RunTestCaseMixin, unittest.TestCase):
+class TestFLowsOnStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
-    class TCClass(EmptyCase):
+    class CaseClass(case_factory.EmptyCase):
 
         __flows__ = (1, 2, 3, 4, 5)
 
