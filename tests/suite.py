@@ -11,6 +11,7 @@ from seismograph.utils import pyv
 
 from .lib.factories import (
     suite_factory,
+    config_factory,
 )
 
 from .lib.case import (
@@ -231,6 +232,43 @@ class TestSuiteObject(BaseTestCase):
             }
         )
 
+    def test_assign_build_rule(self):
+        suite_inst = suite.Suite(__name__)
+        rule = suite.BuildRule(__name__, case_name='MyTestCase', test_name='test')
+
+        suite_inst.assign_build_rule(rule)
+
+        self.assertIn(rule, suite_inst.context.build_rules)
+
+    def test_assign_incorrect_build_rule(self):
+        suite_inst = suite.Suite(__name__)
+        rule = suite.BuildRule('incorrect.name', case_name='MyTestCase')
+
+        with self.assertRaises(AssertionError) as ctx:
+            suite_inst.assign_build_rule(rule)
+
+        self.assertEqual(
+            pyv.get_exc_message(ctx.exception),
+            'Build rule "incorrect.name:MyTestCase" is not of this suite',
+        )
+
+    def test_create_reason(self):
+        suite_inst = suite.Suite(__name__)
+        suite_inst.reason_storage['hello'] = 'world'
+
+        reason = suite_inst.__reason__()
+        self.assertEqual(
+            reason, 'Suite (info from suite): \n  hello: world\n\n',
+        )
+
+    def test_default_class_params(self):
+        self.assertEqual(suite.Suite.__layers__, None)
+        self.assertEqual(suite.Suite.__require__, None)
+        self.assertEqual(suite.Suite.__create_reason__, True)
+        self.assertEqual(suite.Suite.__case_class__, case.Case)
+        self.assertEqual(suite.Suite.__case_group_class__, None)
+        self.assertEqual(suite.Suite.__case_box_class__, case.CaseBox)
+
 
 class TestRegisterCase(BaseTestCase):
 
@@ -357,3 +395,80 @@ class TestRegisterCase(BaseTestCase):
             pass
 
         self.assertTrue(issubclass(function, CaseClass))
+
+    def test_always_success_param(self):
+        suite_inst = suite_factory.create()
+
+        self.assertFalse(case.Case.__always_success__)
+
+        @suite_inst.register(always_success=True)
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertTrue(CaseClass.__always_success__)
+
+
+class TestBuildRule(BaseTestCase):
+
+    def test_basic(self):
+        rule = suite.BuildRule(
+            'package.module',
+            case_name='ClassName',
+            test_name='method_name',
+        )
+
+        self.assertEqual(rule.suite_name, 'package.module')
+        self.assertEqual(rule.case_name, 'ClassName')
+        self.assertEqual(rule.test_name, 'method_name')
+
+    def test_to_str(self):
+        rule_1 = suite.BuildRule(
+            'package.module',
+            case_name='ClassName',
+            test_name='method_name',
+        )
+        rule_2 = suite.BuildRule(
+            'package.module',
+            case_name='ClassName',
+        )
+        rule_3 = suite.BuildRule(
+            'package.module',
+        )
+
+        self.assertEqual(str(rule_1), 'package.module:ClassName.method_name')
+        self.assertEqual(str(rule_2), 'package.module:ClassName')
+        self.assertEqual(str(rule_3), 'package.module')
+
+    def test_repr(self):
+        rule = suite.BuildRule(
+            'package.module',
+            case_name='ClassName',
+            test_name='method_name',
+        )
+
+        self.assertEqual(
+            repr(rule),
+            '<BuildRule(suite_name=package.module, case_name=ClassName, test_name=method_name)>',
+        )
+
+    def test_is_of(self):
+        suite_inst = suite.Suite(__name__)
+        rule = suite.BuildRule(__name__)
+
+        self.assertTrue(rule.is_of(suite_inst))
+
+    def test_is_of_negative(self):
+        suite_inst = suite.Suite(__name__)
+        rule = suite.BuildRule('package.module')
+
+        self.assertFalse(rule.is_of(suite_inst))
+
+
+class TestMountData(BaseTestCase):
+
+    def test_basic(self):
+        config = config_factory.create()
+        mount_data = suite.MountData(config)
+
+        self.assertEqual(mount_data.config, config)

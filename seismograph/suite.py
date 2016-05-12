@@ -53,7 +53,7 @@ class BuildRule(object):
     def __str__(self):
         if self.__suite_name and self.__case_name and self.__test_name:
             return '{}:{}.{}'.format(
-                self.__suite_name, self.__case_name, self.__case_name,
+                self.__suite_name, self.__case_name, self.__test_name,
             )
 
         if self.__suite_name and self.__case_name:

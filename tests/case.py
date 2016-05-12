@@ -15,6 +15,7 @@ from .lib.factories import config_factory
 
 from .lib.case import (
     BaseTestCase,
+    CaseTestCaseMixin,
     RunCaseTestCaseMixin,
 )
 from .lib.layers import CaseLayer
@@ -749,3 +750,17 @@ class TestFLowsOnStepByStepCase(RunCaseTestCaseMixin, BaseTestCase):
 
     def runTest(self):
         self.assertEqual(self.case.flows_sum, 45)
+
+
+class TestShouldStop(CaseTestCaseMixin, BaseTestCase):
+
+    def runTest(self):
+        self.result.current_state.should_stop = True
+
+        self.case(self.result)
+
+        self.assertTrue(self.case.__is_run__())
+        self.assertEqual(self.result.current_state.tests, 0)
+        self.assertFalse(self.result.errors)
+        self.assertFalse(self.result.failures)
+        self.assertFalse(self.result.successes)
