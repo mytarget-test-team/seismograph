@@ -10,8 +10,8 @@ from seismograph.utils import pyv
 from seismograph.steps import step
 from seismograph import exceptions
 
-from .factories import case_factory
-from .factories import config_factory
+from .lib.factories import case_factory
+from .lib.factories import config_factory
 
 from .lib.case import (
     BaseTestCase,
@@ -246,7 +246,7 @@ class TestCaseObject(BaseTestCase):
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
-            'Can not call "skip_test" of "tests.factories.case_factory.FakeCase". Should be run.',
+            'Can not call "skip_test" of "tests.lib.factories.case_factory.FakeCase". Should be run.',
         )
 
         with self.assertRaises(exceptions.Skip) as ctx:
@@ -339,7 +339,7 @@ class TestCaseObject(BaseTestCase):
         case_inst = case_factory.create()
         self.assertEqual(
             case_inst.__class_name__(),
-            'tests.factories.case_factory.FakeCase',
+            'tests.lib.factories.case_factory.FakeCase',
         )
 
     def test_method_name(self):
@@ -350,14 +350,14 @@ class TestCaseObject(BaseTestCase):
         case_inst = case_factory.create()
         self.assertEqual(
             case_inst.__str__(),
-            'test (tests.factories.case_factory:FakeCase)',
+            'test (tests.lib.factories.case_factory:FakeCase)',
         )
 
     def test_repr_method(self):
         case_inst = case_factory.create()
         self.assertEqual(
             case_inst.__repr__(),
-            '<tests.factories.case_factory:FakeCase method_name=test stopped_on=test>',
+            '<tests.lib.factories.case_factory:FakeCase method_name=test stopped_on=test>',
         )
 
     def test_init_context(self):

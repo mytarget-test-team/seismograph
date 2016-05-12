@@ -2,10 +2,16 @@
 
 import inspect
 
-from seismograph import suite
+from seismograph import (
+    case,
+    suite,
+    steps,
+)
 from seismograph.utils import pyv
 
-from .factories import suite_factory
+from .lib.factories import (
+    suite_factory,
+)
 
 from .lib.case import (
     BaseTestCase,
@@ -13,7 +19,7 @@ from .lib.case import (
 from .lib.layers import SuiteLayer
 
 
-class TestCaseContext(BaseTestCase):
+class TestSuiteContext(BaseTestCase):
 
     def setUp(self):
         self.base_layer = suite.SuiteLayer()
@@ -174,6 +180,15 @@ class TestSuiteObject(BaseTestCase):
         self.assertIn(layer, suite_inst.context.layers)
         self.assertEqual(suite_inst.context.require, ['hello'])
 
+        self.assertEqual(
+            str(suite_inst),
+            '<seismograph.suite.Suite method_name=run stopped_on=run>',
+        )
+        self.assertEqual(
+            repr(suite_inst),
+            '<seismograph.suite.Suite method_name=run stopped_on=run>',
+        )
+
     def test_not_mount(self):
         suite_inst = suite.Suite(__name__)
 
@@ -184,3 +199,77 @@ class TestSuiteObject(BaseTestCase):
             pyv.get_exc_message(ctx.exception),
             'Can not call "build" of "seismograph.suite.Suite". Should be mount.',
         )
+
+    def test_get_map(self):
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        @suite_inst.register
+        class CaseClass2(case.Case):
+            def test2(self):
+                pass
+
+        self.assertDictEqual(
+            suite_inst.get_map(),
+            {
+                CaseClass.__name__: {
+                    'tests': {
+                        'test': CaseClass.test,
+                    },
+                    'cls': CaseClass,
+                },
+                CaseClass2.__name__: {
+                    'tests': {
+                        'test2': CaseClass2.test2,
+                    },
+                    'cls': CaseClass2,
+                },
+            }
+        )
+
+
+class TestRegisterCase(BaseTestCase):
+
+    def test_basic(self):
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertIn(CaseClass, suite_inst.cases)
+
+    def test_register_function(self):
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register
+        def function(tc):
+            pass
+
+        self.assertEqual(len(suite_inst.cases), 1)
+
+        created_class = suite_inst.cases[0]
+        self.assertTrue(type(created_class) == steps.CaseMeta)
+
+        signature = inspect.getargspec(created_class.test)
+        self.assertEqual(signature.args, ['tc'])
+
+    def test_register_static_function(self):
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(static=True)
+        def static_function():
+            pass
+
+        self.assertEqual(len(suite_inst.cases), 1)
+
+        created_class = suite_inst.cases[0]
+        self.assertTrue(type(created_class) == steps.CaseMeta)
+
+        signature = inspect.getargspec(created_class.test)
+        self.assertEqual(signature.args, ['s'])

@@ -3,10 +3,10 @@
 import unittest
 from StringIO import StringIO
 
-from ..factories import case_factory
-from ..factories import suite_factory
-from ..factories import config_factory
-from ..factories import result_factory
+from .factories import case_factory
+from .factories import suite_factory
+from .factories import config_factory
+from .factories import result_factory
 
 
 class BaseTestCase(unittest.TestCase):
