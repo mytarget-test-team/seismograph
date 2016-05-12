@@ -16,6 +16,7 @@ from .lib.factories import (
 
 from .lib.case import (
     BaseTestCase,
+    RunSuiteTestCaseMixin,
 )
 from .lib.layers import SuiteLayer
 
@@ -472,3 +473,27 @@ class TestMountData(BaseTestCase):
         mount_data = suite.MountData(config)
 
         self.assertEqual(mount_data.config, config)
+
+
+class TestRunSuite(RunSuiteTestCaseMixin, BaseTestCase):
+
+    def runTest(self):
+        self.assertTrue(self.suite.__is_run__())
+        self.assertEqual(len(self.result.successes), 1)
+        self.assertEqual(self.result.current_state.tests, 1)
+
+
+class TestCallbacksCall(RunSuiteTestCaseMixin, BaseTestCase):
+
+    class SuiteClass(suite.Suite):
+
+        calling_story = []
+
+        def setup(self):
+            self.calling_story.append('setup')
+
+        def teardown(self):
+            self.calling_story.append('teardown')
+
+    def runTest(self):
+        self.assertEqual(self.suite.calling_story, ['setup', 'teardown'])

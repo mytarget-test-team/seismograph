@@ -94,6 +94,19 @@ class SuiteTestCaseMixin(ConfigTestCaseMixin):
         )
 
 
+class RunSuiteTestCaseMixin(CaseTestCaseMixin, SuiteTestCaseMixin):
+
+    def setUp(self):
+        super(RunSuiteTestCaseMixin, self).setUp()
+
+        self.suite.cases.append(self.CaseClass)
+        self.suite.build()
+        self.run_suite()
+
+    def run_suite(self):
+        self.suite(self.result)
+
+
 class RunCaseTestCaseMixin(CaseTestCaseMixin):
 
     def setUp(self):
