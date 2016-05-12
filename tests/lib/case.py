@@ -4,6 +4,7 @@ import unittest
 from StringIO import StringIO
 
 from ..factories import case_factory
+from ..factories import suite_factory
 from ..factories import config_factory
 from ..factories import result_factory
 
@@ -69,6 +70,28 @@ class CaseTestCaseMixin(ResultTestCaseMixin):
 
     def make_case(self):
         self.case = self.CaseClass('test', config=self.config)
+
+
+class SuiteTestCaseMixin(ConfigTestCaseMixin):
+
+    class SuiteClass(suite_factory.FakeSuite):
+        pass
+
+    def setUp(self):
+        super(SuiteTestCaseMixin, self).setUp()
+
+        self.make_suite()
+
+    def tearDown(self):
+        super(SuiteTestCaseMixin, self).tearDown()
+
+        self.suite = None
+
+    def make_suite(self):
+        self.suite = suite_factory.create(
+            config=self.config,
+            suite_class=self.SuiteClass,
+        )
 
 
 class RunCaseTestCaseMixin(CaseTestCaseMixin):

@@ -17,70 +17,7 @@ from .lib.case import (
     BaseTestCase,
     RunCaseTestCaseMixin,
 )
-
-
-class CaseLayer(case.CaseLayer):
-
-    def __init__(self):
-        super(CaseLayer, self).__init__()
-        self.was_called = None
-        self.counter = 0
-        self.calling_story = []
-
-    def on_init(self, case):
-        self.was_called = 'on_init'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_require(self, require):
-        self.was_called = 'on_require'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_setup(self, case):
-        self.was_called = 'on_setup'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_teardown(self, case):
-        self.was_called = 'on_teardown'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_skip(self, case, reason, result):
-        self.was_called = 'on_skip'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_any_error(self, error, case, result):
-        self.was_called = 'on_any_error'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_error(self, error, case, result):
-        self.was_called = 'on_error'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_context_error(self, error, case, result):
-        self.was_called = 'on_context_error'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_fail(self, fail, case, result):
-        self.was_called = 'on_fail'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_success(self, case):
-        self.was_called = 'on_success'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
-
-    def on_run(self, case):
-        self.was_called = 'on_run'
-        self.counter += 1
-        self.calling_story.append(self.was_called)
+from .lib.layers import CaseLayer
 
 
 class TestCaseContext(BaseTestCase):
@@ -302,10 +239,10 @@ class TestCaseObject(BaseTestCase):
         )
 
     def test_skip_method(self):
-        case = case_factory.create()
+        case_inst = case_factory.create()
 
         with self.assertRaises(AssertionError) as ctx:
-            case.skip_test('reason')
+            case_inst.skip_test('reason')
 
         self.assertEqual(
             pyv.get_exc_message(ctx.exception),
@@ -313,25 +250,25 @@ class TestCaseObject(BaseTestCase):
         )
 
         with self.assertRaises(exceptions.Skip) as ctx:
-            case_factory.mark_is_run(case)
-            case.skip_test('reason')
+            case_factory.mark_is_run(case_inst)
+            case_inst.skip_test('reason')
 
         self.assertEqual(pyv.get_exc_message(ctx.exception), 'reason')
 
     def test_extension_not_required(self):
-        case = case_factory.create()
+        case_inst = case_factory.create()
 
         with self.assertRaises(exceptions.ExtensionNotRequired) as ctx:
-            case.ext('hello')
+            case_inst.ext('hello')
 
         self.assertEqual(pyv.get_exc_message(ctx.exception), 'hello')
 
     def test_ext(self):
-        case = case_factory.create()
-        case.context.require.append('hello')
-        case.context.extensions['hello'] = 'world'
+        case_inst = case_factory.create()
+        case_inst.context.require.append('hello')
+        case_inst.context.extensions['hello'] = 'world'
 
-        self.assertEqual(case.ext('hello'), 'world')
+        self.assertEqual(case_inst.ext('hello'), 'world')
 
     def test_default_class_params(self):
         self.assertEqual(case.Case.__flows__, None)
@@ -358,16 +295,16 @@ class TestCaseObject(BaseTestCase):
         self.assertIsInstance(case_inst.assertion, TAssertion)
 
     def test_reason_storage(self):
-        case = case_factory.create()
-        self.assertIsInstance(case.reason_storage, OrderedDict)
+        case_inst = case_factory.create()
+        self.assertIsInstance(case_inst.reason_storage, OrderedDict)
 
     def test_create_reason_for_simple_case(self):
-        case = case_factory.create()
-        reason = case.__reason__()
+        case_inst = case_factory.create()
+        reason = case_inst.__reason__()
         self.assertEqual(reason, '')
 
-        case.reason_storage['hello'] = 'world'
-        reason = case.__reason__()
+        case_inst.reason_storage['hello'] = 'world'
+        reason = case_inst.__reason__()
         self.assertEqual(reason, 'Case (info from test case): \n  hello: world\n\n')
 
     def test_create_reason_for_step_by_step_case(self):
@@ -385,41 +322,41 @@ class TestCaseObject(BaseTestCase):
             def one_step(self):
                 pass
 
-        case = StepByStepCase('test', config=config_factory.create())
-        case.test()
+        case_inst = StepByStepCase('test', config=config_factory.create())
+        case_inst.test()
 
-        reason = case.__reason__()
+        reason = case_inst.__reason__()
         self.assertEqual(reason, expected_reason)
 
-        case.reason_storage['hello'] = 'world'
-        reason = case.__reason__()
+        case_inst.reason_storage['hello'] = 'world'
+        reason = case_inst.__reason__()
         self.assertEqual(
             reason,
             expected_reason + expected_reason_from_storage,
         )
 
     def test_class_name(self):
-        case = case_factory.create()
+        case_inst = case_factory.create()
         self.assertEqual(
-            case.__class_name__(),
+            case_inst.__class_name__(),
             'tests.factories.case_factory.FakeCase',
         )
 
     def test_method_name(self):
-        case = case_factory.create()
-        self.assertEqual(case.__method_name__(), 'test')
+        case_inst = case_factory.create()
+        self.assertEqual(case_inst.__method_name__(), 'test')
 
     def test_str_method(self):
-        case = case_factory.create()
+        case_inst = case_factory.create()
         self.assertEqual(
-            case.__str__(),
+            case_inst.__str__(),
             'test (tests.factories.case_factory:FakeCase)',
         )
 
     def test_repr_method(self):
-        case = case_factory.create()
+        case_inst = case_factory.create()
         self.assertEqual(
-            case.__repr__(),
+            case_inst.__repr__(),
             '<tests.factories.case_factory:FakeCase method_name=test stopped_on=test>',
         )
 
