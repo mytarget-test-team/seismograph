@@ -273,3 +273,87 @@ class TestRegisterCase(BaseTestCase):
 
         signature = inspect.getargspec(created_class.test)
         self.assertEqual(signature.args, ['s'])
+
+    def test_flows_param(self):
+        flows = (1, 2, 3, 4)
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(flows=flows)
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertEqual(CaseClass.__flows__, flows)
+
+    def test_skip_param(self):
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(skip='some reason')
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertIsNotNone(getattr(CaseClass, case.SKIP_ATTRIBUTE_NAME, None))
+        self.assertEqual(getattr(CaseClass, case.SKIP_WHY_ATTRIBUTE_NAME, None), 'some reason')
+
+    def test_layers_param(self):
+        layers = (case.CaseLayer(), )
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(layers=layers)
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertEqual(CaseClass.__layers__, layers)
+
+    def test_set_layers_with_existed(self):
+        layers = (case.CaseLayer(), )
+        cls_layers = (case.CaseLayer(), )
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(layers=layers)
+        class CaseClass(case.Case):
+
+            __layers__ = cls_layers
+
+            def test(self):
+                pass
+
+        self.assertEqual(CaseClass.__layers__, cls_layers + layers)
+
+    def test_require_param(self):
+        require = ['hello']
+        suite_inst = suite_factory.create()
+
+        @suite_inst.register(require=require)
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertEqual(CaseClass.__mount_data__.require, require)
+
+    def test_assertion_class_param(self):
+        suite_inst = suite_factory.create()
+
+        class AssertionClass(case.AssertionBase):
+            pass
+
+        @suite_inst.register(assertion_class=AssertionClass)
+        class CaseClass(case.Case):
+            def test(self):
+                pass
+
+        self.assertEqual(CaseClass.__assertion_class__, AssertionClass)
+
+    def test_case_class_param(self):
+        suite_inst = suite_factory.create()
+
+        class CaseClass(case.Case):
+            pass
+
+        @suite_inst.register(case_class=CaseClass)
+        def function(tc):
+            pass
+
+        self.assertTrue(issubclass(function, CaseClass))
