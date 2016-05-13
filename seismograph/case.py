@@ -181,13 +181,18 @@ class CaseBox(object):
             yield case
 
     def __repr__(self):
-        return repr(self.__current)
+        if self.__current:
+            return repr(self.__current)
+        return super(CaseBox, self).__repr__()
 
     def __str__(self):
         return str(self.__current)
 
     def __getattr__(self, item):
         return getattr(self.__current, item)
+
+    def __len__(self):
+        return len(self.__cases)
 
     def __run_current__(self, result):
         if self.__current.__repeatable__ and self.__current.config.REPEAT > 0:

@@ -6,6 +6,7 @@ from seismograph import (
     case,
     suite,
     steps,
+    exceptions,
 )
 from seismograph.utils import pyv
 
@@ -275,6 +276,39 @@ class TestSuiteObject(BaseTestCase):
         self.assertEqual(suite.Suite.__case_group_class__, None)
         self.assertEqual(suite.Suite.__case_box_class__, case.CaseBox)
 
+    def test_add_setup_callback(self):
+        setup = lambda: None
+        suite_inst = suite.Suite(__name__)
+
+        suite_inst.add_setup(setup)
+
+        self.assertIn(setup, suite_inst.context.setup_callbacks)
+
+    def test_add_teardown_callback(self):
+        teardown = lambda: None
+        suite_inst = suite.Suite(__name__)
+
+        suite_inst.add_teardown(teardown)
+
+        self.assertIn(teardown, suite_inst.context.teardown_callbacks)
+
+    def test_extension_not_required(self):
+        suite_inst = suite_factory.FakeSuite(__name__)
+        suite_factory.mark_is_build(suite_inst)
+
+        with self.assertRaises(exceptions.ExtensionNotRequired) as ctx:
+            suite_inst.ext('hello')
+
+        self.assertEqual(pyv.get_exc_message(ctx.exception), 'hello')
+
+    def test_ext(self):
+        suite_inst = suite_factory.FakeSuite(__name__, require=['hello'])
+        suite_factory.mark_is_build(suite_inst)
+
+        suite_inst.context.extensions['hello'] = 'world'
+
+        self.assertEqual(suite_inst.ext('hello'), 'world')
+
 
 class TestRegisterCase(BaseTestCase):
 
@@ -478,6 +512,103 @@ class TestMountData(BaseTestCase):
         mount_data = suite.MountData(config)
 
         self.assertEqual(mount_data.config, config)
+
+
+class TestBuild(SuiteTestCaseMixin, BaseTestCase):
+
+    def test_basic(self):
+        @self.suite.register
+        class CaseClass(case.Case):
+
+            def test(self):
+                pass
+
+        self.suite.build()
+
+        boxes = [c for c in self.suite]
+
+        self.assertEqual(len(boxes), 1)
+        self.assertIsInstance(boxes[0], self.suite.__case_box_class__)
+
+    def test_build_by_rule(self):
+        @self.suite.register
+        class CaseClass(case.Case):
+
+            def test(self):
+                pass
+
+        @self.suite.register
+        class CaseClass2(case.Case):
+
+            def test(self):
+                pass
+
+        self.suite.assign_build_rule(
+            suite.BuildRule(self.suite.name, case_name=CaseClass.__name__)
+        )
+
+        self.suite.build()
+
+        boxes = [c for c in self.suite]
+
+        self.assertEqual(len(boxes), 1)
+        self.assertIsInstance(boxes[0], self.suite.__case_box_class__)
+
+    def test_case_name_param(self):
+        @self.suite.register
+        class CaseClass(case.Case):
+
+            def test(self):
+                pass
+
+        @self.suite.register
+        class CaseClass2(case.Case):
+
+            def test(self):
+                pass
+
+        self.suite.build(case_name=CaseClass.__name__)
+
+        boxes = [c for c in self.suite]
+
+        self.assertEqual(len(boxes), 1)
+        self.assertIsInstance(boxes[0], self.suite.__case_box_class__)
+
+    def test_test_name_param(self):
+        @self.suite.register
+        class CaseClass(case.Case):
+
+            def test(self):
+                pass
+
+            def test_two(self):
+                pass
+
+        self.suite.build(case_name=CaseClass.__name__, test_name='test')
+
+        boxes = [c for c in self.suite]
+
+        self.assertEqual(len(boxes), 1)
+        self.assertIsInstance(boxes[0], self.suite.__case_box_class__)
+        self.assertEqual(len(boxes[0]), 1)
+
+    def test_build_one_box_from_two_tests(self):
+        @self.suite.register
+        class CaseClass(case.Case):
+
+            def test(self):
+                pass
+
+            def test_two(self):
+                pass
+
+        self.suite.build()
+
+        boxes = [c for c in self.suite]
+
+        self.assertEqual(len(boxes), 1)
+        self.assertIsInstance(boxes[0], self.suite.__case_box_class__)
+        self.assertEqual(len(boxes[0]), 2)
 
 
 class TestRunSuite(RunSuiteTestCaseMixin, BaseTestCase):

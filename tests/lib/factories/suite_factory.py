@@ -6,6 +6,10 @@ from seismograph.suite import (
 )
 
 
+def mark_is_build(suite):
+    suite.__is_build__ = lambda: True
+
+
 class FakeSuite(Suite):
     pass
 
