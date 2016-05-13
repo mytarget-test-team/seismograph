@@ -10,12 +10,15 @@ from seismograph import (
 from seismograph.utils import pyv
 
 from .lib.factories import (
+    case_factory,
     suite_factory,
     config_factory,
 )
 
 from .lib.case import (
     BaseTestCase,
+    SuiteTestCaseMixin,
+    ResultTestCaseMixin,
     RunSuiteTestCaseMixin,
 )
 from .lib.layers import SuiteLayer
@@ -533,3 +536,23 @@ class TestErrorOnContext(RunSuiteTestCaseMixin, BaseTestCase):
             self.suite.layer.calling_story,
             ['on_init', 'on_require', 'on_error'],
         )
+
+
+class TestShouldStop(SuiteTestCaseMixin, ResultTestCaseMixin, BaseTestCase):
+
+    class CaseClass(case_factory.FakeCase):
+
+        def test(self):
+            pass
+
+    def runTest(self):
+        self.result.current_state.should_stop = True
+
+        self.suite.cases.append(self.CaseClass)
+        self.suite.build()
+        self.suite(self.result)
+
+        self.assertFalse(self.result.errors)
+        self.assertFalse(self.result.failures)
+        self.assertFalse(self.result.successes)
+        self.assertEqual(self.result.current_state.tests, 0)
