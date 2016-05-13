@@ -237,12 +237,14 @@ class TestSuiteObject(BaseTestCase):
         )
 
     def test_assign_build_rule(self):
-        suite_inst = suite.Suite(__name__)
+        layer = SuiteLayer()
+        suite_inst = suite.Suite(__name__, layers=[layer])
         rule = suite.BuildRule(__name__, case_name='MyTestCase', test_name='test')
 
         suite_inst.assign_build_rule(rule)
 
         self.assertIn(rule, suite_inst.context.build_rules)
+        self.assertEqual(layer.calling_story, ['on_init', 'on_require', 'on_build_rule'])
 
     def test_assign_incorrect_build_rule(self):
         suite_inst = suite.Suite(__name__)
