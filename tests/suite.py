@@ -477,10 +477,20 @@ class TestMountData(BaseTestCase):
 
 class TestRunSuite(RunSuiteTestCaseMixin, BaseTestCase):
 
+    class SuiteClass(suite.Suite):
+
+        layer = SuiteLayer()
+        __layers__ = (layer, )
+
     def runTest(self):
         self.assertTrue(self.suite.__is_run__())
         self.assertEqual(len(self.result.successes), 1)
         self.assertEqual(self.result.current_state.tests, 1)
+
+        self.assertEqual(
+            self.suite.layer.calling_story,
+            ['on_init', 'on_require', 'on_run', 'on_setup', 'on_teardown'],
+        )
 
 
 class TestCallbacksCall(RunSuiteTestCaseMixin, BaseTestCase):
@@ -497,3 +507,29 @@ class TestCallbacksCall(RunSuiteTestCaseMixin, BaseTestCase):
 
     def runTest(self):
         self.assertEqual(self.suite.calling_story, ['setup', 'teardown'])
+
+
+class TestErrorOnContext(RunSuiteTestCaseMixin, BaseTestCase):
+
+    class SuiteClass(suite.Suite):
+
+        class LayerClass(SuiteLayer):
+
+            def on_run(self, suite):
+                raise Exception('message')
+
+        layer = LayerClass()
+        __layers__ = (layer, )
+
+    def runTest(self):
+        self.assertTrue(self.suite.__is_run__())
+        self.assertEqual(len(self.result.errors), 1)
+        self.assertEqual(self.result.current_state.tests, 1)
+
+        self.assertFalse(self.result.failures)
+        self.assertFalse(self.result.successes)
+
+        self.assertEqual(
+            self.suite.layer.calling_story,
+            ['on_init', 'on_require', 'on_error'],
+        )
