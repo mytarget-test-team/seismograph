@@ -10,7 +10,8 @@ from .factories import result_factory
 
 
 class BaseTestCase(unittest.TestCase):
-    pass
+
+    maxDiff = None
 
 
 class ConfigTestCaseMixin(object):
