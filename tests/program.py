@@ -5,10 +5,17 @@ import inspect
 from seismograph import suite
 from seismograph import config
 from seismograph import result
+from seismograph import script
 from seismograph import program
+from seismograph.utils import pyv
+from seismograph import extensions
 
 from .lib.case import (
     BaseTestCase,
+)
+from .lib.factories import (
+    config_factory,
+    program_factory,
 )
 from .lib.layers import ProgramLayer
 
@@ -156,3 +163,169 @@ class TestProgramObject(BaseTestCase):
         self.assertEqual(program.Program.__result_class__, result.Result)
         self.assertEqual(program.Program.__suite_group_class__, None)
         self.assertEqual(program.Program.__config_class__, config.Config)
+
+    def test_register_suite(self):
+        program_inst = program.Program()
+
+        suite_inst = suite.Suite('test')
+        program_inst.register_suite(suite_inst)
+
+        self.assertIn(suite_inst, program_inst.suites)
+
+    def test_register_suites(self):
+        program_inst = program.Program()
+
+        suite_inst = suite.Suite('test')
+        program_inst.register_suites([suite_inst])
+
+        self.assertIn(suite_inst, program_inst.suites)
+
+    def test_register_script(self):
+        program_inst = program.Program()
+
+        class Script(script.Script):
+
+            def __is_run__(self):
+                return True
+
+            def __run__(self, *args, **kwargs):
+                pass
+
+        program_inst.register_script(Script)
+
+        self.assertEqual(len(program_inst.scripts), 1)
+        self.assertIsInstance(program_inst.scripts[0], Script)
+
+    def test_register_scripts(self):
+        program_inst = program.Program()
+
+        class Script(script.Script):
+
+            def __is_run__(self):
+                return True
+
+            def __run__(self, *args, **kwargs):
+                pass
+
+        program_inst.register_scripts([Script])
+
+        self.assertEqual(len(program_inst.scripts), 1)
+        self.assertIsInstance(program_inst.scripts[0], Script)
+
+    def test_run_empty(self):
+        program_inst = program.Program()
+
+        with self.assertRaises(RuntimeError) as ctx:
+            program_inst()
+
+        self.assertEqual(pyv.get_exc_message(ctx.exception), 'No suites or scripts for execution')
+
+
+class TestSuiteIsValid(BaseTestCase):
+
+    def test_basic(self):
+        program_inst = program.Program()
+        suite_inst = suite.Suite('package.module')
+
+        self.assertTrue(program_inst.suite_is_valid(suite_inst))
+
+    def test_include(self):
+        config_inst = config_factory.create(INCLUDE_SUITES_PATTERN=r'^package.*$')
+        program_inst = program_factory.create(config_inst)
+
+        suite_one = suite.Suite('package.module')
+        suite_two = suite.Suite('program.module')
+
+        self.assertTrue(program_inst.suite_is_valid(suite_one))
+        self.assertFalse(program_inst.suite_is_valid(suite_two))
+
+    def test_exclude(self):
+        config_inst = config_factory.create(EXCLUDE_SUITE_PATTERN=r'^program.*$')
+        program_inst = program_factory.create(config_inst)
+
+        suite_one = suite.Suite('package.module')
+        suite_two = suite.Suite('program.module')
+
+        self.assertTrue(program_inst.suite_is_valid(suite_one))
+        self.assertFalse(program_inst.suite_is_valid(suite_two))
+
+
+class TestShared(BaseTestCase):
+
+    def test_shared_extension(self):
+        ex_tmp = extensions._TMP
+
+        try:
+            class TestExtension(object):
+
+                def __init__(self, *args, **kwargs):
+                    self.args = args
+                    self.kwargs = kwargs
+
+            args = (1, 2, 3, 4, 5)
+            kwargs = dict(a=1, b=2, c=3, d=4, e=5)
+
+            program.Program.shared_extension(
+                'test_extension',
+                TestExtension,
+                args=args,
+                kwargs=kwargs,
+            )
+
+            self.assertIn('test_extension', ex_tmp)
+
+            container = ex_tmp['test_extension']
+
+            self.assertIsInstance(container, extensions.ExtensionContainer)
+            self.assertFalse(isinstance(container, extensions.SingletonExtensionContainer))
+
+            self.assertEqual(container.args, args)
+            self.assertEqual(container.kwargs, kwargs)
+            self.assertEqual(container.ext, TestExtension)
+        finally:
+            ex_tmp.pop('test_extension', None)
+
+    def test_shared_singleton_extension(self):
+        ex_tmp = extensions._TMP
+
+        try:
+            class TestExtension(object):
+
+                def __init__(self, *args, **kwargs):
+                    self.args = args
+                    self.kwargs = kwargs
+
+            args = (1, 2, 3, 4, 5)
+            kwargs = dict(a=1, b=2, c=3, d=4, e=5)
+
+            program.Program.shared_extension(
+                'test_extension',
+                TestExtension,
+                args=args,
+                kwargs=kwargs,
+                singleton=True,
+            )
+
+            self.assertIn('test_extension', ex_tmp)
+
+            container = ex_tmp['test_extension']
+
+            self.assertIsInstance(container, extensions.SingletonExtensionContainer)
+
+            self.assertEqual(container.args, args)
+            self.assertEqual(container.kwargs, kwargs)
+            self.assertEqual(container.ext, TestExtension)
+        finally:
+            ex_tmp.pop('test_extension', None)
+
+    def test_shared_data(self):
+        ex_tmp = extensions._TMP
+
+        try:
+            data = dict(a=1, b=2, c=3, d=4, e=5)
+            program.Program.shared_data('test_data', data)
+
+            self.assertIn('test_data', ex_tmp)
+            self.assertEqual(ex_tmp['test_data'], data)
+        finally:
+            ex_tmp.pop('test_data', None)
