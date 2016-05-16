@@ -19,7 +19,11 @@ from .lib.factories import (
     config_factory,
     program_factory,
 )
-from .lib.layers import ProgramLayer
+from .lib.layers import (
+    CaseLayer,
+    SuiteLayer,
+    ProgramLayer,
+)
 
 
 class TestProgramContext(BaseTestCase):
@@ -333,12 +337,16 @@ class TestShared(BaseTestCase):
             ex_tmp.pop('test_data', None)
 
 
-class TestRunProgram(BaseTestCase):
+class TestFullCycle(BaseTestCase):
 
     def runTest(self):
-        suite_inst = suite.Suite('test')
+        case_layer = CaseLayer()
+        suite_layer = SuiteLayer()
+        program_layer = ProgramLayer()
 
-        @suite_inst.register
+        suite_inst = suite.Suite('test', layers=[suite_layer])
+
+        @suite_inst.register(layers=[case_layer])
         class TestOne(case.Case):
 
             def test(self):
@@ -350,7 +358,7 @@ class TestRunProgram(BaseTestCase):
 
         config_inst = config_factory.create(NO_COLOR=True)
 
-        program_inst = program.Program(exit=False, stream=StringIO())
+        program_inst = program.Program(exit=False, stream=StringIO(), layers=[program_layer])
         program_factory.set_config(program_inst, config_inst)
         program_inst.register_suite(suite_inst)
 
@@ -361,4 +369,17 @@ class TestRunProgram(BaseTestCase):
             u'..\n\n'
             u'---------------------------------------------------------------\n'
             u'tests=2 failures=0 errors=0 skipped=0 successes=2 runtime=0.001\n'
+        )
+
+        self.assertEqual(
+            case_layer.calling_story,
+            ['on_init', 'on_require', 'on_run', 'on_setup', 'on_teardown', 'on_success'],
+        )
+        self.assertEqual(
+            suite_layer.calling_story,
+            ['on_init', 'on_require', 'on_mount', 'on_run', 'on_setup', 'on_teardown'],
+        )
+        self.assertEqual(
+            program_layer.calling_story,
+            ['on_option_parser', 'on_config', 'on_init', 'on_run', 'on_setup', 'on_teardown'],
         )
