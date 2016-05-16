@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import inspect
+from StringIO import StringIO
 
+from seismograph import case
 from seismograph import suite
 from seismograph import config
 from seismograph import result
@@ -329,3 +331,34 @@ class TestShared(BaseTestCase):
             self.assertEqual(ex_tmp['test_data'], data)
         finally:
             ex_tmp.pop('test_data', None)
+
+
+class TestRunProgram(BaseTestCase):
+
+    def runTest(self):
+        suite_inst = suite.Suite('test')
+
+        @suite_inst.register
+        class TestOne(case.Case):
+
+            def test(self):
+                pass
+
+        @suite_inst.register
+        def simple_test(case):
+            pass
+
+        config_inst = config_factory.create(NO_COLOR=True)
+
+        program_inst = program.Program(exit=False, stream=StringIO())
+        program_factory.set_config(program_inst, config_inst)
+        program_inst.register_suite(suite_inst)
+
+        self.assertTrue(program_inst())
+        self.assertEqual(
+            program_inst._Program__stream.getvalue(),
+            u'Seismograph is measuring:\n\n'
+            u'..\n\n'
+            u'---------------------------------------------------------------\n'
+            u'tests=2 failures=0 errors=0 skipped=0 successes=2 runtime=0.001\n'
+        )
