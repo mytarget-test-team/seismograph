@@ -14,10 +14,16 @@ EXCLUDE_FROM_FACADE = (
 )
 
 
-def filter_func(name):
-    if not name.startswith('_') and name not in EXCLUDE_FROM_FACADE:
-        return type(getattr(seismograph, name)) != ModuleType
-    return False
+def get_facade():
+    def filter_func(name):
+        if not name.startswith('_') and name not in EXCLUDE_FROM_FACADE:
+            return type(getattr(seismograph, name)) != ModuleType
+        return False
+
+    return filter(
+        filter_func,
+        dir(seismograph),
+    )
 
 
 @unittest.skipIf(pyv.IS_PYTHON_3, 'for python 2 only')
@@ -43,9 +49,6 @@ class TestFacadeOfLib(BaseTestCase):
             )
 
     def runTest(self):
-        facade = filter(
-            filter_func,
-            dir(seismograph),
-        )
+        facade = get_facade()
         self.assertImportAll()
         self.assertFacadeOfLib(facade)
