@@ -356,10 +356,7 @@ class TestFullCycle(BaseTestCase):
         def simple_test(case):
             pass
 
-        config_inst = config_factory.create(NO_COLOR=True)
-
         program_inst = program.Program(exit=False, stream=StringIO(), layers=[program_layer])
-        program_factory.set_config(program_inst, config_inst)
         program_inst.register_suite(suite_inst)
 
         self.assertTrue(program_inst())
