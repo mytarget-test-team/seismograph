@@ -27,8 +27,7 @@ from .query import query
 from .router import add_route
 
 from .utils import re_raise_exc
-
-from .browser import change_config as change_browser_config
+from .utils import change_browser_config
 
 
 CONFIG_KEY = 'SELENIUM_EX'

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
+from functools import wraps
 from contextlib import contextmanager
 
 from six import with_metaclass
 
 from ...utils import pyv
 from .query import QueryObject
+from .utils import change_browser_config
 from .utils import declare_standard_callback
 
 
@@ -15,6 +17,24 @@ def key(page_element):
 
 def query_set(page_element):
     return page_element.__query_set__()
+
+
+def apply_browser_config(method=None, **config_options):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(self, *args, **kwargs):
+            browser_config = self.__browser_config__.copy()
+            browser_config.update(config_options)
+
+            with change_browser_config(self, **browser_config):
+                result = f(self, *args, **kwargs)
+
+            return result
+        return wrapped
+
+    if method:
+        return wrapper(method)
+    return wrapper
 
 
 class ProxyObject(object):
@@ -86,6 +106,7 @@ class PageElement(object):
         self.__we_class = options.get('we_class', None)
         self.__list_class = options.get('list_class', None)
         self.__wait_timeout = options.get('wait_timeout', None)
+        self.__browser_config = options.get('browser_config', None)
 
         self.__call = options.get('call', None)
         self.__property = declare_standard_callback(options.get('property', None))
@@ -177,7 +198,13 @@ class PageElement(object):
         if instance is None:
             return self
 
-        obj = self.__make_object__(instance)
+        browser_config = instance.__browser_config__.copy()
+
+        if self.__browser_config:
+            browser_config.update(self.__browser_config)
+
+        with change_browser_config(instance, **browser_config):
+            obj = self.__make_object__(instance)
 
         if self.__we_class:
             if self.__is_list:
@@ -219,6 +246,17 @@ class PageApi(object):
         return self.__page.browser
 
 
+def _build_browser_config(cls):
+    if not getattr(cls, '__browser_config__', None):
+        setattr(cls, '__browser_config__', {})
+
+    if not getattr(cls, '__polling__', True):
+        cls.__browser_config__['polling_timeout'] = 0
+
+    if not getattr(cls, '__wait_timeout__', True):
+        cls.__browser_config__['wait_timeout'] = 0
+
+
 class PageMeta(type):
     """
     Factory for creating page object class
@@ -240,6 +278,8 @@ class PageMeta(type):
         for atr_name, page_object in page_objects:
             if key(page_object):
                 cls.__dct__[key(page_object)] = atr_name
+
+        _build_browser_config(cls)
 
         return cls
 
@@ -288,8 +328,11 @@ class _Base(with_metaclass(PageMeta, object)):
 class Page(_Base):
 
     __area__ = None
+    __polling__ = True
     __url_path__ = None
     __api_class__ = None
+    __wait_timeout__ = True
+    __browser_config__ = None
 
     def __init__(self, *args, **kwargs):
         super(Page, self).__init__(*args, **kwargs)
@@ -314,6 +357,7 @@ class Page(_Base):
 
         return self._proxy
 
+    @apply_browser_config
     def open(self, **kwargs):
         if self.__url_path__:
             self.cache.clear()
@@ -325,6 +369,7 @@ class Page(_Base):
                 'You should to set "__url_path__" attribute value for usage "show" method',
             )
 
+    @apply_browser_config
     def refresh(self):
         self.cache.clear()
         self._proxy.browser.refresh()
@@ -334,6 +379,9 @@ class PageItem(_Base):
 
     __area__ = None
     __nested__ = True
+    __polling__ = True
+    __wait_timeout__ = True
+    __browser_config__ = None
 
     @property
     def we(self):

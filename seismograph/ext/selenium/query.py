@@ -6,6 +6,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 
 from ...utils.common import waiting_for
+from .utils import change_browser_config
 from .exceptions import PollingTimeoutExceeded
 from .utils import change_name_from_python_to_html
 
@@ -179,7 +180,7 @@ def get_execute_method(proxy, list_result):
     return getattr(proxy, method_name)
 
 
-def execute(proxy, css, list_result=False, disable_polling=False):
+def execute(proxy, css, list_result=False, browser_config=None):
     logger.debug(
         u'Execute css query "{}", list result "{}"'.format(
             css, 'Yes' if list_result else 'No',
@@ -188,15 +189,10 @@ def execute(proxy, css, list_result=False, disable_polling=False):
 
     proxy.reason_storage['last css query'] = css
 
-    if disable_polling:
-        with proxy.disable_polling():
-            wait_timeout = proxy.config.WAIT_TIMEOUT
-            proxy.config.WAIT_TIMEOUT = 0
-            try:
-                method = get_execute_method(proxy, list_result)
-                result = method(css)
-            finally:
-                proxy.config.WAIT_TIMEOUT = wait_timeout
+    if browser_config:
+        with change_browser_config(proxy, **browser_config):
+            method = get_execute_method(proxy, list_result)
+            result = method(css)
         return result
 
     method = get_execute_method(proxy, list_result)
@@ -232,7 +228,14 @@ class QueryResult(object):
         :rtype: bool
         """
         try:
-            el = execute(self.__proxy, self.__css, disable_polling=True)
+            el = execute(
+                self.__proxy,
+                self.__css,
+                browser_config={
+                    'wait_timeout': 0,
+                    'polling_timeout': 0,
+                },
+            )
 
             if el:
                 return True

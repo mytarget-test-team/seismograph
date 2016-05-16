@@ -4,6 +4,7 @@ import time
 import inspect
 from random import randint
 from functools import wraps
+from contextlib import contextmanager
 
 from ...utils import pyv
 from .exceptions import ReRaiseException
@@ -99,3 +100,22 @@ def declare_standard_callback(func):
 
         ),
     )
+
+
+@contextmanager
+def change_browser_config(browser, **options):
+    """
+    Do something with with change config
+    of browser and restore it after this
+    """
+    to_restore = {}
+
+    for option, value in options.items():
+        option = option.upper()
+        to_restore[option] = getattr(browser.config, option)
+        setattr(browser.config, option, value)
+    try:
+        yield
+    finally:
+        for option, value in to_restore.items():
+            setattr(browser.config, option, value)
