@@ -51,7 +51,7 @@ You can to create query separately of browser and to get result by request of.
 
 
     def get_some_element(browser):
-        query = selenium.query(selenium.query.DIV, _class='some_class')
+        query = selenium.query(selenium.query.DIV, _class='some-class')
         result = query(browser)
         result.wait()
         return result.first()
@@ -66,7 +66,7 @@ You can to create query separately of browser and to get result by request of.
 Contains marker
 ---------------
 
-If you want to create css query with contains class or some other then you can to use contains marker.
+When value of attribute contains value
 
 
 .. code-block:: python
@@ -83,7 +83,131 @@ If you want to create css query with contains class or some other then you can t
         browser.go_to('http://some.address')
 
         some_element = browser.div(
-            _class=selenium.query.contains('some_class'),
+            _class=selenium.query.contains('some-class'),
+        ).first()
+
+
+Not equal marker
+----------------
+
+When value of attribute not equal value
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    suite = selenium.Suite(__name__)
+
+
+    @suite.register
+    def example(case, browser):
+        browser.go_to('http://some.address')
+
+        some_element = browser.div(
+            _class=selenium.query.not_equal('some-class'),
+        ).first()
+
+
+Endswith marker
+---------------
+
+When value of attribute ends with value
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    suite = selenium.Suite(__name__)
+
+
+    @suite.register
+    def example(case, browser):
+        browser.go_to('http://some.address')
+
+        some_element = browser.div(
+            _class=selenium.query.endswith('some-class'),
+        ).first()
+
+
+Startswith marker
+-----------------
+
+When value of attribute starts with value
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    suite = selenium.Suite(__name__)
+
+
+    @suite.register
+    def example(case, browser):
+        browser.go_to('http://some.address')
+
+        some_element = browser.div(
+            _class=selenium.query.startswith('some-class'),
+        ).first()
+
+
+Not contains marker
+-------------------
+
+When value of attribute does not contains value
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    suite = selenium.Suite(__name__)
+
+
+    @suite.register
+    def example(case, browser):
+        browser.go_to('http://some.address')
+
+        some_element = browser.div(
+            _class=selenium.query.not_contains('some-class'),
+        ).first()
+
+
+
+Expression
+----------
+
+When require expression for value of attribute
+
+
+.. code-block:: python
+
+    import seismograph
+    from seismograph.ext import selenium
+
+
+    suite = selenium.Suite(__name__)
+
+
+    @suite.register
+    def example(case, browser):
+        browser.go_to('http://some.address')
+
+        some_element = browser.div(
+            _class=selenium.query.expression(
+                selenium.query.contains('some-class'),
+                selenium.query.not_contains('hide'),
+            )
         ).first()
 
 
@@ -107,7 +231,7 @@ If you want to follow into DOM tree then you can to do it like
         browser.go_to('http://some.address')
 
         element = browser.div(name='some_name').first()
-        second_element = element.li(_class='some_class').first()
+        second_element = element.li(_class='some-class').first()
 
 
 or like
@@ -119,7 +243,7 @@ or like
     def function_example(case, browser):
         browser.go_to('http://some.address')
 
-        second_element = browser.div(name='some_name').li(_class='some_class').first()
+        second_element = browser.div(name='some_name').li(_class='some-class').first()
 
 
 Css query result api
