@@ -126,6 +126,28 @@ class SeleniumAssertion(case.AssertionBase):
             self.text_exist(proxy, text, timeout=timeout, msg=msg)
 
     @staticmethod
+    def text_not_exist(proxy, text, msg=None, timeout=None):
+        def check_text():
+            try:
+                return text not in proxy.text
+            except (HTTPException, StaleElementReferenceException):
+                return False
+
+        waiting_for(
+            check_text,
+            exc_cls=AssertionError,
+            message=msg or u'Text "{}" was found on page by URL "{}"'.format(
+                text, proxy.browser.current_url,
+            ),
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
+
+    def texts_not_exist(self, proxy, texts, timeout=None, msg=None):
+        for text in texts:
+            self.text_not_exist(proxy, text, timeout=timeout, msg=msg)
+
+    @staticmethod
     def web_element_exist(proxy, query, msg=None, timeout=None):
         waiting_for(
             lambda: query(proxy).exist,
