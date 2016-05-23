@@ -49,6 +49,105 @@ This code for demonstration of simple usage
         seismograph.main()
 
 
+Page, PageItem and PageElement. How and when to use.
+----------------------------------------------------
+
+Page, PageItem and PageElement class is a solid foundation to description html markup in your test code.
+Let look at html code...
+
+.. code-block:: html
+
+    <html>
+        <body>
+            <div id="top-menu">
+                <a href="/">Index page></a>
+                <a href="/about/">About Us</a>
+            </div>
+            <div id="content">
+                Something content...
+            </div>
+            <div id="footer">
+                <a href='/contacts/'>contacts</a>
+            </div>
+        </body>
+    </html>
+
+
+How is it be described with help page object? See example
+
+.. code-block:: python
+
+    from seismograph.ext import selenium
+
+
+    class TopMenu(selenium.PageItem):
+
+        __area__ = selenium.query(
+            selenium.query.DIV,
+            id='top-menu',
+        )
+
+        index_page_link = selenium.PageElement(
+            selenium.query(
+                selenium.query.A,
+                href='/',
+            ),
+        )
+
+        about_us_link = selenium.PageElement(
+            selenium.query(
+                selenium.query.A,
+                href='/about/',
+            ),
+        )
+
+        go_to_index_page = selenium.PageElement(
+            index_page_link,
+            call=lambda we: we.click(),
+        )
+
+        go_to_about_us = selenium.PageElement(
+            about_us_link,
+            call=lambda we: we.click(),
+        )
+
+
+    class Footer(selenium.PageItem):
+
+        __area__ = selenium.query(
+            selenium.query.DIV,
+            id='footer',
+        )
+
+        contacts_link = selenium.PageElement(
+            selenium.query(
+                selenium.query.A,
+                href='/contacts/',
+            ),
+        )
+
+
+    class MyPage(selenium.Page):
+
+        __url_path__ = '/'
+
+        top_menu = selenium.PageElement(TopMenu)
+
+        content_wrapper = selenium.PageElement(
+            selenium.query(
+                selenium.query.DIV,
+                id='content',
+            ),
+        )
+
+        content = selenium.PageElement(
+            content_wrapper,
+            property=lambda we: we.text,
+        )
+
+        footer = selenium.PageElement(Footer)
+
+
 Page element result
 -------------------
 
