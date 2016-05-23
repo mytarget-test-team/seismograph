@@ -194,6 +194,13 @@ class Checkbox(FormField, SimpleFieldInterface):
 
     __tag__ = 'input'
 
+    def __init__(self,
+                 name,
+                 **kwargs):
+        self.force = kwargs.pop('force', False)
+
+        super(Checkbox, self).__init__(name, **kwargs)
+
     @fill_field_handler
     def fill(self, value=None):
         value = value or self.value
@@ -209,7 +216,11 @@ class Checkbox(FormField, SimpleFieldInterface):
                 raise FieldError('Oops, checkbox was unselected')
 
         if (value and not current_value) or (not value and current_value):
-            el.click()
+            if self.force:
+                while not el.is_selected():
+                    el.click()
+            else:
+                el.click()
 
     @clear_field_handler
     def clear(self):
@@ -238,7 +249,11 @@ class RadioButton(Checkbox):
         changed = False
 
         if (value and not current_value) or (not value and current_value):
-            el.click()
+            if self.force:
+                while not el.is_selected():
+                    el.click()
+            else:
+                el.click()
             changed = True
 
         return changed
