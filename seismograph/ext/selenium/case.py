@@ -17,6 +17,7 @@ from ... import case
 from ... import steps
 from ... import reason
 from ... import runnable
+from .query import QueryResult
 from .extension import EX_NAME
 from .utils import random_file_name
 from ...utils.common import waiting_for
@@ -149,8 +150,13 @@ class SeleniumAssertion(case.AssertionBase):
 
     @staticmethod
     def web_element_exist(proxy, query, msg=None, timeout=None):
+        if isinstance(query, QueryResult):
+            function = lambda: query.exist
+        else:
+            function = lambda: query(proxy).exist
+
         waiting_for(
-            lambda: query(proxy).exist,
+            function,
             exc_cls=AssertionError,
             message=msg or u'Web element was not found on page by URL "{}"'.format(
                 proxy.browser.current_url,
@@ -161,8 +167,13 @@ class SeleniumAssertion(case.AssertionBase):
 
     @staticmethod
     def web_element_not_exist(proxy, query, msg=None, timeout=None):
+        if isinstance(query, QueryResult):
+            function = lambda: not query.exist
+        else:
+            function = lambda: not query(proxy).exist
+
         waiting_for(
-            lambda: not query(proxy).exist,
+            function,
             exc_cls=AssertionError,
             message=msg or u'Web element was found on page by URL "{}"'.format(
                 proxy.browser.current_url,
@@ -179,6 +190,7 @@ class SeleniumAssertion(case.AssertionBase):
             message=msg or 'Content is not exist inside element on page by URL "{}"'.format(
                 proxy.browser.current_url,
             ),
+
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
