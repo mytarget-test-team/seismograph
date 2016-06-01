@@ -4,9 +4,16 @@ from functools import wraps
 
 from selenium.common.exceptions import NoSuchElementException
 
+from ....utils import pyv
 from ..query import make_result
 from ..exceptions import FieldError
 from ..utils import declare_standard_callback
+
+
+def _if_value_is_int_then_to_string(value):
+    if type(value) is int:
+        return str(value)
+    return value
 
 
 def selector(**kwargs):
@@ -92,22 +99,21 @@ class FormField(object):
                  error_mess=None,
                  invalid_value=None,
                  before_fill_trigger=None,
-                 after_fill_trigger=None):
+                 after_fill_trigger=None,
+                 area=None):
 
         self.name = name
-
-        if not isinstance(selector, dict):
-            raise ValueError('incorrect selector')
 
         self.value = value
         self.required = required
         self.error_mess = error_mess
         self.invalid_value = invalid_value
 
+        self.__area = area
         self.__group = group
 
         self.__weight = weight
-        self.__selector = selector
+        self.__selector = selector or {}
 
         self.before_fill_trigger = declare_standard_callback(before_fill_trigger)
         self.after_fill_trigger = declare_standard_callback(after_fill_trigger)
@@ -115,23 +121,34 @@ class FormField(object):
     def __getattr__(self, item):
         return getattr(self.we, item)
 
-    def __call__(self, group):
+    def __call__(self, group, **kwargs):
+        kwargs.setdefault('area', self.__area)
+        kwargs.setdefault('weight', self.__weight)
+        kwargs.setdefault('selector', self.selector)
+        kwargs.setdefault('required', self.required)
+        kwargs.setdefault('error_mess', self.error_mess)
+        kwargs.setdefault('before_fill_trigger', self.before_fill_trigger)
+        kwargs.setdefault('after_fill_trigger', self.after_fill_trigger)
+        kwargs.setdefault('value', self.value() if callable(self.value) else self.value)
+        kwargs.setdefault(
+            'invalid_value', self.invalid_value() if callable(self.invalid_value) else self.invalid_value,
+        )
+
         return self.__class__(
             self.name,
             group=group,
-            weight=self.__weight,
-            selector=self.selector,
-            required=self.required,
-            error_mess=self.error_mess,
-            before_fill_trigger=self.before_fill_trigger,
-            after_fill_trigger=self.after_fill_trigger,
-            value=self.value() if callable(self.value) else self.value,
-            invalid_value=self.invalid_value() if callable(self.invalid_value) else self.invalid_value,
+            **kwargs
         )
 
     @property
     def browser(self):
         return self.group.browser
+
+    @property
+    def area(self):
+        if self.__area:
+            return self.__area(self.group.area)
+        return self.group.area
 
     @property
     def group(self):
@@ -152,7 +169,8 @@ class FormField(object):
     @property
     def we(self):
         return make_result(
-            self.group.area, self.__tag__,
+            self.area,
+            self.__tag__,
         )(**self.__selector).first()
 
     @property
@@ -170,7 +188,7 @@ class Input(FormField, SimpleFieldInterface):
 
     @fill_field_handler
     def fill(self, value=None):
-        value = value or self.value
+        value = _if_value_is_int_then_to_string(value or self.value)
 
         self.we.send_keys(*value)
 
@@ -190,6 +208,34 @@ class TextArea(Input):
 assert issubclass(TextArea, SimpleFieldInterface)
 
 
+class DateInput(Input):
+
+    __default_format__ = '%d.%m.%Y'
+
+    def __init__(self, name, **kwargs):
+        self.format = kwargs.pop('format', self.__default_format__)
+
+        super(DateInput, self).__init__(name, **kwargs)
+
+    def __call__(self, group, **kwargs):
+        kwargs.setdefault('format', self.format)
+        return super(DateInput, self).__call__(group, **kwargs)
+
+    def _get_value(self, value):
+        date = value or self.value
+        if isinstance(date, pyv.basestring):
+            return date
+        return date.strftime(self.format)
+
+    def fill(self, value=None):
+        return super(DateInput, self).fill(
+            self._get_value(value),
+        )
+
+
+assert issubclass(DateInput, Input)
+
+
 class Checkbox(FormField, SimpleFieldInterface):
 
     __tag__ = 'input'
@@ -200,6 +246,10 @@ class Checkbox(FormField, SimpleFieldInterface):
         self.force = kwargs.pop('force', False)
 
         super(Checkbox, self).__init__(name, **kwargs)
+
+    def __call__(self, group, **kwargs):
+        kwargs.setdefault('force', self.force)
+        return super(Checkbox, self).__call__(group, **kwargs)
 
     @fill_field_handler
     def fill(self, value=None):
@@ -270,10 +320,35 @@ class Select(FormField, SimpleFieldInterface):
 
     __tag__ = 'select'
 
+    FILL_BY_TEXT = 'by text'
+    FILL_BY_VALUE = 'by value'
+
+    def __init__(self,
+                 name,
+                 **kwargs):
+        self.fill_strategy = kwargs.pop('fill_strategy', self.FILL_BY_VALUE)
+
+        super(Select, self).__init__(name, **kwargs)
+
+    def __call__(self, group, **kwargs):
+        kwargs.setdefault('fill_strategy', self.fill_strategy)
+        return super(Select, self).__call__(group, **kwargs)
+
     @fill_field_handler
     def fill(self, value=None):
-        value = value or self.value
-        option = self.we.option().all().get_by(value=value)
+        value = _if_value_is_int_then_to_string(value or self.value)
+
+        filters = {}
+        if self.fill_strategy == self.FILL_BY_TEXT:
+            filters['text'] = value
+        elif self.fill_strategy == self.FILL_BY_VALUE:
+            filters['value'] = value
+        else:
+            raise ValueError(
+                'Incorrect value from "fill_strategy": "{}"'.format(self.fill_strategy),
+            )
+
+        option = self.we.option().all().get_by(**filters)
 
         if option:
             option.click()
