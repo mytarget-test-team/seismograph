@@ -1,5 +1,4 @@
 PUT 200 /hello
-
 Server: nginx/1.2.1
 
 {"result": "changed"}
