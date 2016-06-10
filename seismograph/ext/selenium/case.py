@@ -150,7 +150,7 @@ class SeleniumAssertion(case.AssertionBase):
 
     @staticmethod
     def web_element_exist(proxy, query, msg=None, timeout=None):
-        if isinstance(query, QueryResult):
+        if hasattr(query, 'exist'):
             function = lambda: query.exist
         else:
             function = lambda: query(proxy).exist
@@ -167,7 +167,7 @@ class SeleniumAssertion(case.AssertionBase):
 
     @staticmethod
     def web_element_not_exist(proxy, query, msg=None, timeout=None):
-        if isinstance(query, QueryResult):
+        if hasattr(query, 'exist'):
             function = lambda: not query.exist
         else:
             function = lambda: not query(proxy).exist
