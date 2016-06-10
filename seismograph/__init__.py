@@ -43,7 +43,7 @@ from .scope import set_default_suite_layers
 from .scope import set_default_program_layers
 
 
-__version__ = '0.2.17'
+__version__ = '0.2.18'
 
 
 VERSION = tuple(map(int, __version__.split('.')))
