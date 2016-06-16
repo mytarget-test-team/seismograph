@@ -22,6 +22,7 @@ assert __version__
 EXTENSIONS = [
     'mocker',
     'alchemy',
+    'builder',
     'selenium',
 ]
 
@@ -43,6 +44,9 @@ EX_REQUIREMENTS = {
     ],
     'alchemy': [
         'sqlalchemy>=0.8',
+    ],
+    'builder': [
+        'jsonschema>=1.0',
     ],
 }
 
