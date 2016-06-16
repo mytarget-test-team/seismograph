@@ -161,6 +161,14 @@ class ModelCRUD(object):
             session.delete(self)
             session.commit()
 
+    def refresh(self):
+        pk_columns = self.__table__.primary_key.columns.keys()
+        refreshed_obj = self.objects.get_by(**dict((n, getattr(self, n)) for n in pk_columns))
+        data_to_update = dict((k, v) for k, v in refreshed_obj.to_dict().items() if k not in pk_columns)
+
+        for k, v in data_to_update.items():
+            setattr(self, k, v)
+
     def __repr__(self):
         if hasattr(self, 'id'):
             return '<{} id={}>'.format(self.__class__.__name__, self.id or 'NULL')
