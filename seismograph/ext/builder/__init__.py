@@ -9,10 +9,10 @@ from .exceptions import ConfigurationError
 
 class BuilderSchema(object):
 
-    def __init__(self, name, obj=None, factory=None):
-        self.__obj = obj
+    def __init__(self, name, originated=None, factory=None):
         self.__name = name
         self.__factory = factory
+        self.__originated = originated
 
     def __getattr__(self, item):
         try:
@@ -21,11 +21,11 @@ class BuilderSchema(object):
             pass
 
         try:
-            return getattr(self.__obj, item)
+            return getattr(self.__originated, item)
         except AttributeError:
             pass
 
-        raise AttributeError('{}: {}'.format(self.__class__.__name__, item))
+        raise AttributeError('{}({}): {}'.format(self.__class__.__name__, self.__name, item))
 
     def __contains__(self, item):
         return item in self.__dict__
@@ -37,9 +37,10 @@ class BuilderSchema(object):
         self.__dict__[key] = value
 
     def __repr__(self):
-        if self.__obj and self.__factory:
+        if self.__originated and self.__factory:
             return '<Schema({} spawned {}): {}>'.format(
-                self.__factory.__class__.__name__, self.__obj.__class__.__name__, self.__name,
+                self.__factory.__class__.__name__,
+                self.__originated.__class__.__name__, self.__name,
             )
         return '<Schema: {}>'.format(self.__name)
 
@@ -48,7 +49,7 @@ class BuilderSchema(object):
 
         return list(
             set(
-                dir(self.__obj) + dir(self.__factory) + self_dir
+                dir(self.__originated) + dir(self.__factory) + self_dir
             ),
         )
 
@@ -69,10 +70,15 @@ class BaseBuilder(object):
     __schema_class__ = BuilderSchema
     __settings_class__ = BaseBuilderSettings
 
-    def __init__(self, case):
-        self.case = case
+    def __init__(self, runnable=None):
         self._schema = None
         self._settings = None
+        self._runnable = runnable
+
+    def __repr__(self):
+        return '<Builder on: {}>'.format(
+            repr(self._runnable).strip('<>'),
+        )
 
     @property
     def schema(self):
@@ -81,6 +87,10 @@ class BaseBuilder(object):
     @property
     def settings(self):
         return self._settings
+
+    @property
+    def runnable(self):
+        return self._runnable
 
     def configure(self, **kwargs):
         self._settings = self.__settings_class__(**kwargs)

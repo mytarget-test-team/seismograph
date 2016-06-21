@@ -8,7 +8,7 @@ Extensions
     selenium
     alchemy
     mocker
-
+    builder
 
 Extensions is tools for test development. You can to require it.
 

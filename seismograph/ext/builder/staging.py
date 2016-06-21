@@ -133,12 +133,12 @@ class Staging(object):
         )
 
         if callable(creator):
-            created_obj = creator(self._factory, self._compiled_rule.instance)
+            originated = creator(self._factory, self._compiled_rule.instance)
         else:
-            created_obj = self._factory.create()
+            originated = self._factory.create()
 
         self._embedded_instance = self._compiled_rule.builder.__schema_class__(
-            self._compiled_rule.name, created_obj, self._factory,
+            self._compiled_rule.name, originated, self._factory,
         )
         instance_name = self._compiled_rule.property_name or self._compiled_rule.name
         self._compiled_rule.instance[instance_name] = self._embedded_instance

@@ -25,6 +25,7 @@ SCHEMA = {
                 'post': {'type': ['list', 'tuple']},
             },
         },
+        'require': {'type': 'array'},
     },
     'required': ['factory_class'],
 }
