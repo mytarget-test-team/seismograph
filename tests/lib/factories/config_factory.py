@@ -30,6 +30,7 @@ class FakeConfig(object):
         self.GEVENT = False
         self.THREADING = False
         self.MULTIPROCESSING = False
+        self.PDB = False
 
     def __getitem__(self, item):
         try:
