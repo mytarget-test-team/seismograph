@@ -764,18 +764,21 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                             result_proxy.current_state.should_stop = True
                             raise
                         except Skip as s:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_skip(self, s.message, result_proxy)
                             result_proxy.add_skip(
                                 self, s.message, timer(),
                             )
                         except AssertionError as fail:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_fail(fail, self, result_proxy)
                             result_proxy.add_fail(
                                 self, traceback.format_exc(), timer(), fail,
                             )
                         except BaseException as error:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_error(error, self, result_proxy)
                             self.__context.on_any_error(error, self, result_proxy)
@@ -794,6 +797,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                runnable.set_debug_if_allowed(self.config)
                 self.__context.on_context_error(error, self, result_proxy)
                 self.__context.on_any_error(error, self, result_proxy)
                 result_proxy.add_error(

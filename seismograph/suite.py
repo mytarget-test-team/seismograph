@@ -352,6 +352,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                runnable.set_debug_if_allowed(self.config)
                 self.__context.on_error(error, self, result_proxy)
                 result_proxy.add_error(
                     self, traceback.format_exc(), timer(), error,

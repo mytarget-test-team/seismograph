@@ -202,6 +202,13 @@ def create_option_parser():
         default=False,
         help='Use multiprocessing groups for run.',
     )
+    run_group.add_option(
+        '--pdb',
+        dest='PDB',
+        action='store_true',
+        default=False,
+        help='Set trace after raise exception on runnable object.',
+    )
     parser.add_option_group(run_group)
 
     return parser
