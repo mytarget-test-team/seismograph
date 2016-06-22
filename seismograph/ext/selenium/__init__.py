@@ -3,6 +3,8 @@
 from warnings import warn
 from optparse import OptionGroup
 
+from selenium.webdriver.common.keys import Keys as keys
+
 from . import forms
 from . import polling
 
@@ -157,6 +159,7 @@ def __install__(program):
 __all__ = (
     'Case',
     'Page',
+    'keys',
     'forms',
     'query',
     'Alert',

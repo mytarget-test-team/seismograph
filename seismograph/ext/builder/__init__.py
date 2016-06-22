@@ -3,6 +3,7 @@
 from . import collector
 from .rule import SettingsValue
 from .staging import AliasToMethod
+from .collector import current_schema
 from .signature import Signature as sig
 from .exceptions import ConfigurationError
 
@@ -112,5 +113,6 @@ __all__ = (
     'AliasToMethod',
     'BuilderSchema',
     'SettingsValue',
+    'current_schema',
     'BaseBuilderSettings',
 )

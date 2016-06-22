@@ -6,6 +6,47 @@ from .rule import RuleObject
 from .staging import Staging
 
 
+class RelationObject(object):
+
+    def __init__(self, *keys):
+        self._keys = []
+        self._keys.extend(keys)
+
+    def __getitem__(self, item):
+        self._keys.append(item)
+        return self
+
+    def __repr__(self):
+        return 'Relation to schema: {}'.format('->'.join(self._keys))
+
+    def __call__(self, builder):
+        try:
+            data = builder.__build_schema__[self._keys[0]]
+        except KeyError:
+            raise exceptions.RelationError(
+                '{} from {}'.format(self._keys[0], '->'.join(self._keys))
+            )
+
+        for key in self._keys[1:]:
+            try:
+                data = data['embedded'][key]
+            except KeyError:
+                raise exceptions.RelationError(
+                    '{} from {}'.format(key, '->'.join(self._keys)),
+                )
+
+        return data
+
+
+class CurrentSchema(object):
+
+    def __getitem__(self, item):
+        return RelationObject(item)
+
+
+current_schema = CurrentSchema()
+
+
 class PendingList(object):
 
     def __init__(self):
@@ -82,6 +123,9 @@ def collect(builder, schema=None, options=None, instance=None):
             raise exceptions.ConfigurationError(
                 'Incorrect option "{}". Builder has not schema for it.'.format(option_name),
             )
+
+        if isinstance(option_schema, RelationObject):
+            option_schema = option_schema(builder)
 
         rule_object = RuleObject(option_name, builder, option_schema, instance)
 

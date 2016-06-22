@@ -29,3 +29,7 @@ class ValidationError(BaseBuilderError):
 
 class BuildError(BaseBuilderError):
     pass
+
+
+class RelationError(SchemaError):
+    pass
