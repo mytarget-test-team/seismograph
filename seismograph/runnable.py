@@ -27,12 +27,13 @@ def stopped_on(runnable, method_name=None):
 
 def set_debug_if_allowed(config):
     if config.PDB:
+        _, _, tb = sys.exc_info()
+
         try:
             import ipdb as pdb
         except ImportError:
             import pdb
 
-        _, _, tb = sys.exc_info()
         pdb.post_mortem(tb)
 
 
