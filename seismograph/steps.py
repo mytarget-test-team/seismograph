@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import inspect
 from functools import wraps
 
 from . import loader
@@ -30,9 +31,8 @@ def step(num, doc=None, performer=None):
         @wraps(method)
         def wrapped(self, *args, **kwargs):
             if performer:
-                step_method = lambda: method(self, *args, **kwargs)
-                return performer(self, step_method)
-            return method(self, *args, **kwargs)
+                return performer(self, lambda: _call_to_method(self, method, *args, **kwargs))
+            return _call_to_method(self, method, *args, **kwargs)
 
         return wrapped
 
@@ -136,30 +136,37 @@ def _run_step(case, method, flow=None):
         raise
 
 
+def _call_to_method(case, method, *args, **kwargs):
+    sig = inspect.getargspec(method)
+
+    if len(sig.args) == 1 and not sig.varargs and not sig.keywords:
+        return method(case) if case else method()
+
+    return method(case, *args, **kwargs) if case else method(*args, **kwargs)
+
+
 def _call_to_begin_method_if_exist(case, flow=None):
-    if hasattr(case, 'begin'):
+    if getattr(case, 'begin', False):
         setattr(
             case,
             CURRENT_STEP_ATTRIBUTE_NAME,
             'begin',
         )
-        if flow:
-            case.begin(flow)
-        else:
-            case.begin()
+        if flow is not None:
+            return _call_to_method(None, case.begin, flow)
+        return case.begin()
 
 
 def _call_to_finish_method_if_exist(case, flow=None):
-    if hasattr(case, 'finish'):
+    if getattr(case, 'finish', False):
         setattr(
             case,
             CURRENT_STEP_ATTRIBUTE_NAME,
             'finish',
         )
-        if flow:
-            case.finish(flow)
-        else:
-            case.finish()
+        if flow is not None:
+            return _call_to_method(None, case.finish, flow)
+        return case.finish()
 
 
 def _make_run_test():
@@ -191,6 +198,9 @@ def _make_run_test():
                     setattr(self, STEPS_HISTORY_ATTRIBUTE_NAME, [])
 
                 _call_to_finish_method_if_exist(self, flow=flow)
+
+                if self.config.FIRST_FLOW_ONLY:
+                    break
 
         else:
             _call_to_begin_method_if_exist(self)

@@ -132,6 +132,18 @@ class PageElement(object):
             '"{}" is not callable'.format(self.__class__.__name__),
         )
 
+    def __iter__(self):
+        # for IDE only
+        raise TypeError(
+            '"{}" is not iterable'.format(self.__class__.__name__),
+        )
+
+    def __len__(self):
+        # for IDE only
+        raise TypeError(
+            'object of type "{}" has no len()'.format(self.__class__.__name__)
+        )
+
     def __make_object__(self, page):
         if self.__cached and id(self) in page.cache:
             result = page.cache[id(self)]

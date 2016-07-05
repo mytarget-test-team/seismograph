@@ -141,6 +141,13 @@ def create_option_parser():
         help='Random order when tests is running.',
     )
     run_group.add_option(
+        '--first-flow-only',
+        dest='FIRST_FLOW_ONLY',
+        action='store_true',
+        default=False,
+        help='Run each of cases with first flow and exiting after that.',
+    )
+    run_group.add_option(
         '--random-seed',
         dest='RANDOM_SEED',
         default=time.time(),
