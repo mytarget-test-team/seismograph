@@ -3,7 +3,9 @@
 
 class SeismographError(BaseException):
 
-    def __init__(self, message, *args, **kwargs):
+    def __init__(self, message=None, *args, **kwargs):
+        message = message or ''
+
         super(SeismographError, self).__init__(message, *args, **kwargs)
 
         self.message = message  # please python 3

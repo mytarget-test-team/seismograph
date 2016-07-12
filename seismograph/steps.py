@@ -19,7 +19,7 @@ STEP_BY_STEP_ATTRIBUTE_NAME = '__step_by_step__'
 STEPS_STORAGE_ATTRIBUTE_NAME = '__step_methods__'
 
 
-def step(num, doc=None, performer=None):
+def step(num, doc=None, performer=None, for_flows=None):
     def wrapper(method):
         if type(num) not in (int, float):
             raise ValueError('step num can be int or float type only')
@@ -30,6 +30,15 @@ def step(num, doc=None, performer=None):
 
         @wraps(method)
         def wrapped(self, *args, **kwargs):
+            if for_flows:
+                flows = getattr(self, '__flows__', [])
+                current_flow = get_current_flow(self)
+                is_able_to_run = (
+                    flows.index(current_flow) + 1 in for_flows
+                )
+                if not is_able_to_run:
+                    return
+
             if performer:
                 return performer(self, lambda: _call_to_method(self, method, *args, **kwargs))
             return _call_to_method(self, method, *args, **kwargs)

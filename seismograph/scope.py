@@ -8,6 +8,7 @@ import seismograph.case as _case
 import seismograph.xunit as _xunit
 import seismograph.suite as _suite
 from seismograph import ext as _ext
+import seismograph.result as _result
 import seismograph.loader as _loader
 import seismograph.program as _program
 import seismograph.runnable as _runnable
@@ -48,6 +49,7 @@ def set_default_program_layers(*layers):
 
 
 def configure(
+        start_message=None,
         round_runtime=None,
         config_env_name=None,
         max_diff=_empty_value,
@@ -61,6 +63,7 @@ def configure(
     """
     Configure global context
 
+    :param start_message:
     :param round_runtime:
     :param config_env_name:
     :param max_diff:
@@ -72,6 +75,9 @@ def configure(
     :param skip_why_attribute_name:
     :param use_static_test_functions:
     """
+    if start_message:
+        _result.START_MESSAGE = start_message
+
     if round_runtime:
         assert type(round_runtime) == int
         _xunit.ROUND_RUNTIME = round_runtime

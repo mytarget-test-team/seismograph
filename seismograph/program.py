@@ -228,7 +228,8 @@ class Program(runnable.RunnableObject):
 
                 with self.__context(self):
                     self.run_scripts(run_point='before')
-                    group(self.__result)
+                    if not self.__config.NO_TESTS:
+                        group(self.__result)
                     self.run_scripts(run_point='after')
                     self.__result.stop_timer()
             except ALLOW_RAISED_EXCEPTIONS:

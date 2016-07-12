@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 import time
 
 from ..exceptions import TimeoutException
@@ -48,3 +49,12 @@ def call_to_chain(chain, method_name, *args, **kwargs):
 def measure_time():
     start_time = time.time()
     return lambda: time.time() - start_time
+
+
+def pythonpaths(*paths):
+    def wrapper(f):
+        for path in paths:
+            if path not in sys.path:
+                sys.path.append(path)
+        return f
+    return wrapper

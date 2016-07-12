@@ -168,6 +168,13 @@ def create_option_parser():
         help='Ignore scripts on run.',
     )
     run_group.add_option(
+        '--no-tests',
+        dest='NO_TESTS',
+        action='store_true',
+        default=False,
+        help='Ignore tests on run.',
+    )
+    run_group.add_option(
         '--async-suites',
         type=int,
         dest='ASYNC_SUITES',
