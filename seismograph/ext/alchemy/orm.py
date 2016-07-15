@@ -5,7 +5,7 @@ from contextlib import contextmanager
 
 from sqlalchemy.exc import InvalidRequestError
 from sqlalchemy.ext.declarative import DeclarativeMeta
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base as _declarative_base
 
 from . import registry
 from .constants import DEFAULT_BIND_KEY
@@ -182,10 +182,31 @@ class BoundDeclarativeMeta(DeclarativeMeta):
         DeclarativeMeta.__init__(self, name, bases, d)
 
         try:
-            bind_key = d.pop('__bind_key__', DEFAULT_BIND_KEY)
+            bind_key = d.pop('__bind_key__', None)
+
+            if not bind_key:
+                for base in bases:
+                    if getattr(base, '__bind_key__', None):
+                        bind_key = getattr(base, '__bind_key__')
+                        break
+                else:
+                    bind_key = DEFAULT_BIND_KEY
+
             self.__table__.info['bind_key'] = bind_key
         except AttributeError:
             pass
 
 
-BaseModel = declarative_base(cls=ModelCRUD, metaclass=BoundDeclarativeMeta)
+def declarative_base(cls=None, bind_key=None, **kw):
+    return _declarative_base(
+        cls=type(
+            'ModelCRUD',
+            (cls, ModelCRUD) if cls else (ModelCRUD, ),
+            {'__bind_key__': bind_key or DEFAULT_BIND_KEY},
+        ),
+        metaclass=BoundDeclarativeMeta,
+        **kw
+    )
+
+
+BaseModel = _declarative_base(cls=ModelCRUD, metaclass=BoundDeclarativeMeta)
