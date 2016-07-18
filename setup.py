@@ -22,6 +22,7 @@ assert __version__
 EXTENSIONS = [
     'mocker',
     'alchemy',
+    'builder',
     'selenium',
 ]
 
@@ -43,6 +44,9 @@ EX_REQUIREMENTS = {
     ],
     'alchemy': [
         'sqlalchemy>=0.8',
+    ],
+    'builder': [
+        'jsonschema>=1.0',
     ],
 }
 
@@ -111,7 +115,6 @@ def install_package():
         test_suite='tests',
         classifiers=(
             'Development Status :: 4 - Beta',
-            'Framework :: Seismograph',
             'Natural Language :: Russian',
             'Intended Audience :: Developers',
             'Operating System :: OS Independent',

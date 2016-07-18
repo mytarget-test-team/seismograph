@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_NAME = 'seismograph'
+START_MESSAGE = 'Seismograph is measuring'
 
 
 def get_runnable_from_storage_item(item):
@@ -615,7 +616,7 @@ class Result(object):
         if self.__capture:
             self.__capture.make()
 
-        self.__console.writeln('Seismograph is measuring:')
+        self.__console.writeln(u'{}:'.format(START_MESSAGE))
         self.__console.line_break()
         self.console.flush()
 

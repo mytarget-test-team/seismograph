@@ -98,7 +98,28 @@ class BaseMock(object):
     def __on_file__(self, fp):
         body = []
 
-        for line in fp.readlines():
+        meta_was_found = False
+        break_line_was_found = False
+
+        break_line_chars = ('\n', '\r', '\r\n')
+
+        lines = [l for l in fp.readlines()]
+
+        can_find_meta = lambda: (
+            not meta_was_found
+        )
+        can_find_header = lambda: (
+            meta_was_found
+            and
+            not break_line_was_found
+        )
+        can_find_break_line = lambda: (
+            not break_line_was_found
+            and
+            meta_was_found
+        )
+
+        for line in lines:
             try:
                 line = line.decode('utf-8')
             except AttributeError:  # please python 3 :)
@@ -107,16 +128,20 @@ class BaseMock(object):
             if line.startswith('#'):  # pass comment line
                 continue
 
-            if self.HEADER_REGEXP.search(line):
-                key, value = parse_for_header(line)
-                self._headers[key] = value
-            elif self.META_REGEXP.search(line):
+            if can_find_break_line():
+                if line.replace(' ', '') in break_line_chars:
+                    break_line_was_found = True
+
+            if can_find_meta() and self.META_REGEXP.search(line):
                 http_method, status_code, url_rule = parse_for_meta(line)
                 self._url_rule = url_rule
                 self._http_method = http_method
                 self._status_code = status_code
+                meta_was_found = True
+            elif can_find_header() and self.HEADER_REGEXP.search(line):
+                key, value = parse_for_header(line)
+                self._headers[key] = value
             else:
-                # Other line as body item
                 body.append(line)
 
         self._body = u''.join(body)

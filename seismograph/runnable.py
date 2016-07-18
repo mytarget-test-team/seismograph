@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from functools import wraps
 from collections import OrderedDict
 from contextlib import contextmanager
@@ -22,6 +23,18 @@ def stopped_on(runnable, method_name=None):
         return method_name
 
     return runnable.__stopped_on__()
+
+
+def set_debug_if_allowed(config):
+    if config.PDB:
+        _, _, tb = sys.exc_info()
+
+        try:
+            import ipdb as pdb
+        except ImportError:
+            import pdb
+
+        pdb.post_mortem(tb)
 
 
 def is_run(runnable):

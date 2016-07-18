@@ -34,8 +34,19 @@ from .steps import step
 
 from .datastructures import Context
 
+from .scope import configure
+from .scope import add_extension
+from .scope import match_case_to_layer
+from .scope import match_suite_to_layer
+from .scope import set_default_case_layers
+from .scope import set_default_suite_layers
+from .scope import set_default_program_layers
 
-__version__ = '0.2.6'
+
+__version__ = '0.3.7'
+
+
+VERSION = tuple(map(int, __version__.split('.')))
 
 
 __all__ = (
@@ -45,6 +56,7 @@ __all__ = (
     'Case',
     'flows',
     'Suite',
+    'Script',
     'skip_if',
     'Context',
     'Program',
@@ -57,6 +69,13 @@ __all__ = (
     'BeforeScript',
     'AssertionBase',
     'get_config_path_by_env',
+    'configure',
+    'add_extension',
+    'match_case_to_layer',
+    'match_suite_to_layer',
+    'set_default_case_layers',
+    'set_default_suite_layers',
+    'set_default_program_layers',
 )
 
 

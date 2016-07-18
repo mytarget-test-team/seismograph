@@ -17,6 +17,7 @@ from ... import case
 from ... import steps
 from ... import reason
 from ... import runnable
+from .query import QueryResult
 from .extension import EX_NAME
 from .utils import random_file_name
 from ...utils.common import waiting_for
@@ -126,9 +127,36 @@ class SeleniumAssertion(case.AssertionBase):
             self.text_exist(proxy, text, timeout=timeout, msg=msg)
 
     @staticmethod
-    def web_element_exist(proxy, query, msg=None, timeout=None):
+    def text_not_exist(proxy, text, msg=None, timeout=None):
+        def check_text():
+            try:
+                return text not in proxy.text
+            except (HTTPException, StaleElementReferenceException):
+                return False
+
         waiting_for(
-            lambda: query(proxy).exist,
+            check_text,
+            exc_cls=AssertionError,
+            message=msg or u'Text "{}" was found on page by URL "{}"'.format(
+                text, proxy.browser.current_url,
+            ),
+            delay=proxy.config.POLLING_DELAY,
+            timeout=timeout or proxy.config.POLLING_TIMEOUT,
+        )
+
+    def texts_not_exist(self, proxy, texts, timeout=None, msg=None):
+        for text in texts:
+            self.text_not_exist(proxy, text, timeout=timeout, msg=msg)
+
+    @staticmethod
+    def web_element_exist(proxy, query, msg=None, timeout=None):
+        if hasattr(query, 'exist'):
+            function = lambda: query.exist
+        else:
+            function = lambda: query(proxy).exist
+
+        waiting_for(
+            function,
             exc_cls=AssertionError,
             message=msg or u'Web element was not found on page by URL "{}"'.format(
                 proxy.browser.current_url,
@@ -139,8 +167,13 @@ class SeleniumAssertion(case.AssertionBase):
 
     @staticmethod
     def web_element_not_exist(proxy, query, msg=None, timeout=None):
+        if hasattr(query, 'exist'):
+            function = lambda: not query.exist
+        else:
+            function = lambda: not query(proxy).exist
+
         waiting_for(
-            lambda: not query(proxy).exist,
+            function,
             exc_cls=AssertionError,
             message=msg or u'Web element was found on page by URL "{}"'.format(
                 proxy.browser.current_url,
@@ -157,6 +190,7 @@ class SeleniumAssertion(case.AssertionBase):
             message=msg or 'Content is not exist inside element on page by URL "{}"'.format(
                 proxy.browser.current_url,
             ),
+
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
@@ -257,7 +291,7 @@ class SeleniumAssertion(case.AssertionBase):
             field.group.area,
             text,
             timeout=timeout,
-            msg=msg or error_message,
+            msg=error_message,
         )
 
 

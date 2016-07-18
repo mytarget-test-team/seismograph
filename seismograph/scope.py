@@ -7,13 +7,25 @@ Module for configuration global context
 import seismograph.case as _case
 import seismograph.xunit as _xunit
 import seismograph.suite as _suite
+from seismograph import ext as _ext
+import seismograph.result as _result
 import seismograph.loader as _loader
 import seismograph.program as _program
 import seismograph.runnable as _runnable
 
 
-shared_data = _program.Program.shared_data
-shared_extension = _program.Program.shared_extension
+_empty_value = object()
+
+
+def add_extension(extension):
+    if not getattr(extension, '__install__', None):
+        raise NotImplementedError(
+            '{} does not implement "__install__". '
+            '"__install__" should accept input program '
+            'instance as first argument'.format(extension),
+        )
+
+    _ext.TO_INIT.append(extension)
 
 
 def match_suite_to_layer(cls, layer):
@@ -37,8 +49,10 @@ def set_default_program_layers(*layers):
 
 
 def configure(
+        start_message=None,
         round_runtime=None,
         config_env_name=None,
+        max_diff=_empty_value,
         test_name_prefix=None,
         case_group_class=None,
         suite_group_class=None,
@@ -49,8 +63,10 @@ def configure(
     """
     Configure global context
 
+    :param start_message:
     :param round_runtime:
     :param config_env_name:
+    :param max_diff:
     :param test_name_prefix:
     :param case_group_class:
     :param suite_group_class:
@@ -59,6 +75,9 @@ def configure(
     :param skip_why_attribute_name:
     :param use_static_test_functions:
     """
+    if start_message:
+        _result.START_MESSAGE = start_message
+
     if round_runtime:
         assert type(round_runtime) == int
         _xunit.ROUND_RUNTIME = round_runtime
@@ -68,6 +87,9 @@ def configure(
 
     if config_env_name:
         _program.CONFIG_ENV_NAME = config_env_name
+
+    if max_diff != _empty_value:
+        _case.assertion.__unittest__.maxDiff = max_diff
 
     if test_name_prefix:
         _loader.TEST_NAME_PREFIX = test_name_prefix

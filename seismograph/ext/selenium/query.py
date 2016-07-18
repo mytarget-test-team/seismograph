@@ -48,19 +48,95 @@ class QueryObject(object):
         )
 
 
-class Contains(object):
+class ValueFormat(object):
+
+    __format__ = None
 
     def __init__(self, value):
         self.value = value
 
-    def __repr__(self):
-        return self.value
+    def __call__(self, tag_attr_name=None):
+        if not self.__format__:
+            raise ValueError('Unknown format')
 
-    def __str__(self):
-        return str(self.value)
+        return self.__format__.format(
+            attr_value=self.value,
+            attr_name=attribute_by_alias(tag_attr_name or ''),
+        )
 
-    def __unicode__(self):
-        return unicode(self.value)
+
+class Equal(ValueFormat):
+
+    __format__ = u'[{attr_name}="{attr_value}"]'
+
+
+class NotEqual(ValueFormat):
+
+    __format__ = u':not([{attr_name}="{attr_value}"])'
+
+
+class Contains(ValueFormat):
+
+    __format__ = u'[{attr_name}*="{attr_value}"]'
+
+
+class NotContains(ValueFormat):
+
+    __format__ = u':not([{attr_name}*="{attr_value}"])'
+
+
+class ContainsText(ValueFormat):
+
+    __format__ = u':contains("{attr_value}")'
+
+
+class StartsWith(ValueFormat):
+
+    __format__ = u'[{attr_name}^="{attr_value}"]'
+
+
+class EndsWith(ValueFormat):
+
+    __format__ = u'[{attr_name}$="{attr_value}"]'
+
+
+class Expression(object):
+
+    __restricted_formats__ = (
+        ContainsText,
+    )
+
+    def __init__(self, value=None, value_format=Equal):
+        self._expressions = []
+
+        if value:
+            self.expression(value, value_format=value_format)
+
+    def expression(self, value, value_format=Equal):
+        if isinstance(value, ValueFormat):
+            self._add_format(value)
+        else:
+            self._add_format(value_format(value))
+
+        return self
+
+    def _check_format(self, fmt):
+        if fmt.__class__ in self.__restricted_formats__:
+            raise ValueError(
+                'Restricted format "{}"'.format(fmt.__class__.__name__),
+            )
+
+    def _add_format(self, fmt):
+        self._check_format(fmt)
+        self._expressions.append(fmt)
+
+    def __call__(self, tag_attr_name):
+        css_selector = []
+
+        for fmt in self._expressions:
+            css_selector.append(fmt(tag_attr_name))
+
+        return u''.join(css_selector)
 
 
 def tag_by_alias(tag_name):
@@ -74,22 +150,21 @@ def attribute_by_alias(atr_name):
 
 
 def make_result(proxy, tag):
-    def handle(**selector):
+    def handle(tag_text_contains=None, **selector):
         css = [tag_by_alias(tag)]
 
-        def get_format(value):
-            if isinstance(value, Contains):
-                return u'[{}*="{}"]'
-            return u'[{}="{}"]'
+        if isinstance(tag_text_contains, ContainsText):
+            css.append(tag_text_contains())
 
-        css.extend(
-            (
-                get_format(val).format(attribute_by_alias(atr), val)
-                for atr, val in selector.items()
-            ),
-        )
+        for tag_attr_name, value in selector.items():
+            if isinstance(value, Expression):
+                expression = value
+            else:
+                expression = Expression(value)
 
-        return QueryResult(proxy, ''.join(css))
+            css.append(expression(tag_attr_name))
+
+        return QueryResult(proxy, u''.join(css))
 
     return handle
 
@@ -137,7 +212,9 @@ class QueryResult(object):
         self.__proxy = proxy
 
     def __repr__(self):
-        return 'QueryResult({}): {}'.format(self.__css, repr(self.__proxy))
+        return u'{}({}): {}'.format(
+            self.__class__.__name__, self.__css, repr(self.__proxy),
+        )
 
     def __getattr__(self, item):
         if not self.__we:
@@ -262,11 +339,26 @@ class Query(object):
 
     ANY = '*'
 
+    equal = Equal
+    not_equal = NotEqual
     contains = Contains
+    endswith = EndsWith
+    startswith = StartsWith
+    not_contains = NotContains
+    contains_text = ContainsText
 
     @staticmethod
     def css_string(query_result):
         return query_result.__css_string__()
+
+    @staticmethod
+    def expression(*args):
+        expression = Expression()
+
+        for fmt in args:
+            expression.expression(fmt)
+
+        return expression
 
     def __call__(self, tag, **selector):
         return QueryObject(tag, **selector)

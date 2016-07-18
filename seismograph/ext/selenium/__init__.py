@@ -3,6 +3,8 @@
 from warnings import warn
 from optparse import OptionGroup
 
+from selenium.webdriver.common.keys import Keys as keys
+
 from . import forms
 from . import polling
 
@@ -29,9 +31,6 @@ from .router import add_route
 from .utils import re_raise_exc
 
 from .browser import change_config as change_browser_config
-
-# rudiment
-from ...utils.common import waiting_for
 
 
 CONFIG_KEY = 'SELENIUM_EX'
@@ -160,6 +159,7 @@ def __install__(program):
 __all__ = (
     'Case',
     'Page',
+    'keys',
     'forms',
     'query',
     'Alert',

@@ -181,13 +181,18 @@ class CaseBox(object):
             yield case
 
     def __repr__(self):
-        return repr(self.__current)
+        if self.__current:
+            return repr(self.__current)
+        return super(CaseBox, self).__repr__()
 
     def __str__(self):
         return str(self.__current)
 
     def __getattr__(self, item):
         return getattr(self.__current, item)
+
+    def __len__(self):
+        return len(self.__cases)
 
     def __run_current__(self, result):
         if self.__current.__repeatable__ and self.__current.config.REPEAT > 0:
@@ -333,6 +338,29 @@ class AssertionBase(object):
         Like assertIsNotNone in unittest
         """
         self.__unittest__.assertIsNotNone(obj, msg=msg)
+
+    def equal_by_iter(self, seq1, seq2, msg=None):
+        """
+        Compare two iterable objects.
+
+        Example::
+
+            assertion.equal_by_iter(['hello', 'world'], set(['hello', 'world'])).
+            assertion.equal_by_iter(dict(a=1, b=2), ('a', 'b))
+        """
+        compare_error = 'compare by iter: {} != {}'.format(seq1, seq2)
+        len_error = 'discrepancy of objects length: {} != {}'.format(len(seq1), len(seq2))
+
+        self.equal(len(seq1), len(seq2), msg=msg or len_error)
+
+        for first, second in zip(seq1, seq2):
+            self.equal(first, second, msg=msg or compare_error)
+
+    def dict_equal(self, d1, d2, msg=None):
+        """
+        Like assertDictEqual in unittest
+        """
+        self.__unittest__.assertDictEqual(d1, d2, msg=msg)
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):
@@ -736,18 +764,21 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                             result_proxy.current_state.should_stop = True
                             raise
                         except Skip as s:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_skip(self, s.message, result_proxy)
                             result_proxy.add_skip(
                                 self, s.message, timer(),
                             )
                         except AssertionError as fail:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_fail(fail, self, result_proxy)
                             result_proxy.add_fail(
                                 self, traceback.format_exc(), timer(), fail,
                             )
                         except BaseException as error:
+                            runnable.set_debug_if_allowed(self.config)
                             was_success = False
                             self.__context.on_error(error, self, result_proxy)
                             self.__context.on_any_error(error, self, result_proxy)
@@ -766,6 +797,7 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                runnable.set_debug_if_allowed(self.config)
                 self.__context.on_context_error(error, self, result_proxy)
                 self.__context.on_any_error(error, self, result_proxy)
                 result_proxy.add_error(

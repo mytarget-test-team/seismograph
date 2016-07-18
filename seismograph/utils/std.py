@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+from StringIO import StringIO
 from contextlib import contextmanager
 
 
@@ -22,3 +23,14 @@ def dev_null():
     finally:
         sys.stdout = stdout
         sys.stderr = stderr
+
+
+@contextmanager
+def capture_stdout():
+    stream = StringIO()
+    stdout = sys.stdout
+    sys.stdout = stream
+    try:
+        yield stream
+    finally:
+        sys.stdout = stdout

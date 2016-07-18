@@ -6,6 +6,7 @@ from six import with_metaclass
 
 from ...utils import pyv
 from .query import QueryObject
+from .utils import declare_standard_callback
 
 
 def key(page_element):
@@ -80,13 +81,14 @@ class PageElement(object):
                 )
 
         self.__key = options.get('key', None)
-        self.__call = options.get('call', None)
         self.__index = options.get('index', None)
         self.__is_list = options.get('is_list', False)
-        self.__property = options.get('property', None)
         self.__we_class = options.get('we_class', None)
         self.__list_class = options.get('list_class', None)
         self.__wait_timeout = options.get('wait_timeout', None)
+
+        self.__call = options.get('call', None)
+        self.__property = declare_standard_callback(options.get('property', None))
 
         if self.__list_class and not self.__is_list:
             raise ValueError(
@@ -124,6 +126,24 @@ class PageElement(object):
         # for IDE only
         raise AttributeError(item)
 
+    def __call__(self):
+        # for IDE only
+        raise TypeError(
+            '"{}" is not callable'.format(self.__class__.__name__),
+        )
+
+    def __iter__(self):
+        # for IDE only
+        raise TypeError(
+            '"{}" is not iterable'.format(self.__class__.__name__),
+        )
+
+    def __len__(self):
+        # for IDE only
+        raise TypeError(
+            'object of type "{}" has no len()'.format(self.__class__.__name__)
+        )
+
     def __make_object__(self, page):
         if self.__cached and id(self) in page.cache:
             result = page.cache[id(self)]
@@ -158,7 +178,7 @@ class PageElement(object):
                         self.__index,
                     )
                 else:
-                    result = query_result.first()
+                    result = query_result
 
         if self.__cached:
             page.cache[id(self)] = result

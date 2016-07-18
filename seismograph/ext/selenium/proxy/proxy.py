@@ -6,7 +6,6 @@ from types import MethodType
 from collections import OrderedDict
 from contextlib import contextmanager
 
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webelement import WebElement
@@ -311,15 +310,15 @@ class WebElementProxy(BaseProxy, WebElementInterface):
     def double_click(self):
         with self.browser.action_chains as action:
             action.double_click(self)
+            action.perform()
 
     def context_click(self):
         with self.browser.action_chains as action:
             action.context_click(self)
+            action.perform()
 
 
 class WebDriverProxy(BaseProxy, WebDriverInterface):
-
-    keys = Keys
 
     def __init__(self, *args, **kwargs):
         super(WebDriverProxy, self).__init__(*args, **kwargs)

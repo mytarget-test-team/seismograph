@@ -141,6 +141,13 @@ def create_option_parser():
         help='Random order when tests is running.',
     )
     run_group.add_option(
+        '--first-flow-only',
+        dest='FIRST_FLOW_ONLY',
+        action='store_true',
+        default=False,
+        help='Run each of cases with first flow and exiting after that.',
+    )
+    run_group.add_option(
         '--random-seed',
         dest='RANDOM_SEED',
         default=time.time(),
@@ -159,6 +166,13 @@ def create_option_parser():
         action='store_true',
         default=False,
         help='Ignore scripts on run.',
+    )
+    run_group.add_option(
+        '--no-tests',
+        dest='NO_TESTS',
+        action='store_true',
+        default=False,
+        help='Ignore tests on run.',
     )
     run_group.add_option(
         '--async-suites',
@@ -201,6 +215,13 @@ def create_option_parser():
         action='store_true',
         default=False,
         help='Use multiprocessing groups for run.',
+    )
+    run_group.add_option(
+        '--pdb',
+        dest='PDB',
+        action='store_true',
+        default=False,
+        help='Set trace after raise exception on runnable object.',
     )
     parser.add_option_group(run_group)
 

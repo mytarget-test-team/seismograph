@@ -44,7 +44,7 @@ def load_module(module_name, package=None):
     # We're obliged to talk about this
     if module_name in sys.modules:
         raise LoaderError(
-            'Module "{}" already exit in program context. {}.'.format(
+            'Module "{}" already exist in program context. {}.'.format(
                 module_name, sys.modules[module_name],
             ),
         )

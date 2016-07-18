@@ -53,7 +53,7 @@ class BuildRule(object):
     def __str__(self):
         if self.__suite_name and self.__case_name and self.__test_name:
             return '{}:{}.{}'.format(
-                self.__suite_name, self.__case_name, self.__case_name,
+                self.__suite_name, self.__case_name, self.__test_name,
             )
 
         if self.__suite_name and self.__case_name:
@@ -101,9 +101,10 @@ class SuiteLayer(runnable.LayerOfRunnableObject):
         """
         pass
 
-    def on_build_rule(self, build_rules):
+    def on_build_rule(self, suite, rule):
         """
-        :type build_rules: list
+        :type suite: Suite
+        :type rule: BuildRule
         """
         pass
 
@@ -245,7 +246,7 @@ class SuiteContext(runnable.ContextOfRunnableObject):
             with_match_layers(self, suite), 'on_require', self.__require,
         )
 
-    def on_build_rule(self, suite):
+    def on_build_rule(self, suite, rule):
         logger.debug(
             'Call to chain callbacks "on_build_rule" of suite "{}"'.format(
                 runnable.class_name(suite),
@@ -253,7 +254,7 @@ class SuiteContext(runnable.ContextOfRunnableObject):
         )
 
         call_to_chain(
-            with_match_layers(self, suite), 'on_build_rule', self.__build_rules,
+            with_match_layers(self, suite), 'on_build_rule', suite, rule,
         )
 
     def on_mount(self, suite, program):
@@ -351,6 +352,7 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             except ALLOW_RAISED_EXCEPTIONS:
                 raise
             except BaseException as error:
+                runnable.set_debug_if_allowed(self.config)
                 self.__context.on_error(error, self, result_proxy)
                 result_proxy.add_error(
                     self, traceback.format_exc(), timer(), error,
@@ -402,7 +404,6 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
 
         self.__context.on_init(self)
         self.__context.on_require(self)
-        self.__context.on_build_rule(self)
 
     def __build__(self, case_name=None, test_name=None):
         logger.debug(
@@ -511,6 +512,8 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
         """
         :type rule: BuildRule
         """
+        self.__context.on_build_rule(self, rule)
+
         assert rule.is_of(self), 'Build rule "{}" is not of this suite'.format(
             str(rule),
         )
