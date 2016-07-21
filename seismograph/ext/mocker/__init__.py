@@ -1,74 +1,148 @@
 # -*- coding: utf-8 -*-
 
+"""
+Extension for mock http external resources.
+
+Usage:
+
+    from seismograph.ext import mocker
+
+
+    with mocker.path('/users/<int:id>', json={'name': 'Username'}):
+        pass
+
+    @mocker.mock('/user/<int:id>', json={'name': 'Username'})
+    def do_something(case):
+        pass
+
+
+    some_api = MockResource('/some/api')
+
+
+    with some_api.path('/users/<int:id>', json={'name': 'Username'}):
+        pass
+
+    @some_api.mock('/user/<int:id>', json={'name': 'Username'})
+    def do_something(case):
+        pass
+
+
+    # You can to run server from program instance
+
+    import seismograph
+
+
+    class Program(seismograph.Program):
+
+        def setup(self):
+            self.ext('mocker').start()
+
+        def teardown(self):
+            self.ext('mocker').stop()
+
+
+    # or from command line interface like:
+    # seismograph.mocker --help
+    # or
+    # python -m seismograph.ext.mocker --help
+    #
+    # Should to know:
+    # Server have to run when you can try to mock url,
+    # also your application should to know about mock server URL.
+
+"""
+
+from functools import wraps
 from optparse import OptionGroup
 
-from .mock import BaseMock
-from .base import BaseMockServer
-from .json_api_mock import JsonMock
-from .json_api_mock import JsonApiMockServer
-
-from ...exceptions import EmergencyStop
+from . import client as _client
+from . import constants as _constants
+from .extension import Config as _Config
+from .extension import Mocker as _Mocker
 
 
-EX_NAME = 'mocker'
-CONFIG_KEY = 'MOCKER_EX'
-DEFAULT_SERVER_TYPE = 'json_api'
+class MockResource(object):
 
-SERVER_TYPES = {
-    'simple': BaseMockServer,
-    'json_api': JsonApiMockServer,
-}
+    def __init__(self, base_path):
+        self._base_path = base_path
 
+    def __call__(self, *args, **kwargs):
+        return self.mock(*args, **kwargs)
 
-def create_server(host=None,
-                  port=None,
-                  mocks=None,
-                  debug=False,
-                  mocks_path=None,
-                  server_type=DEFAULT_SERVER_TYPE,
-                  **kwargs):
-    try:
-        mock_server_class = SERVER_TYPES[server_type]
-    except KeyError:
-        raise EmergencyStop(
-            'Incorrect server type "{}"'.format(server_type),
+    def _compile_url_rule(self, url_rule):
+        return '{}{}'.format(self._base_path, url_rule).replace('//', '/')
+
+    def mock(self, url_rule, **params):
+        return mock(self._compile_url_rule(url_rule), **params)
+
+    def path(self, url_rule, **kwargs):
+        """
+        Contextmanager will be returned
+        """
+        return _client.instance.path(self._compile_url_rule(url_rule), **kwargs)
+
+    def add_mock(self, url_rule, **kwargs):
+        return _client.instance.add_mock(self._compile_url_rule(url_rule), kwargs)
+
+    def unblock_mock(self, url_rule):
+        return _client.instance.unblock_mock(self._compile_url_rule(url_rule))
+
+    def __repr__(self):
+        return '<{}: {}>'.format(
+            self.__class__.__name__, self._base_path,
         )
 
-    return mock_server_class(
-        mocks_path,
-        host=host,
-        port=port,
-        mocks=mocks,
-        debug=debug,
-        **kwargs
-    )
+
+def mock(url_rule, **params):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            with _client.instance.path(url_rule, **params):
+                result = f(*args, **kwargs)
+            return result
+        return wrapped
+    return wrapper
+
+
+def path(url_rule, **params):
+    """
+    Contextmanager will be returned
+    """
+    return _client.instance.path(url_rule, **params)
 
 
 def __add_options__(parser):
     group = OptionGroup(parser, 'MockServer extension options')
 
     group.add_option(
-        '--mock-server-mocks-dir',
-        dest='MOCK_SERVER_MOCKS_DIR',
+        '--mocker-path-to-mocks',
+        dest='MOCKER_PATH_TO_MOCKS',
         default=None,
         help='Path to dir within mock files.'
     )
     group.add_option(
-        '--mock-server-host',
-        dest='MOCK_SERVER_HOST',
+        '--mocker-host',
+        dest='MOCKER_HOST',
         default=None,
         help='Server host.',
     )
     group.add_option(
-        '--mock-server-port',
-        dest='MOCK_SERVER_PORT',
+        '--mocker-port',
+        dest='MOCKER_PORT',
         default=None,
         type=int,
         help='Server port.',
     )
     group.add_option(
-        '--mock-server-debug',
-        dest='MOCK_SERVER_DEBUG',
+        '--mocker-block-timeout',
+        dest='MOCKER_BLOCK_TIMEOUT',
+        default=None,
+        type=float,
+        help='Timeout to set mock if exist.',
+    )
+    group.add_option(
+        '--mocker-debug',
+        dest='MOCKER_DEBUG',
         action='store_true',
         default=False,
         help='Use debug.',
@@ -78,31 +152,26 @@ def __add_options__(parser):
 
 
 def __install__(program):
-    params = program.config.get(CONFIG_KEY, {})
+    params = program.config.get(_constants.CONFIG_KEY, {})
 
-    ex_kwargs = {
-        'mocks': params.get('MOCKS'),
-        'host': program.config.MOCK_SERVER_HOST or params.get('HOST'),
-        'port': program.config.MOCK_SERVER_PORT or params.get('PORT'),
-        'debug': program.config.MOCK_SERVER_DEBUG or params.get('DEBUG'),
-        'mocks_path': program.config.MOCK_SERVER_MOCKS_DIR or params.get('MOCKS_PATH'),
-        'server_type': params.get(
-            'SERVER_TYPE', DEFAULT_SERVER_TYPE,
+    config = _Config(
+        host=program.config.MOCKER_HOST or params.get('HOST', _constants.DEFAULT_HOST),
+        port=program.config.MOCKER_PORT or params.get('PORT', _constants.DEFAULT_PORT),
+        debug=program.config.MOCKER_DEBUG or params.get('DEBUG'),
+        gevent=program.config.GEVENT,
+        path_to_mocks=program.config.MOCKER_PATH_TO_MOCKS or params.get('PATH_TO_MOCKS'),
+        block_timeout=program.config.MOCKER_BLOCK_TIMEOUT or params.get(
+            'BLOCK_TIMEOUT', _constants.DEFAULT_BLOCK_TIMEOUT,
         ),
-        'multiprocessing': program.config.MULTIPROCESSING,
-        'threading': program.config.THREADING,
-        'gevent': program.config.GEVENT,
-    }
+    )
 
     program.shared_extension(
-        EX_NAME, create_server, singleton=True, kwargs=ex_kwargs,
+        _constants.EX_NAME, _Mocker, singleton=True, args=(config, ),
     )
 
 
 __all__ = (
-    'BaseMock',
-    'JsonMock',
-    'SERVER_TYPES',
-    'BaseMockServer',
-    'JsonApiMockServer',
+    'mock',
+    'Mocker',
+    'MockResource',
 )

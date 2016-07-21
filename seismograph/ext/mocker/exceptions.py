@@ -3,9 +3,13 @@
 from ...exceptions import SeismographError
 
 
-class MockServerError(SeismographError):
+class MockerError(SeismographError):
     pass
 
 
-class MockServerClientError(MockServerError):
+class MockServerError(MockerError):
+    pass
+
+
+class MockServerClientError(MockerError):
     pass

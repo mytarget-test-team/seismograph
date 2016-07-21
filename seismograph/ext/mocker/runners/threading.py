@@ -16,8 +16,8 @@ class RunServerInThread(Thread):
 
     def run(self):
         self._httpd = self._server_class(
-            self._mock_server.host,
-            self._mock_server.port,
+            self._mock_server.config.HOST,
+            self._mock_server.config.PORT,
             self._mock_server,
         )
         self._httpd.serve_forever()

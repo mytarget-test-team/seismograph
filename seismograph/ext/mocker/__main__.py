@@ -2,30 +2,30 @@
 
 from optparse import OptionParser
 
-
-DEFAULT_PORT = 5000
-DEFAULT_HOST = '127.0.0.1'
+from seismograph.ext.mocker import constants
+from seismograph.ext.mocker.extension import Config
+from seismograph.ext.mocker.server import MockServer
 
 
 def get_parser():
-    parser = OptionParser('python -m seismograph.ext.mock_server [options]')
+    parser = OptionParser('python -m seismograph.ext.mocker [options]')
 
     parser.add_option(
         '-p', '--port',
         type=int,
         dest='PORT',
-        default=DEFAULT_PORT,
+        default=constants.DEFAULT_PORT,
         help='Server port'
     )
     parser.add_option(
         '-i', '--host',
         dest='HOST',
-        default=DEFAULT_HOST,
+        default=constants.DEFAULT_HOST,
         help='Server host'
     )
     parser.add_option(
-        '-m', '--mocks-dir',
-        dest='MOCKS_DIR',
+        '-m', '--path-to-mocks',
+        dest='PATH_TO_MOCKS',
         default=None,
         help='Path to dir within mock files'
     )
@@ -44,20 +44,6 @@ def get_parser():
         action='store_false',
         default=True,
         help='No use debug for output',
-    )
-    parser.add_option(
-        '--multiprocessing',
-        dest='MULTIPROCESSING',
-        action='store_true',
-        default=False,
-        help='Use fork server',
-    )
-    parser.add_option(
-        '--threading',
-        dest='THREADING',
-        action='store_true',
-        default=False,
-        help='Use thread server',
     )
     parser.add_option(
         '--gevent',
@@ -81,22 +67,16 @@ def main():
         from gevent.monkey import patch_all
         patch_all(thread=False)
 
-    from seismograph.ext.mocker import SERVER_TYPES
-
-    try:
-        mock_server_class = SERVER_TYPES[options.SERVER_TYPE]
-    except KeyError:
-        raise ValueError('Incorrect server type')
-
-    server = mock_server_class(
-        options.MOCKS_DIR,
+    config = Config(
         host=options.HOST,
         port=options.PORT,
         debug=options.NO_DEBUG,
         gevent=options.GEVENT,
-        threading=options.THREADING,
-        multiprocessing=options.MULTIPROCESSING,
+        path_to_mocks=options.PATH_TO_MOCKS,
+        block_timeout=constants.DEFAULT_BLOCK_TIMEOUT,
     )
+
+    server = MockServer(config)
     server.serve_forever()
 
 
