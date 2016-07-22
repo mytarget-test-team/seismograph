@@ -18,3 +18,7 @@ def set_log_level_for_dependency(debug):
         logger.handlers = []
         logger.handlers.append(handlers[bool(debug)]())
         logger.setLevel(logging.INFO if debug else logging.ERROR)
+
+
+def endpoint(url_rule, method):
+    return '{}({})'.format(method.upper(), url_rule)

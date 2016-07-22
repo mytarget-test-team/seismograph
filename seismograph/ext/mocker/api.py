@@ -10,6 +10,7 @@ from flask import request
 
 from . import constants
 from .mocks import BaseMock
+from .tools import endpoint
 from .mocks import get_mock_class_by_content_type
 
 
@@ -68,9 +69,11 @@ class MockerApi(object):
     def unblock_mock(self):
         data = request.json
         url_rule = data.get('url_rule')
+        method = data.get('method', constants.DEFAULT_HTTP_METHOD)
+        ep = endpoint(url_rule, method)
 
-        if url_rule in self.__server.views:
-            del self.__server.views[url_rule]
+        if ep in self.__server.views:
+            del self.__server.views[ep]
 
         return make_response(httplib.OK, status=constants.OK_STATUS)
 
@@ -87,7 +90,7 @@ class MockerApi(object):
         headers = data.get('headers', {})
         body = data.get('body', '')
 
-        if url_rule in self.__server.views:
+        if endpoint(url_rule, method) in self.__server.views:
             return make_response(httplib.OK, status=constants.MOCK_BLOCKED_STATUS)
 
         mock_cls = get_mock_class_by_content_type(content_type)
@@ -107,9 +110,9 @@ class MockerApi(object):
         return make_response(httplib.OK, status=constants.MOCK_ADDED_STATUS)
 
     def clean_mocks(self):
-        for endpoint, view_func in self.__server.views.items():
+        for ep, view_func in self.__server.views.items():
             if isinstance(view_func, BaseMock):
-                del self.__server.views[endpoint]
+                del self.__server.views[ep]
 
         return make_response(httplib.OK, status=constants.OK_STATUS)
 

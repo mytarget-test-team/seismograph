@@ -76,7 +76,7 @@ class MockServerClient(object):
         try:
             yield
         finally:
-            self.unblock_mock(url_rule)
+            self.unblock_mock(url_rule, method=kwargs.get('method'))
 
     @handle_errors
     def add_mock(self,
@@ -84,10 +84,10 @@ class MockServerClient(object):
                  body=None,
                  json=None,
                  html=None,
+                 status=None,
                  method=None,
                  headers=None,
-                 content_type=None,
-                 status_code=None):
+                 content_type=None):
         data = {'url_rule': url_rule}
 
         if method:
@@ -103,8 +103,8 @@ class MockServerClient(object):
         elif content_type:
             data['content_type'] = content_type
 
-        if status_code:
-            data['status'] = status_code
+        if status:
+            data['status'] = status
 
         data['body'] = body or json or html or ''
 
@@ -122,7 +122,7 @@ class MockServerClient(object):
         )
 
     @handle_errors
-    def unblock_mock(self, url_rule):
+    def unblock_mock(self, url_rule, method=None):
         def was_unblocked(resp):
             d = resp.json()
             return d.get('status') == constants.OK_STATUS
@@ -130,8 +130,11 @@ class MockServerClient(object):
         return was_unblocked(
             self.post(
                 '/mocker/api/mocks/unblock',
-                json={'url_rule': url_rule},
-            )
+                json={
+                    'url_rule': url_rule,
+                    'method': method or constants.DEFAULT_HTTP_METHOD,
+                },
+            ),
         )
 
     @handle_errors

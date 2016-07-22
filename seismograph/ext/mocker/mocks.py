@@ -221,8 +221,8 @@ CONTENT_TYPE_TO_MOCK_CLASS = {
 }
 
 FILE_EXTENSION_TO_MOCK_CLASS = {
-    '.json': JsonMock,
-    '.html': HTMLMock,
+    'json': JsonMock,
+    'html': HTMLMock,
 }
 
 

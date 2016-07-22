@@ -9,6 +9,7 @@ from flask import Flask as _Flask
 from . import patch
 from . import constants
 from .mocks import BaseMock
+from .tools import endpoint
 from .client import MockServerClient
 from .exceptions import MockServerError
 from .mocks import get_mock_class_by_file_name
@@ -124,7 +125,10 @@ class MockServer(object):
         self.add_url_rule(
             mock.url_rule,
             view_func=mock,
-            endpoint=mock.url_rule,
+            endpoint=endpoint(
+                mock.url_rule,
+                mock.http_method,
+            ),
             methods=[mock.http_method],
         )
 

@@ -17,7 +17,6 @@ from ... import case
 from ... import steps
 from ... import reason
 from ... import runnable
-from .query import QueryResult
 from .extension import EX_NAME
 from .utils import random_file_name
 from ...utils.common import waiting_for
@@ -325,7 +324,7 @@ class SeleniumCase(case.Case):
     def __init__(self, *args, **kwargs):
         if self.__require_browser__:
             kwargs.update(use_flows=False)
-    
+
             super(SeleniumCase, self).__init__(*args, **kwargs)
 
             if steps.is_step_by_step_case(self):

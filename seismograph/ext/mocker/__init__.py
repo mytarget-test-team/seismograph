@@ -69,7 +69,7 @@ from .extension import Config as _Config
 from .extension import Mocker as _Mocker
 
 
-class MockResource(object):
+class _MockResource(object):
 
     def __init__(self, base_path):
         self._base_path = base_path
@@ -102,7 +102,7 @@ class MockResource(object):
 
 
 def declare_external_resource(base_path=None):
-    return MockResource(base_path or '')
+    return _MockResource(base_path or '')
 
 
 def mock(url_rule, **params):
@@ -121,6 +121,10 @@ def path(url_rule, **params):
     Contextmanager will be returned
     """
     return _client.instance.path(url_rule, **params)
+
+
+def unblock(url_rule, method):
+    return _client.instance.unblock_mock(url_rule, method)
 
 
 def __add_options__(parser):
@@ -184,6 +188,7 @@ def __install__(program):
 
 __all__ = (
     'mock',
-    'Mocker',
-    'MockResource',
+    'path',
+    'unblock',
+    'declare_external_resource',
 )
