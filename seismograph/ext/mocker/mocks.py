@@ -230,7 +230,7 @@ def get_mock_class_by_file_name(filename):
     """
     :rtype: BaseMock
     """
-    split_name = filename.replace('.mocker', '').split('.')
+    split_name = filename.replace('.mock', '').split('.')
     try:
         ext = split_name[len(split_name) - 1]
         return FILE_EXTENSION_TO_MOCK_CLASS.get(ext, DEFAULT_MOCK_CLASS)

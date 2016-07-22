@@ -12,17 +12,23 @@ Usage:
         pass
 
     @mocker.mock('/user/<int:id>', json={'name': 'Username'})
-    def do_something(case):
+    def do_something():
         pass
 
 
-    some_api = MockResource('/some/api')
+    some_api = mocker.declare_external_resource('/some/api')
 
 
     with some_api.path('/users/<int:id>', json={'name': 'Username'}):
         pass
 
     @some_api.mock('/user/<int:id>', json={'name': 'Username'})
+    def do_something(case):
+        pass
+
+    # or
+
+    @some_api('/user/<int:id>', json={'name': 'Username'})
     def do_something(case):
         pass
 
@@ -50,6 +56,8 @@ Usage:
     # Server have to run when you can try to mock url,
     # also your application should to know about mock server URL.
 
+
+Need to require mocker where it using
 """
 
 from functools import wraps
@@ -91,6 +99,10 @@ class MockResource(object):
         return '<{}: {}>'.format(
             self.__class__.__name__, self._base_path,
         )
+
+
+def declare_external_resource(base_path=None):
+    return MockResource(base_path or '')
 
 
 def mock(url_rule, **params):

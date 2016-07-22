@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import httplib
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
 
 
 EX_NAME = 'mocker'

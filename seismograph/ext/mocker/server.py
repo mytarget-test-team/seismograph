@@ -13,7 +13,6 @@ from .client import MockServerClient
 from .exceptions import MockServerError
 from .mocks import get_mock_class_by_file_name
 from .tools import set_log_level_for_dependency
-from .mocks import FILE_EXTENSION_TO_MOCK_CLASS
 from .mocks import on_file as fill_mock_from_file
 
 

@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import httplib
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+
 from functools import wraps
 
 from flask import abort
