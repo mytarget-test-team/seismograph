@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from seismograph import Case, Suite
+from seismograph.ext.mocker import client
 
 
 suite = Suite(__name__, require=['mocker'])
@@ -9,17 +10,17 @@ suite = Suite(__name__, require=['mocker'])
 @suite.register
 class TestMocksFromFiles(Case):
 
-    server = None
+    mocker = None
 
     def setup(self):
-        self.server = self.ext('mocker')
-        self.server.start()
+        self.mocker = self.ext('mocker')
+        self.mocker.start()
 
     def teardown(self):
-        self.server.stop()
+        self.mocker.stop()
 
     def test_hello_get(self):
-        response = self.server.client.get('/hello')
+        response = client.instance.get('/hello')
         self.assertion.equal(response.status_code, 200)
         self.assertion.equal(response.headers['Server'], 'nginx/1.2.1')
 
@@ -29,7 +30,7 @@ class TestMocksFromFiles(Case):
         self.assertion.equal(data['hello'], 'hello world!')
 
     def test_hello_put(self):
-        response = self.server.client.put('/hello')
+        response = client.instance.put('/hello')
         self.assertion.equal(response.status_code, 200)
         self.assertion.equal(response.headers['Server'], 'nginx/1.2.1')
 
@@ -37,7 +38,7 @@ class TestMocksFromFiles(Case):
         self.assertion.equal(data['result'], 'changed')
 
     def test_hello_post(self):
-        response = self.server.client.post('/hello')
+        response = client.instance.post('/hello')
         self.assertion.equal(response.status_code, 201)
         self.assertion.equal(response.headers['Server'], 'nginx/1.2.1')
 

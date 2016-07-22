@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+
+from functools import wraps
+
+from flask import abort
 from flask.app import _endpoint_from_view_func
 
 
@@ -46,3 +54,13 @@ def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
             )
 
         self.view_functions[endpoint] = view_func
+
+
+def dispatch_request(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except KeyError:
+            abort(httplib.NOT_FOUND)
+    return wrapper

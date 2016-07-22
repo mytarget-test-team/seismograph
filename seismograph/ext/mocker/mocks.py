@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import re
-from contextlib import contextmanager
+import json
 
 from flask import Response
-from flask import abort as _abort
 
 from ...utils import pyv
+from . import constants
 
 if pyv.IS_PYTHON_2:
     import urlparse
@@ -14,28 +14,21 @@ else:
     from urllib import parse
 
 
-DEFAULT_STATUS_CODE = 200
-DEFAULT_HTTP_METHOD = 'GET'
-
-ABORT_ATTRIBUTE_NAME = '__abort__'
+CLEAN_DATA_REGEXP = re.compile(r'^\s{2}|\n|\r$')
 
 
 def on_file(mock, fp):
     mock.__on_file__(fp)
 
 
-def abort(mock, status_code):
-    setattr(mock, ABORT_ATTRIBUTE_NAME, status_code)
-
-
-def parse_for_meta(string):
+def parse_meta_data(string):
     http_method, status_code, url_rule = [
         item.strip() for item in string.split(' ')
     ]
     return http_method, status_code, url_rule
 
 
-def parse_for_header(string):
+def parse_header(string):
     key = string[:string.index(':'):]
     value = string[string.index(':') + 1:]
 
@@ -52,8 +45,7 @@ class BaseMock(object):
     META_REGEXP = re.compile(r'[A-Z]{3,6}\s[0-9]{3}\s\/.*\s')
 
     def __init__(self,
-                 endpoint,
-                 url_rule,
+                 url_rule=None,
                  body=None,
                  headers=None,
                  mime_type=None,
@@ -62,30 +54,22 @@ class BaseMock(object):
                  content_type=None):
         self._body = body or ''
         self._url_rule = url_rule
-        self._endpoint = endpoint
         self._mime_type = mime_type
         self._headers = headers or {}
         self._content_type = content_type
-        self._status_code = status_code or DEFAULT_STATUS_CODE
-        self._http_method = http_method or DEFAULT_HTTP_METHOD
+        self._status_code = status_code or constants.DEFAULT_STATUS_CODE
+        self._http_method = http_method or constants.DEFAULT_HTTP_METHOD
 
         if self.__headers__:
-            for k, v in self.__headers__:
+            for k, v in self.__headers__.items():
                 self._headers.setdefault(k, v)
 
     def __call__(self, *args, **kwargs):
-        abort_code = getattr(
-            self, ABORT_ATTRIBUTE_NAME, None,
-        )
-
-        if abort_code:
-            _abort(abort_code)
-
         return self.make_response()
 
     def __repr__(self):
-        return '<ResponseProvider(url_rule={} http_method={}): {}>'.format(
-            self.url_rule, self.http_method, self.endpoint,
+        return '<ResponseProvider(url_rule={} http_method={})>'.format(
+            self.url_rule, self.http_method,
         )
 
     def __eq__(self, other):
@@ -133,13 +117,13 @@ class BaseMock(object):
                     break_line_was_found = True
 
             if can_find_meta() and self.META_REGEXP.search(line):
-                http_method, status_code, url_rule = parse_for_meta(line)
+                http_method, status_code, url_rule = parse_meta_data(line)
                 self._url_rule = url_rule
                 self._http_method = http_method
                 self._status_code = status_code
                 meta_was_found = True
             elif can_find_header() and self.HEADER_REGEXP.search(line):
-                key, value = parse_for_header(line)
+                key, value = parse_header(line)
                 self._headers[key] = value
             else:
                 body.append(line)
@@ -160,10 +144,6 @@ class BaseMock(object):
     @property
     def headers(self):
         return self._headers
-
-    @property
-    def endpoint(self):
-        return self._endpoint
 
     @property
     def url_rule(self):
@@ -195,17 +175,6 @@ class BaseMock(object):
     def content_type(self):
         return self._content_type or self.__content_type__
 
-    @contextmanager
-    def as_(self, mock):
-        assert self == mock
-
-        endpoint = self._endpoint
-        self._endpoint = mock.endpoint
-        try:
-            yield
-        finally:
-            self._endpoint = endpoint
-
     def make_response(self):
         return Response(
             self.body,
@@ -214,3 +183,63 @@ class BaseMock(object):
             status=self.status_code,
             content_type=self.content_type,
         )
+
+
+class JsonMock(BaseMock):
+
+    __mime_type__ = 'application/json'
+    __content_type__ = 'application/json'
+
+    @property
+    def body(self):
+        return json.dumps(self._body)
+
+    @property
+    def json(self):
+        return self._body
+
+    def __on_file__(self, fp):
+        super(JsonMock, self).__on_file__(fp)
+
+        # for pre validation only
+        self._body = json.loads(
+            CLEAN_DATA_REGEXP.sub('', self._body),
+        )
+
+
+class HTMLMock(BaseMock):
+
+    __mime_type__ = 'text/html'
+    __content_type__ = 'text/html'
+
+
+DEFAULT_MOCK_CLASS = BaseMock
+
+CONTENT_TYPE_TO_MOCK_CLASS = {
+    'text/html': HTMLMock,
+    'application/json': JsonMock,
+}
+
+FILE_EXTENSION_TO_MOCK_CLASS = {
+    'json': JsonMock,
+    'html': HTMLMock,
+}
+
+
+def get_mock_class_by_file_name(filename):
+    """
+    :rtype: BaseMock
+    """
+    split_name = filename.replace('.mock', '').split('.')
+    try:
+        ext = split_name[len(split_name) - 1]
+        return FILE_EXTENSION_TO_MOCK_CLASS.get(ext, DEFAULT_MOCK_CLASS)
+    except IndexError:
+        return DEFAULT_MOCK_CLASS
+
+
+def get_mock_class_by_content_type(content_type):
+    """
+    :rtype: BaseMock
+    """
+    return CONTENT_TYPE_TO_MOCK_CLASS.get(content_type, DEFAULT_MOCK_CLASS)

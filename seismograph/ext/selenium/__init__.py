@@ -174,6 +174,7 @@ __all__ = (
     'TouchActions',
     're_raise_exc',
     'inject_driver',
+    'require_browser',
     'SeleniumAssertion',
     'make_with_browsers',
     'change_browser_config',
