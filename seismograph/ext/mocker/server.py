@@ -35,6 +35,8 @@ Flask = type(
 
 class MockServer(object):
 
+    __client_class__ = MockServerClient
+
     def __init__(self, config):
         """
         :type config: seismograph.ext.mocker.extension.Config
@@ -49,7 +51,7 @@ class MockServer(object):
 
         self._process = None
         self._started = False
-        self._client = MockServerClient(config)
+        self._client = self.__client_class__(config)
 
         if config.PATH_TO_MOCKS:
             self.scan_dir(config.PATH_TO_MOCKS)
