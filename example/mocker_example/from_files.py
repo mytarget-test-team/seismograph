@@ -44,3 +44,9 @@ class TestMocksFromFiles(Case):
 
         data = response.json()
         self.assertion.equal(data['result'], 'created')
+
+    def test_html(self):
+        response = client.instance.get('/world')
+
+        self.assertion.equal(response.text, '\n<html><body></body></html>\n')
+        self.assertion.equal(response.headers['Content-Type'], 'text/html')
