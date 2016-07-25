@@ -128,7 +128,7 @@ You should to use **MOCKER_EX** option in config for configure extension.
 Config is python dictionary.
 
 +-------------------+----------------------------------------------------------+
-| **MOCKS_PATH**    | Absolute path to directory where contains mock files     |
+| **PATH_TO_MOCKS** | Absolute path to directory where contains mock files     |
 +-------------------+----------------------------------------------------------+
 | **PORT**          | Port which listen mock server                            |
 +-------------------+----------------------------------------------------------+
