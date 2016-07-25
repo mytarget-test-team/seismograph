@@ -2,6 +2,7 @@
 
 import os
 import time
+from threading import Lock
 
 import requests
 from flask import Flask as _Flask
@@ -31,6 +32,9 @@ Flask = type(
         ),
     },
 )
+
+
+lock = Lock()
 
 
 class MockServer(object):
@@ -115,9 +119,10 @@ class MockServer(object):
                 self.scan_dir(path)
 
     def add_url_rule(self, rule, endpoint=None, view_func=None, **options):
-        self.__app.add_url_rule(
-            rule, endpoint=endpoint, view_func=view_func, **options
-        )
+        with lock:
+            self.__app.add_url_rule(
+                rule, endpoint=endpoint, view_func=view_func, **options
+            )
 
     def add_mock(self, mock):
         """
