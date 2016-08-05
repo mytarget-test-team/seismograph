@@ -197,3 +197,26 @@ def load_suites_from_path(path_to_dir, suite_class, package=None, recursive=True
                     recursive=recursive,
                     package='{}.{}'.format(package, pack) if package else pack):
                 yield suite
+
+
+def load_separated_classes_for_flows(case_cls):
+    if not case_cls.__flows__ or not isinstance(case_cls.__flows__, (list, tuple)):
+        return [case_cls]
+
+    new_classes = []
+
+    for flow in case_cls.__flows__:
+        index = case_cls.__flows__.index(flow)
+        new_class_name = '{}{}'.format(case_cls.__name__, (index + 1))
+
+        cls = type(
+            new_class_name,
+            (case_cls, ),
+            {
+                '__flows__': (flow, ),
+            },
+        )
+
+        new_classes.append(cls)
+
+    return new_classes

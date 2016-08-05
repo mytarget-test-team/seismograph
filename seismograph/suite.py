@@ -412,11 +412,33 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
             ),
         )
 
+        if test_name and not case_name:
+            raise AssertionError(
+                'test name can not be installed without case name',
+            )
+
         if case_name:
             cls = loader.load_case_from_suite(
                 case_name, self,
             )
 
+            if self.config.SPLIT_FLOWS:
+                case_classes = loader.load_separated_classes_for_flows(cls)
+            else:
+                case_classes = [cls]
+
+        else:
+            if self.config.SPLIT_FLOWS:
+                case_classes = []
+
+                for case_class in self.__case_classes:
+                    case_classes.extend(
+                        loader.load_separated_classes_for_flows(case_class),
+                    )
+            else:
+                case_classes = self.__case_classes
+
+        for cls in case_classes:
             self.__case_instances.extend(
                 loader.load_tests_from_case(
                     cls,
@@ -425,15 +447,6 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     box_class=self.__case_box_class__,
                 ),
             )
-        else:
-            for cls in self.__case_classes:
-                self.__case_instances.extend(
-                    loader.load_tests_from_case(
-                        cls,
-                        config=self.config,
-                        box_class=self.__case_box_class__,
-                    ),
-                )
 
     @property
     def name(self):

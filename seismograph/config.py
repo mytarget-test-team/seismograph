@@ -189,6 +189,13 @@ def create_option_parser():
         help='Num tests from suite to async run.',
     )
     run_group.add_option(
+        '--split-flows',
+        dest='SPLIT_FLOWS',
+        action='store_true',
+        default=False,
+        help='Allow to create separated case classes for flow from base case.',
+    )
+    run_group.add_option(
         '--mp-timeout',
         type=float,
         dest='MULTIPROCESSING_TIMEOUT',
