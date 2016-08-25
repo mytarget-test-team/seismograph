@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 TEST_NAME_PREFIX = 'test'
 DEFAULT_TEST_NAME = 'test'
 
+TASK_NAME_PREFIX = 'task'
+
 
 def check_path_is_exist(path):
     if not os.path.exists(path):
@@ -220,3 +222,11 @@ def load_separated_classes_for_flows(case_cls):
         new_classes.append(cls)
 
     return new_classes
+
+
+def load_tasks_from_script(program, script, task_name_prefix=None):
+    task_name_prefix = task_name_prefix or TASK_NAME_PREFIX
+    task_names = (n for n in dir(script) if n.startswith(task_name_prefix))
+
+    for task_name in task_names:
+        yield script(program, task_name)

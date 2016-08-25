@@ -12,11 +12,13 @@ class Script(runnable.RunnableObject):
     __stop_if_error__ = False
     __create_reason__ = False
 
-    def __init__(self, program):
+    def __init__(self, program, method_name):
         super(Script, self).__init__()
 
-        self._timer = None
         self.__program = program
+        self._method_name = self._stopped_on = method_name
+
+        self.__is_run = False
 
     def __str__(self):
         return 'script ({}.{})'.format(
@@ -25,7 +27,10 @@ class Script(runnable.RunnableObject):
         )
 
     def __is_run__(self):
-        return True
+        return self.__is_run
+
+    def __method_name__(self):
+        return self._method_name
 
     @property
     def config(self):
@@ -35,22 +40,24 @@ class Script(runnable.RunnableObject):
     def ext(self):
         return self.__program.ext
 
-    def __call__(self, result, *args, **kwargs):
+    def __run__(self, result):
+        self.__is_run = True
+
         if result.current_state.should_stop:
             return
 
         result.start(self)
-        self._timer = measure_time()
+        timer = measure_time()
         try:
-            res = super(Script, self).__call__(result, *args, **kwargs)
-            result.add_success(self, self._timer())
-            return res
+            task = getattr(self, self._method_name)
+            task()
+            result.add_success(self, timer())
         except BaseException as error:
-            if self.__stop_if_error__:
+            if self.__stop_if_error__ or self.config.STOP:
                 result.current_state.should_stop = True
 
             runnable.set_debug_if_allowed(self.config)
-            result.add_error(self, traceback.format_exc(), self._timer(), error)
+            result.add_error(self, traceback.format_exc(), timer(), error)
 
 
 class BeforeScript(Script):
