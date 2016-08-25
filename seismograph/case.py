@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import logging
 import traceback
 from functools import wraps
@@ -361,6 +362,25 @@ class AssertionBase(object):
         Like assertDictEqual in unittest
         """
         self.__unittest__.assertDictEqual(d1, d2, msg=msg)
+
+    def dates_equal(self, date1, date2):
+        """
+        To compare dates. Date can be as string and date object.
+
+        For example::
+
+            import datetime
+            dates_equal(datetime.date(2016, 8, 16), '16.08.2016')
+        """
+        from_date = lambda d: sum(sorted((d.year, d.month, d.day)))
+        from_string = lambda d: sum(sorted(int(i) for i in re.findall(r'[0-9]+', d)))
+
+        d1 = from_string(date1) if isinstance(date1, pyv.basestring) else from_date(date1)
+        d2 = from_string(date2) if isinstance(date2, basestring) else from_date(date2)
+
+        if d1 != d2:
+            self.fail('{} != {}'.format(date1, date2))
+
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):

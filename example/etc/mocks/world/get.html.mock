@@ -1,0 +1,4 @@
+GET 200 /world
+Server: nginx/1.2.1
+
+<html><body></body></html>

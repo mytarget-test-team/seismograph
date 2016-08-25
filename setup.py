@@ -28,6 +28,7 @@ EXTENSIONS = [
 
 REQUIREMENTS = [
     'six>=1.4',
+    'python-dateutil',
 ]
 
 CONSOLE_SCRIPTS = [

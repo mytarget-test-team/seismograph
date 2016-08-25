@@ -24,7 +24,7 @@ def _get_default_storage_name(method_name):
     return method_name.replace(FACTORY_METHOD_PREFIX, '')
 
 
-def _set_require(f, *what):
+def _set_required(f, *what):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
         for it in what:
@@ -62,7 +62,7 @@ def _set_only_one_creation(f):
 
 def factory_method(**options):
     def wrapper(f):
-        require = options.get('require')
+        required = options.get('required')
         storage = options.get('storage')
         only_one_creation = options.get('only_one_creation')
 
@@ -72,11 +72,11 @@ def factory_method(**options):
         if only_one_creation:
             f = _set_only_one_creation(f)
 
-        if require:
-            if not isinstance(require, (list, tuple)):
-                require = (require, )
+        if required:
+            if not isinstance(required, (list, tuple)):
+                required = (required, )
 
-            f = _set_require(f, *require)
+            f = _set_required(f, *required)
 
         @wraps(f)
         def wrapped(*args, **kwargs):
