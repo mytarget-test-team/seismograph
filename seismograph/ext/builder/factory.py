@@ -62,9 +62,16 @@ def _set_only_one_creation(f):
 
 def factory_method(**options):
     def wrapper(f):
-        required = options.get('required')
-        storage = options.get('storage')
-        only_one_creation = options.get('only_one_creation')
+        required = options.pop('required', None)
+        storage = options.pop('storage', None)
+        only_one_creation = options.pop('only_one_creation', None)
+
+        if options:
+            raise TypeError(
+                'got an unexpected keyword arguments "{}"'.format(
+                    ', '.join(options.keys()),
+                ),
+            )
 
         if storage:
             _set_storage_name(f, storage)
