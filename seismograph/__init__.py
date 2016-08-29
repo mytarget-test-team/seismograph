@@ -33,6 +33,7 @@ from .config import get_config_path_by_env
 from .steps import step
 
 from .datastructures import Context
+from .datastructures import NamedContext
 
 from .scope import configure
 from .scope import add_extension
@@ -59,6 +60,7 @@ __all__ = (
     'Script',
     'skip_if',
     'Context',
+    'NamedContext',
     'Program',
     'assertion',
     'CaseLayer',

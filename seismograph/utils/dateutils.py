@@ -62,7 +62,7 @@ def datetime_to_string(datetime, fmt=DATETIME_FORMAT):
     return _datetime_to_string(datetime, fmt)
 
 
-def date_args_to_str(fmt):
+def date_args_to_string(fmt):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
@@ -90,70 +90,112 @@ def plus_delta(datetime, **kwargs):
     return _make_copy(datetime + _dt.timedelta(**kwargs))
 
 
-def minus_seconds(datetime, seconds):
-    return minus_delta(datetime, seconds=seconds)
+def minus_seconds(datetime, seconds, handler=None):
+    date = minus_delta(datetime, seconds=seconds)
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_seconds(datetime, seconds):
-    return plus_delta(datetime, seconds=seconds)
+def plus_seconds(datetime, seconds, handler=None):
+    date = plus_delta(datetime, seconds=seconds)
+    if handler:
+        return handler(date)
+    return date
 
 
-def minus_minutes(datetime, minutes):
-    return minus_delta(datetime, minutes=minutes)
+def minus_minutes(datetime, minutes, handler=None):
+    date = minus_delta(datetime, minutes=minutes)
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_minutes(datetime, minutes):
+def plus_minutes(datetime, minutes, handler=None):
     return plus_delta(datetime, minutes=minutes)
 
 
-def minus_hours(datetime, hours):
-    return minus_delta(datetime, hours=hours)
+def minus_hours(datetime, hours, handler=None):
+    date = minus_delta(datetime, hours=hours)
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_hours(datetime, hours):
+def plus_hours(datetime, hours, handler=None):
     return plus_delta(datetime, hours=hours)
 
 
-def minus_days(datetime, days):
+def minus_days(datetime, days, handler=None):
     return minus_delta(datetime, days=days)
 
 
-def plus_days(datetime, days):
-    return plus_delta(datetime, days=days)
+def plus_days(datetime, days, handler=None):
+    date = plus_delta(datetime, days=days)
+    if handler:
+        return handler(date)
+    return date
 
 
-def minus_weeks(datetime, weeks):
-    return minus_delta(datetime, weeks=weeks)
+def minus_weeks(datetime, weeks, handler=None):
+    date = minus_delta(datetime, weeks=weeks)
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_weeks(datetime, weeks):
-    return plus_delta(datetime, weeks=weeks)
+def plus_weeks(datetime, weeks, handler=None):
+    date = plus_delta(datetime, weeks=weeks)
+    if handler:
+        return handler(date)
+    return date
 
 
-def minus_months(datetime, months):
-    return _make_copy(datetime - relativedelta(months=months))
+def minus_months(datetime, months, handler=None):
+    date = _make_copy(datetime - relativedelta(months=months))
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_months(datetime, months):
-    return _make_copy(datetime - relativedelta(months=-months))
+def plus_months(datetime, months, handler=None):
+    date = _make_copy(datetime - relativedelta(months=-months))
+    if handler:
+        return handler(date)
+    return date
 
 
-def minus_years(datetime, years):
-    return _make_copy(datetime - relativedelta(years=years))
+def minus_years(datetime, years, handler=None):
+    date = _make_copy(datetime - relativedelta(years=years))
+    if handler:
+        return handler(date)
+    return date
 
 
-def plus_years(datetime, years):
-    return _make_copy(datetime - relativedelta(years=-years))
+def plus_years(datetime, years, handler=None):
+    date = _make_copy(datetime - relativedelta(years=-years))
+    if handler:
+        return handler(date)
+    return date
 
 
-def to_start_month(datetime):
-    return _make_copy(datetime.replace(day=1))
+def to_start_month(datetime, handler=None):
+    date = _make_copy(datetime.replace(day=1))
+    if handler:
+        return handler(date)
+    return date
 
 
-def to_start_year(datetime):
-    return _make_copy(datetime.replace(day=1, month=1))
+def to_start_year(datetime, handler=None):
+    date = _make_copy(datetime.replace(day=1, month=1))
+    if handler:
+        return handler(date)
+    return date
 
 
-def to_end_month(datetime):
+def to_end_month(datetime, handler=None):
     _, end_day = calendar.monthrange(datetime.year, datetime.month)
-    return _make_copy(datetime.replace(day=end_day))
+    date = _make_copy(datetime.replace(day=end_day))
+    if handler:
+        return handler(date)
+    return date
