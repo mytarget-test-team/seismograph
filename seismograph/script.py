@@ -13,15 +13,17 @@ class Script(runnable.RunnableObject):
     __create_reason__ = False
 
     def __init__(self, program, method_name):
+        self.__program = program
+        self._method_name = method_name
+
         super(Script, self).__init__()
 
-        self.__program = program
-        self._method_name = self._stopped_on = method_name
-
         self.__is_run = False
+        self._stopped_on = method_name
 
     def __str__(self):
-        return 'script ({}.{})'.format(
+        return '{} ({}:{})'.format(
+            self._method_name,
             self.__class__.__module__,
             self.__class__.__name__,
         )
