@@ -38,10 +38,6 @@ def _make_copy(instance, cls=None):
     )
 
 
-def _datetime_to_string(datetime, fmt):
-    return datetime.strftime(fmt)
-
-
 def _make_result(data, *handlers):
     for handler in handlers:
         data = handler(data)
@@ -49,24 +45,14 @@ def _make_result(data, *handlers):
     return data
 
 
-def date_to_string(date, fmt=DEFAULT_DATE_FORMAT):
-    """
-    Convert date object to string by format
-
-    :type date: datetime.date
-    :type fmt: str
-    """
-    return _datetime_to_string(date, fmt)
-
-
-def datetime_to_string(datetime, fmt=DEFAULT_DATETIME_FORMAT):
-    """
-    Convert datetime object to string by format
-
-    :type date: datetime.datetime
-    :type fmt: str
-    """
-    return _datetime_to_string(datetime, fmt)
+def to_string(d, fmt=None):
+    default_fmt = (
+        DEFAULT_DATETIME_FORMAT
+        if isinstance(d, _dt.datetime)
+        else
+        DEFAULT_DATE_FORMAT
+    )
+    return d.strftime(fmt or default_fmt)
 
 
 def date_args_to_string(fmt):
@@ -76,13 +62,13 @@ def date_args_to_string(fmt):
             new_args = []
             for a in args:
                 if isinstance(a, _dt.date):
-                    new_args.append(date_to_string(a, fmt))
+                    new_args.append(to_string(a, fmt))
                 else:
                     new_args.append(a)
 
             for k, v in kwargs.items():
                 if isinstance(v, _dt.date):
-                    kwargs[k] = date_to_string(v, fmt)
+                    kwargs[k] = to_string(v, fmt)
             return f(*new_args, **kwargs)
 
         return wrapped
@@ -172,3 +158,36 @@ def to_date(date, *handlers):
 
 def now(*handlers):
    return _make_result(_dt.datetime.now(), *handlers)
+
+
+def date(year, month, day, *handlers):
+    return _make_result(_dt.date(year, month, day), *handlers)
+
+
+def today(*handlers):
+    return _make_result(_dt.date.today(), *handlers)
+
+
+class delta:
+
+    minus_seconds = staticmethod(lambda s: lambda d: minus_seconds(d, s))
+    plus_seconds = staticmethod(lambda s: lambda d: plus_seconds(d, s))
+    minus_minutes = staticmethod(lambda m: lambda d: minus_minutes(d, m))
+    plus_minutes = staticmethod(lambda m: lambda d: plus_minutes(d, m))
+    minus_hours = staticmethod(lambda h: lambda d: minus_hours(d, h))
+    plus_hours = staticmethod(lambda h: lambda d: plus_hours(d, h))
+    minus_days = staticmethod(lambda y: lambda d: minus_days(d, y))
+    plus_days = staticmethod(lambda y: lambda d: plus_days(d, y))
+    minus_weeks = staticmethod(lambda w: lambda d: minus_weeks(d, w))
+    plus_weeks = staticmethod(lambda w: lambda d: plus_weeks(d, w))
+    minus_months = staticmethod(lambda m: lambda d: minus_months(d, m))
+    plus_months = staticmethod(lambda m: lambda d: plus_months(d, m))
+    minus_years = staticmethod(lambda y: lambda d: minus_years(d, y))
+    plus_years = staticmethod(lambda y: lambda d: plus_years(d, y))
+
+
+class fmt:
+
+    to_string = staticmethod(
+        lambda f=None: lambda d: to_string(d, f or DEFAULT_DATE_FORMAT)
+    )
