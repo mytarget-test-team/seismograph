@@ -191,10 +191,7 @@ class TestProgramObject(BaseTestCase):
 
         class Script(script.Script):
 
-            def __is_run__(self):
-                return True
-
-            def __run__(self, *args, **kwargs):
+            def task(self):
                 pass
 
         program_inst.register_script(Script)
@@ -207,10 +204,7 @@ class TestProgramObject(BaseTestCase):
 
         class Script(script.Script):
 
-            def __is_run__(self):
-                return True
-
-            def __run__(self, *args, **kwargs):
+            def task(self):
                 pass
 
         program_inst.register_scripts([Script])
