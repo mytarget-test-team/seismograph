@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
 
+from warnings import warn
+from functools import wraps
+
+from selenium.common.exceptions import StaleElementReferenceException
+
+from .....utils import pyv
 from .base import BaseInterface
+
+
+def allow_ignore_stale(f):
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if self.config.IGNORE_STALE_ELEMENT:
+            try:
+                return f(self, *args, **kwargs)
+            except StaleElementReferenceException as error:
+                warn(
+                    'StaleElementReferenceException: {}'.format(
+                        pyv.get_exc_message(error)
+                    ),
+                    RuntimeWarning,
+                )
+                return
+        return f(self, *args, **kwargs)
+    return wrapper
 
 
 class WebElementInterface(BaseInterface):
@@ -60,12 +84,15 @@ class WebElementInterface(BaseInterface):
     def _upload(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('_upload')(*args, **kwargs)
 
+    @allow_ignore_stale
     def click(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('click')(*args, **kwargs)
 
+    @allow_ignore_stale
     def submit(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('submit')(*args, **kwargs)
 
+    @allow_ignore_stale
     def clear(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('clear')(*args, **kwargs)
 
@@ -126,9 +153,11 @@ class WebElementInterface(BaseInterface):
     def find_elements_by_css_selector(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('find_elements_by_css_selector')(*args, **kwargs)
 
+    @allow_ignore_stale
     def send_keys(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('send_keys')(*args, **kwargs)
 
+    @allow_ignore_stale
     def set(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('send_keys')(*args, **kwargs)
 
