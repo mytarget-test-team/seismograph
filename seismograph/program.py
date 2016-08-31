@@ -465,10 +465,13 @@ class Program(runnable.RunnableObject):
             self.register_script(script)
 
     def register_script(self, script, run_point=None):
-        if not self.__config.NO_SCRIPTS:
-            if run_point:
-                setattr(script, '__run_point__', run_point)
-            self.__scripts.append(script(self))
+        if self.__config.NO_SCRIPTS:
+            return
+
+        if run_point:
+            setattr(script, '__run_point__', run_point)
+        for task in loader.load_tasks_from_script(self, script):
+            self.__scripts.append(task)
 
     def register_suite(self, suite):
         if self.suite_is_valid(suite):

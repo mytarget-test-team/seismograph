@@ -33,6 +33,7 @@ from .config import get_config_path_by_env
 from .steps import step
 
 from .datastructures import Context
+from .datastructures import NamedContext
 
 from .scope import configure
 from .scope import add_extension
@@ -43,7 +44,7 @@ from .scope import set_default_suite_layers
 from .scope import set_default_program_layers
 
 
-__version__ = '0.3.7'
+__version__ = '0.3.20'
 
 
 VERSION = tuple(map(int, __version__.split('.')))
@@ -59,6 +60,7 @@ __all__ = (
     'Script',
     'skip_if',
     'Context',
+    'NamedContext',
     'Program',
     'assertion',
     'CaseLayer',

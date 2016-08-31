@@ -51,13 +51,13 @@ Example
         def build_data(self, **user_data):  # must be implemented
             self._user_data.update(user_data)
 
-        @factory_method(require=['user'], only_one_creation=True)
+        @factory_method(required=['user'], only_one_creation=True)
         def create_account(self, **account_data):
             account_data.update(user_id=self.user.id)
             self.account = AccountModel.create(**account_data)
             return self._account
 
-        @factory_method(require=['user'], storage='permissions')
+        @factory_method(required=['user'], storage='permissions')
         def create_permission(self, perm):
             created_perm = UserPermissionModel.create(
                 perm=perm, user_id=self.user.id,
@@ -91,7 +91,7 @@ Example
             self._blog_data.update(blog_data)
             self._blog_data.update(user_id=self.user.id)
 
-        @factory_method(require=['blog'], storage='posts')
+        @factory_method(required=['blog'], storage='posts')
         def create_post(self, **post_data):
             post_data.update(blog_id=self.blog.id)
             post = PostModel.create(**post_data)

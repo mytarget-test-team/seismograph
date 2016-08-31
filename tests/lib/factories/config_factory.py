@@ -32,6 +32,7 @@ class FakeConfig(object):
         self.MULTIPROCESSING = False
         self.PDB = False
         self.FIRST_FLOW_ONLY = False
+        self.SPLIT_FLOWS = False
 
     def __getitem__(self, item):
         try:

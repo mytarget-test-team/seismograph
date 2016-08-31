@@ -16,9 +16,9 @@ class RunServerInGreenlet(Greenlet):
 
     def run(self):
         self._httpd = WSGIServer(
-            (self._mock_server.host, self._mock_server.port),
+            (self._mock_server.config.HOST, self._mock_server.config.PORT),
             self._mock_server,
-            log='default' if self._mock_server.debug else None,
+            log='default' if self._mock_server.config.DEBUG else None,
         )
         self._httpd.start()
 

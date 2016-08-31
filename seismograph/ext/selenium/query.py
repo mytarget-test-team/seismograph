@@ -218,7 +218,7 @@ class QueryResult(object):
 
     def __getattr__(self, item):
         if not self.__we:
-           self.first()
+            self.first()
         return getattr(self.__we, item)
 
     def __css_string__(self):

@@ -32,3 +32,18 @@ class DictObject(dict):
 
 class Context(DictObject):
     pass
+
+
+class NamedContext(Context):
+
+    def __init__(self, name, *args, **kwargs):
+        super(NamedContext, self).__init__(*args, **kwargs)
+
+        self.__name = name
+
+    def __repr__(self):
+        return '<NamedContext: {}>'.format(self.__name)
+
+    @property
+    def name(self):
+        return self.__name

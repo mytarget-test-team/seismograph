@@ -40,7 +40,7 @@ MOCKER_EX = {
     'DEBUG': False,
     'HOST': '127.0.0.1',
     'SERVER_TYPE': 'json_api',
-    'MOCKS_PATH': os.path.abspath(
+    'PATH_TO_MOCKS': os.path.abspath(
         os.path.join(
             os.path.dirname(
                 __file__,
