@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
 import logging
 from functools import wraps
 from pprint import PrettyPrinter
@@ -103,8 +104,7 @@ class SeleniumAssertion(case.AssertionBase):
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
 
-    @staticmethod
-    def text_exist(proxy, text, msg=None, timeout=None):
+    def text_exist(self, proxy, text, entries=None, msg=None, timeout=None):
         def check_text():
             try:
                 return text in proxy.text
@@ -120,6 +120,13 @@ class SeleniumAssertion(case.AssertionBase):
             delay=proxy.config.POLLING_DELAY,
             timeout=timeout or proxy.config.POLLING_TIMEOUT,
         )
+
+        if entries:
+            lst = re.findall(text, proxy.text, re.UNICODE)
+            error_msg = u'Num of entries "{}" == {} expected {}'.format(
+                text, len(lst), entries,
+            )
+            self.len_equal(lst, entries, msg=error_msg)
 
     def texts_exist(self, proxy, texts, timeout=None, msg=None):
         for text in texts:
