@@ -223,7 +223,7 @@ class TestProgramObject(BaseTestCase):
     def test_require(self):
         program_inst = program.Program(require=['some_ext'])
 
-        self.assertIn('some_etx', program_inst.context.require)
+        self.assertIn('some_ext', program_inst.context.require)
 
 
 class TestSuiteIsValid(BaseTestCase):
