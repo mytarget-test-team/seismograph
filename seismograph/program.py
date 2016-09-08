@@ -18,6 +18,7 @@ from .utils.common import measure_time
 from .utils.common import call_to_chain
 from .groups.default import DefaultSuiteGroup
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
+from .exceptions import ExtensionNotRequired
 
 
 logger = logging.getLogger(__name__)
@@ -78,9 +79,20 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 
     def __init__(self, setup, teardown):
         self.__layers = []
+        self.__require = []
+
+        self.__extensions = {}
 
         self.__setup_callbacks = [setup]
         self.__teardown_callbacks = [teardown]
+
+    @property
+    def require(self):
+        return self.__require
+
+    @property
+    def extensions(self):
+        return self.__extensions
 
     @property
     def setup_callbacks(self):
@@ -102,6 +114,11 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 
     def add_layers(self, layers):
         self.__layers.extend(layers)
+
+    def install_extensions(self):
+        for ext_name in self.__require:
+            if ext_name not in self.__extensions:
+                self.__extensions[ext_name] = extensions.get(ext_name)
 
     def start_context(self, program):
         logger.debug(
@@ -186,6 +203,7 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 class Program(runnable.RunnableObject):
 
     __layers__ = None
+    __require__ = None
     __suite_class__ = Suite
     __create_reason__ = False
     __result_class__ = Result
@@ -203,6 +221,8 @@ class Program(runnable.RunnableObject):
         self.__is_run = True
         timer = measure_time()
         self.__result.set_timer(timer)
+
+        self.__context.install_extensions()
 
         if self.suites_path:
             self.load_suites()
@@ -259,6 +279,7 @@ class Program(runnable.RunnableObject):
                  argv=None,
                  exit=True,
                  stream=None,
+                 require=None,
                  suites=None):
         super(Program, self).__init__()
 
@@ -287,6 +308,9 @@ class Program(runnable.RunnableObject):
 
         for extension in ext.TO_INIT:
             extensions.add_options(extension, parser)
+
+        if require:
+            self.__context.require.extend(require)
 
         options, _ = parser.parse_args()
 
@@ -413,9 +437,11 @@ class Program(runnable.RunnableObject):
             stream=stream,
         )
 
-    @staticmethod
-    def ext(name):
-        return extensions.get(name)
+    def ext(self, name):
+        if name not in self.__context.require:
+            raise ExtensionNotRequired(name)
+
+        return self.__context.extensions.get(name)
 
     def setup(self, *args, **kwargs):
         pass
