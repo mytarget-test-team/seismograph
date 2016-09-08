@@ -312,6 +312,9 @@ class Program(runnable.RunnableObject):
         if require:
             self.__context.require.extend(require)
 
+        if self.__require__:
+            self.__context.require.extend(self.__require__)
+
         options, _ = parser.parse_args()
 
         self.__config = self.__config_class__(
