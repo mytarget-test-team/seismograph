@@ -220,6 +220,11 @@ class TestProgramObject(BaseTestCase):
 
         self.assertEqual(pyv.get_exc_message(ctx.exception), 'No suites or scripts for execution')
 
+    def test_require(self):
+        program_inst = program.Program(require=['some_ext'])
+
+        self.assertIn('some_etx', program_inst.context.require)
+
 
 class TestSuiteIsValid(BaseTestCase):
 
