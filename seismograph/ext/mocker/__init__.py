@@ -163,6 +163,18 @@ def __add_options__(parser):
         default=False,
         help='Use debug.',
     )
+    group.add_option(
+        '--mocker-static-folder',
+        dest='MOCKER_STATIC_FOLDER',
+        default=None,
+        help='Path to dir within mock static files.',
+    )
+    group.add_option(
+        '--mocker-static-path',
+        dest='MOCKER_STATIC_URL_PATH',
+        default=None,
+        help='Path for static files on the web.',
+    )
 
     parser.add_option_group(group)
 
@@ -176,6 +188,12 @@ def __install__(program):
         debug=program.config.MOCKER_DEBUG or params.get('DEBUG'),
         gevent=program.config.GEVENT,
         path_to_mocks=program.config.MOCKER_PATH_TO_MOCKS or params.get('PATH_TO_MOCKS'),
+        static_folder=program.config.MOCKER_STATIC_FOLDER or params.get(
+            'STATIC_FOLDER', _constants.DEFAULT_STATIC_FOLDER,
+        ),
+        static_url_path=program.config.MOCKER_STATIC_URL_PATH or params.get(
+            'STATIC_URL_PATH', _constants.DEFAULT_STATIC_URL_PATH,
+        ),
         block_timeout=program.config.MOCKER_BLOCK_TIMEOUT or params.get(
             'BLOCK_TIMEOUT', _constants.DEFAULT_BLOCK_TIMEOUT,
         ),

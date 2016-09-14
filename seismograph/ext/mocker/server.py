@@ -47,7 +47,11 @@ class MockServer(object):
         """
         set_log_level_for_dependency(config.DEBUG)
 
-        self.__app = Flask(constants.WSGI_APP_NAME)
+        self.__app = Flask(
+            constants.WSGI_APP_NAME,
+            static_url_path=config.STATIC_URL_PATH,
+            static_folder=config.STATIC_FOLDER
+        )
         self.__app.debug = config.DEBUG
 
         self.__config = config
