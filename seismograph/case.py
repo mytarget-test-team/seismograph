@@ -436,8 +436,11 @@ class AssertionBase(object):
         )
 
         if schema:
-            from jsonschema import validate
-            from jsonschema import ValidationError
+            try:
+                from jsonschema import validate
+                from jsonschema import ValidationError
+            except ImportError:
+                raise RuntimeError('Dependence jsonschema not found.')
 
             if required:
                 schema = schema.copy()
