@@ -5,8 +5,6 @@ import logging
 import traceback
 from functools import wraps
 from unittest import TestCase as __UnitTest__
-from jsonschema import validate
-from jsonschema import ValidationError
 
 from six import with_metaclass
 
@@ -15,7 +13,7 @@ from . import loader
 from . import reason
 from . import runnable
 from .utils import pyv
-from .utils import response
+from .utils import common
 from . import extensions
 from .exceptions import Skip
 from .utils.common import measure_time
@@ -393,7 +391,6 @@ class AssertionBase(object):
                  required=None,
                  use_schema=True,
                  use_required=True,
-                 get_schema_func=None,
                  ):
         if resp.status_code != status:
             raise AssertionError(
@@ -401,10 +398,8 @@ class AssertionBase(object):
                     resp.status_code, status,
                 ),
             )
-        
-        schema = schema or (
-            get_schema_func(resp) if get_schema_func and callable(get_schema_func) else None
-        ) if use_schema else None
+
+        schema = schema or self.get_json_schema_by_response(resp) if use_schema else None
 
         if length is not None:
             self.len_equal(resp.json(), length)
@@ -412,7 +407,7 @@ class AssertionBase(object):
         if data is None and schema is None:
             return
 
-        resp_data = response.filter_result(
+        resp_data = common.get_dict_from_list(
             resp.json(),
             **data if isinstance(data, dict) else {}
         )
@@ -426,10 +421,13 @@ class AssertionBase(object):
                     schema = schema.copy()
                     del schema['required']
 
+            from jsonschema import validate
+            from jsonschema import ValidationError
+
             try:
                 validate(resp_data, schema)
             except ValidationError as error:
-                self.fail('\n\n' + unicode(error))
+                self.fail('\n\n' + pyv.unicode(error))
         elif required:
             for field_name in required:
                 self.is_in(field_name, resp_data)
@@ -437,7 +435,7 @@ class AssertionBase(object):
         if data:
             if isinstance(data, dict):
                 self.is_instance(resp_data, dict, msg='response is not dict')
-                self.dict_equal(*response.reduce_dicts(resp_data, data))
+                self.dict_equal(common.reduce_dict(resp_data, **data), data)
 
             elif isinstance(data, (list, tuple)):
                 self.is_instance(resp_data, list, msg='response is not list')
@@ -450,7 +448,7 @@ class AssertionBase(object):
 
                 for item in resp_data:
                     index = resp_data.index(item)
-                    self.dict_equal(*response.reduce_dicts(item, data[index]))
+                    self.dict_equal(common.reduce_dict(item, **dict(data[index])), data[index])
 
             elif isinstance(data, pyv.basestring):
                 self.is_instance(resp_data, pyv.basestring, msg='response is not basestring')
@@ -458,6 +456,9 @@ class AssertionBase(object):
 
             else:
                 raise TypeError('Incorrect type of data')
+
+    def get_json_schema_by_response(self, resp):
+        raise NotImplementedError("You must implemented get_json_schema_by_response method.")
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):
