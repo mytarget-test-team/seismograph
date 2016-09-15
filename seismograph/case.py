@@ -392,6 +392,29 @@ class AssertionBase(object):
                  use_schema=True,
                  use_required=True,
                  ):
+        """
+        Validate hhtp response.
+        :param resp: validate http response
+        :param status: compare with http response status
+        :param data: compare with http response content
+        :param schema: compare with http response content json schema
+        :param length: compare with http response length
+        :param required: compare with required field in http response
+        :param use_schema: True or False
+        :param use_required: True or False
+
+        Example:
+            AssertionBase().response(
+                resp,
+                httplib.OK,
+                data={'id': 100},
+                required=['id', 'name'],
+            )
+
+        You can override get_json_schema_by_response(self, resp) method and
+        use own strategy for obtaining json schema in depending of response.
+        Or use hard schema in parameter 'schema'.
+        """
         if resp.status_code != status:
             raise AssertionError(
                 'response status: {}, expected: {}'.format(
@@ -413,6 +436,9 @@ class AssertionBase(object):
         )
 
         if schema:
+            from jsonschema import validate
+            from jsonschema import ValidationError
+
             if required:
                 schema = schema.copy()
                 schema.update(required=required)
@@ -420,9 +446,6 @@ class AssertionBase(object):
                 if 'required' in schema:
                     schema = schema.copy()
                     del schema['required']
-
-            from jsonschema import validate
-            from jsonschema import ValidationError
 
             try:
                 validate(resp_data, schema)
@@ -448,7 +471,7 @@ class AssertionBase(object):
 
                 for item in resp_data:
                     index = resp_data.index(item)
-                    self.dict_equal(common.reduce_dict(item, **dict(data[index])), data[index])
+                    self.dict_equal(common.reduce_dict(item, **data[index]), data[index])
 
             elif isinstance(data, pyv.basestring):
                 self.is_instance(resp_data, pyv.basestring, msg='response is not basestring')
@@ -458,7 +481,11 @@ class AssertionBase(object):
                 raise TypeError('Incorrect type of data')
 
     def get_json_schema_by_response(self, resp):
-        raise NotImplementedError("You must implemented get_json_schema_by_response method.")
+        raise NotImplementedError(
+            'You should implemented get_json_schema_by_response method in {}'.format(
+                self.__class__.__name__
+            )
+        )
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):
