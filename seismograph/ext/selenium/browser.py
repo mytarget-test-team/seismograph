@@ -102,6 +102,8 @@ class BrowserConfig(object):
             'MAXIMIZE_WINDOW', DEFAULT_MAXIMIZE_WINDOW,
         )
 
+        self.IGNORE_STALE_ELEMENT = selenium.config.get('IGNORE_STALE_ELEMENT', False)
+
     @property
     def PAGE_LOAD_TIMEOUT(self):
         return self.__PAGE_LOAD_TIMEOUT

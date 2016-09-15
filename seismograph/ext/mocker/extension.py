@@ -12,12 +12,16 @@ class Config(object):
                  debug=False,
                  gevent=False,
                  path_to_mocks=None,
+                 static_folder=None,
+                 static_url_path=None,
                  block_timeout=None):
         self.HOST = host
         self.PORT = port
         self.DEBUG = debug
         self.GEVENT = gevent
         self.PATH_TO_MOCKS = path_to_mocks
+        self.STATIC_FOLDER = static_folder
+        self.STATIC_URL_PATH = static_url_path
         self.BLOCK_TIMEOUT = block_timeout
 
 

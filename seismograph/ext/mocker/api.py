@@ -122,6 +122,8 @@ class MockerApi(object):
             'port': self.__server.config.PORT,
             'debug': self.__server.config.DEBUG,
             'path_to_mocks': self.__server.config.PATH_TO_MOCKS,
+            'static_folder': self.__server.config.STATIC_FOLDER,
+            'static_url_path': self.__server.config.STATIC_URL_PATH,
             'block_timeout': self.__server.config.BLOCK_TIMEOUT,
             'urls': [ep for ep, mck in self.__server.views.items() if isinstance(mck, BaseMock)],
         }
