@@ -13,6 +13,7 @@ from . import loader
 from . import reason
 from . import runnable
 from .utils import pyv
+from .utils import common
 from . import extensions
 from .exceptions import Skip
 from .utils.common import measure_time
@@ -381,6 +382,114 @@ class AssertionBase(object):
         if d1 != d2:
             self.fail('{} != {}'.format(date1, date2))
 
+    def response(self,
+                 resp,
+                 status,
+                 data=None,
+                 schema=None,
+                 length=None,
+                 required=None,
+                 use_schema=True,
+                 use_required=True,
+                 ):
+        """
+        Validate hhtp response from request libs.
+        :param resp: validate http response
+        :param status: compare with http response status
+        :param data: compare with http response content
+        :param schema: compare with http response content json schema
+        :param length: compare with http response length
+        :param required: compare with required field in http response
+        :param use_schema: True or False
+        :param use_required: True or False
+
+        Example:
+            AssertionBase().response(
+                resp,
+                httplib.OK,
+                data={'id': 100},
+                required=['id', 'name'],
+            )
+
+        You should implemented "get_json_schema_by_response" method in "AssertionBase"
+        and can use own strategy for obtaining json schema in depending of response.
+        Or use hard schema in parameter 'schema', parameter 'schema' has higher priority
+        than "get_json_schema_by_response" method.
+        """
+        if resp.status_code != status:
+            raise AssertionError(
+                'response status: {}, expected: {}'.format(
+                    resp.status_code, status,
+                ),
+            )
+
+        schema = schema or self.get_json_schema_by_response(resp) if use_schema else None
+
+        if length is not None:
+            self.len_equal(resp.json(), length)
+
+        if data is None and schema is None:
+            return
+
+        resp_data = common.get_dict_from_list(
+            resp.json(),
+            **data if isinstance(data, dict) else {}
+        )
+
+        if schema:
+            try:
+                from jsonschema import validate
+                from jsonschema import ValidationError
+            except ImportError:
+                raise RuntimeError('Dependence jsonschema not found.')
+
+            if required:
+                schema = schema.copy()
+                schema.update(required=required)
+            elif not use_required:
+                if 'required' in schema:
+                    schema = schema.copy()
+                    del schema['required']
+
+            try:
+                validate(resp_data, schema)
+            except ValidationError as error:
+                self.fail('\n\n' + pyv.unicode(error))
+        elif required:
+            for field_name in required:
+                self.is_in(field_name, resp_data)
+
+        if data:
+            if isinstance(data, dict):
+                self.is_instance(resp_data, dict, msg='response is not dict')
+                self.dict_equal(common.reduce_dict(resp_data, **data), data)
+
+            elif isinstance(data, (list, tuple)):
+                self.is_instance(resp_data, list, msg='response is not list')
+                self.equal(
+                    len(resp_data), len(data),
+                    msg='objects of different lengths: {} != {}'.format(
+                        len(resp_data), len(data),
+                    ),
+                )
+
+                for item in resp_data:
+                    index = resp_data.index(item)
+                    self.dict_equal(common.reduce_dict(item, **data[index]), data[index])
+
+            elif isinstance(data, pyv.basestring):
+                self.is_instance(resp_data, pyv.basestring, msg='response is not basestring')
+                self.equal(resp_data, data)
+
+            else:
+                raise TypeError('Incorrect type of data')
+
+    def get_json_schema_by_response(self, resp):
+        raise NotImplementedError(
+            'You should implemented get_json_schema_by_response method in {}'.format(
+                self.__class__.__name__
+            )
+        )
 
 
 class CaseLayer(runnable.LayerOfRunnableObject):
