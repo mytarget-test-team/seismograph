@@ -393,7 +393,7 @@ class AssertionBase(object):
                  use_required=True,
                  ):
         """
-        Validate hhtp response.
+        Validate hhtp response from request libs.
         :param resp: validate http response
         :param status: compare with http response status
         :param data: compare with http response content
@@ -411,9 +411,10 @@ class AssertionBase(object):
                 required=['id', 'name'],
             )
 
-        You can override get_json_schema_by_response(self, resp) method and
-        use own strategy for obtaining json schema in depending of response.
-        Or use hard schema in parameter 'schema'.
+        You should implemented "get_json_schema_by_response" method in "AssertionBase"
+        and can use own strategy for obtaining json schema in depending of response.
+        Or use hard schema in parameter 'schema', parameter 'schema' has higher priority
+        than "get_json_schema_by_response" method.
         """
         if resp.status_code != status:
             raise AssertionError(
