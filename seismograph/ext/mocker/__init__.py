@@ -121,7 +121,7 @@ def get_current_url():
 
 
 def get_current_static_url():
-    return '{}:{}{}'.format(_client.instance.config.HOST, _client.instance.config.PORT, _client.instance.config.STATIC_URL_PATH)
+    return '{}{}'.format(get_current_url(), _client.instance.config.STATIC_URL_PATH)
 
 
 def path(url_rule, **params):
