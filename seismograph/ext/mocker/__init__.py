@@ -116,6 +116,14 @@ def mock(url_rule, **params):
     return wrapper
 
 
+def get_current_url():
+    return '{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
+
+
+def get_current_static_url():
+    return '{}:{}{}'.format(_client.instance.config.HOST, _client.instance.config.PORT, _client.instance.config.STATIC_URL_PATH)
+
+
 def path(url_rule, **params):
     """
     Contextmanager will be returned
