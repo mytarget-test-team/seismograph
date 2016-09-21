@@ -117,14 +117,13 @@ def mock(url_rule, **params):
 
 
 def get_current_url():
-    if not _client.instance.config:
-        raise RuntimeError('mock server was not configurated')
-    return '{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
+    if _client.instance is not None:
+        return '{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
+
+    raise RuntimeError('Working outside mocker context')
 
 
 def get_current_static_url():
-    if not _client.instance.config:
-        raise RuntimeError('mock server was not configurated')
     return '{}{}'.format(get_current_url(), _client.instance.config.STATIC_URL_PATH)
 
 
