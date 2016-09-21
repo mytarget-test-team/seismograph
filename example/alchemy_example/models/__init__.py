@@ -28,3 +28,7 @@ class UsersModel(orm.BaseModel):
 UsersModel.__table__.create(
     registry.get_engine(UsersModel.__bind_key__), checkfirst=True,
 )
+
+
+if not UsersModel.objects.getlist():
+    UsersModel.create(name='test', age=30)
