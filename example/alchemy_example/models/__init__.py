@@ -2,7 +2,7 @@
 
 import sqlalchemy
 
-from seismograph.ext.alchemy import orm
+from seismograph.ext.alchemy import orm, registry
 
 
 class UsersModel(orm.BaseModel):
@@ -23,3 +23,8 @@ class UsersModel(orm.BaseModel):
         sqlalchemy.Integer,
         nullable=False,
     )
+
+
+UsersModel.__table__.create(
+    registry.get_engine(UsersModel.__bind_key__), checkfirst=True,
+)
