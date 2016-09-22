@@ -118,7 +118,7 @@ def mock(url_rule, **params):
 
 def get_current_url():
     if _client.instance is not None:
-        return '{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
+        return 'http://{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
 
     raise RuntimeError('Working outside mocker context')
 
