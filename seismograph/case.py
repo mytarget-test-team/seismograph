@@ -505,86 +505,6 @@ class AssertionBase(object):
             else:
                 raise TypeError('Incorrect type of data')
 
-
-class CaseLayer(runnable.LayerOfRunnableObject):
-
-    def on_init(self, case):
-        """
-        :type case: Case
-        """
-        pass
-
-    def on_require(self, require):
-        """
-        :type require: list
-        """
-        pass
-
-    def on_setup(self, case):
-        """
-        :type case: Case
-        """
-        pass
-
-    def on_teardown(self, case):
-        """
-        :type case: Case
-        """
-        pass
-
-    def on_skip(self, case, reason, result):
-        """
-        :type case: Case
-        :type reason: str
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_any_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_context_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_fail(self, fail, case, result):
-        """
-        :type case: Case
-        :type fail: AssertionError
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_success(self, case):
-        """
-        :type case: Case
-        """
-        pass
-
-    def on_run(self, case):
-        """
-        :type case: Case
-        """
-        pass
-
-
 class CaseContext(runnable.ContextOfRunnableObject):
 
     def __init__(self,
@@ -616,11 +536,11 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
     @property
     def layers(self):
-        for layer in DEFAULT_LAYERS:
+        for layer in self.__layers:
             if layer.enabled:
                 yield layer
 
-        for layer in self.__layers:
+        for layer in DEFAULT_LAYERS:
             if layer.enabled:
                 yield layer
 
@@ -698,7 +618,7 @@ class CaseContext(runnable.ContextOfRunnableObject):
             runnable.stopped_on(case, 'on_skip')
             raise
 
-    def on_any_error(self, error, case, result):
+    def on_any_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_any_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -707,13 +627,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_any_error', error, case, result,
+                with_match_layers(self, case), 'on_any_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_any_error')
             raise
 
-    def on_error(self, error, case, result):
+    def on_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -722,13 +642,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_error', error, case, result,
+                with_match_layers(self, case), 'on_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_error')
             raise
 
-    def on_context_error(self, error, case, result):
+    def on_context_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_context_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -737,13 +657,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_context_error', error, case, result,
+                with_match_layers(self, case), 'on_context_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_context_error')
             raise
 
-    def on_fail(self, fail, case, result):
+    def on_fail(self, fail, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_fail" of case "{}"'.format(
                 runnable.class_name(case),
@@ -752,13 +672,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_fail', fail, case, result,
+                with_match_layers(self, case), 'on_fail', fail, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_fail')
             raise
 
-    def on_success(self, case):
+    def on_success(self, case, timer):
         logger.debug(
             'Call to chain callbacks "on_success" of case "{}"'.format(
                 runnable.class_name(case),
@@ -767,7 +687,7 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_success', case,
+                with_match_layers(self, case), 'on_success', case, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_success')
@@ -916,24 +836,26 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                         except AssertionError as fail:
                             runnable.set_debug_if_allowed(self.config)
                             was_success = False
-                            self.__context.on_fail(fail, self, result_proxy)
+                            tb = traceback.format_exc()
+                            self.__context.on_fail(fail, self, result_proxy, tb, timer)
                             result_proxy.add_fail(
-                                self, traceback.format_exc(), timer(), fail,
+                                self, tb, timer(), fail,
                             )
                         except BaseException as error:
                             runnable.set_debug_if_allowed(self.config)
                             was_success = False
-                            self.__context.on_error(error, self, result_proxy)
-                            self.__context.on_any_error(error, self, result_proxy)
+                            tb = traceback.format_exc()
+                            self.__context.on_error(error, self, result_proxy, tb, timer)
+                            self.__context.on_any_error(error, self, result_proxy, tb, timer)
                             result_proxy.add_error(
-                                self, traceback.format_exc(), timer(), error,
+                                self, tb, timer(), error,
                             )
 
                     if not was_success:
                         break
 
                 if was_success:
-                    self.__context.on_success(self)
+                    self.__context.on_success(self, timer)
                     result_proxy.add_success(
                         self, timer(),
                     )
@@ -941,10 +863,11 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 raise
             except BaseException as error:
                 runnable.set_debug_if_allowed(self.config)
-                self.__context.on_context_error(error, self, result_proxy)
-                self.__context.on_any_error(error, self, result_proxy)
+                tb = traceback.format_exc()
+                self.__context.on_context_error(error, self, result_proxy, tb, timer)
+                self.__context.on_any_error(error, self, result_proxy, tb, timer)
                 result_proxy.add_error(
-                    self, traceback.format_exc(), timer(), error,
+                    self, tb, timer(), error,
                 )
 
     #
@@ -1058,6 +981,14 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
     def __prepare__(self, method):
         return method
+
+    @property
+    @runnable.mount_method
+    def name(self):
+        return '{}:{}'.format(
+            self.__mount_data__.suite_name,
+            self.__class__.__name__
+        )
 
     @property
     def config(self):

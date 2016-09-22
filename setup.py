@@ -37,7 +37,7 @@ CONSOLE_SCRIPTS = [
 
 EX_REQUIREMENTS = {
     'mocker': [
-        'requests',
+        'requests>=2.5',
         'flask>=0.7',
     ],
     'selenium': [

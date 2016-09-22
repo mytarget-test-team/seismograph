@@ -28,4 +28,11 @@ except ImportError:
     pass
 
 
+try:
+    from . import seisma
+    TO_INIT.append(seisma)
+except ImportError:
+    raise
+
+
 logger.debug('Available extensions: {}'.format(TO_INIT))

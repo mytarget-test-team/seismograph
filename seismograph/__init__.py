@@ -13,12 +13,11 @@ from .case import Case
 from .case import flows
 from .case import skip_if
 from .case import assertion
-from .case import CaseLayer
+
 from .case import skip_unless
 from .case import AssertionBase
 
 from .suite import Suite
-from .suite import SuiteLayer
 
 from .script import Script
 from .script import AfterScript
@@ -26,7 +25,6 @@ from .script import BeforeScript
 
 from .program import main
 from .program import Program
-from .program import ProgramLayer
 
 from .config import get_config_path_by_env
 
@@ -34,6 +32,10 @@ from .steps import step
 
 from .datastructures import Context
 from .datastructures import NamedContext
+
+from .layers import CaseLayer
+from .layers import SuiteLayer
+from .layers import ProgramLayer
 
 from .scope import configure
 from .scope import add_extension

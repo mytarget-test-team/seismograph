@@ -87,61 +87,6 @@ class BuildRule(object):
         return self.__suite_name == suite.name
 
 
-class SuiteLayer(runnable.LayerOfRunnableObject):
-
-    def on_init(self, suite):
-        """
-        :type suite: Suite
-        """
-        pass
-
-    def on_require(self, require):
-        """
-        :type require: list
-        """
-        pass
-
-    def on_build_rule(self, suite, rule):
-        """
-        :type suite: Suite
-        :type rule: BuildRule
-        """
-        pass
-
-    def on_setup(self, suite):
-        """
-        :type suite: Suite
-        """
-        pass
-
-    def on_teardown(self, suite):
-        """
-        :type suite: Suite
-        """
-        pass
-
-    def on_mount(self, suite, program):
-        """
-        :type suite: Suite
-        :type program: seismograph.program.Program
-        """
-        pass
-
-    def on_run(self, suite):
-        """
-        :type suite: Suite
-        """
-        pass
-
-    def on_error(self, error, suite, result):
-        """
-        :type error: BaseException
-        :type suite: Suite
-        :type result: seismograph.result.Result
-        """
-        pass
-
-
 class SuiteContext(runnable.ContextOfRunnableObject):
 
     def __init__(self, setup, teardown):
@@ -176,11 +121,11 @@ class SuiteContext(runnable.ContextOfRunnableObject):
 
     @property
     def layers(self):
-        for layer in DEFAULT_LAYERS:
+        for layer in self.__layers:
             if layer.enabled:
                 yield layer
 
-        for layer in self.__layers:
+        for layer in DEFAULT_LAYERS:
             if layer.enabled:
                 yield layer
 
@@ -283,7 +228,7 @@ class SuiteContext(runnable.ContextOfRunnableObject):
             runnable.stopped_on(suite, 'on_run')
             raise
 
-    def on_error(self, error, suite, result):
+    def on_error(self, error, suite, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_error" of suite "{}"'.format(
                 runnable.class_name(suite),
@@ -292,7 +237,7 @@ class SuiteContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, suite), 'on_error', error, suite, result,
+                with_match_layers(self, suite), 'on_error', error, suite, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(suite, 'on_error')
@@ -353,9 +298,10 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 raise
             except BaseException as error:
                 runnable.set_debug_if_allowed(self.config)
-                self.__context.on_error(error, self, result_proxy)
+                tb = traceback.format_exc()
+                self.__context.on_error(error, self, result_proxy, tb, timer)
                 result_proxy.add_error(
-                    self, traceback.format_exc(), timer(), error,
+                    self, tb, timer(), error,
                 )
 
     #

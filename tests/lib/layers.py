@@ -33,7 +33,7 @@ class ProgramLayer(program.ProgramLayer):
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_error(self, error, program, result):
+    def on_error(self, error, program, result, tb, timer):
         self.was_called = 'on_error'
         self.counter += 1
         self.calling_story.append(self.was_called)
@@ -92,7 +92,7 @@ class SuiteLayer(suite.SuiteLayer):
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_error(self, error, suite, result):
+    def on_error(self, error, suite, result, tb, timer):
         self.was_called = 'on_error'
         self.counter += 1
         self.calling_story.append(self.was_called)
@@ -131,22 +131,22 @@ class CaseLayer(case.CaseLayer):
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_any_error(self, error, case, result):
+    def on_any_error(self, error, case, result, tb, timer):
         self.was_called = 'on_any_error'
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_error(self, error, case, result):
+    def on_error(self, error, case, result, tb, timer):
         self.was_called = 'on_error'
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_context_error(self, error, case, result):
+    def on_context_error(self, error, case, result, tb, timer):
         self.was_called = 'on_context_error'
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_fail(self, fail, case, result):
+    def on_fail(self, fail, case, result, tb, timer):
         self.was_called = 'on_fail'
         self.counter += 1
         self.calling_story.append(self.was_called)
