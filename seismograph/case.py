@@ -18,6 +18,7 @@ from .utils import common
 from .exceptions import Skip
 from .utils.common import measure_time
 from .utils.common import call_to_chain
+from .exceptions import DependencyError
 from .exceptions import ExtensionNotRequired
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
 
@@ -31,6 +32,21 @@ MATCH_CASE_TO_LAYER = {}
 
 SKIP_ATTRIBUTE_NAME = '__skip__'
 SKIP_WHY_ATTRIBUTE_NAME = '__skip_why__'
+
+
+jsonschema = None
+
+
+def import_json_schema():
+    global jsonschema
+
+    try:
+        import jsonschema as _jsonschema
+        jsonschema = _jsonschema
+    except ImportError:
+        raise DependencyError(
+            'Dependence "jsonschema" is not found. Please install it and try again.',
+        )
 
 
 def repeat(case):
@@ -243,8 +259,8 @@ class AssertionBase(object):
     def __json_schema_by_response__(self, resp):
         raise NotImplementedError(
             'You should implemented "__json_schema_by_response__" method in {}'.format(
-                self.__class__.__name__
-            )
+                self.__class__.__name__,
+            ),
         )
 
     def len_equal(self, a, b, msg=None):
@@ -445,11 +461,8 @@ class AssertionBase(object):
         )
 
         if schema:
-            try:
-                from jsonschema import validate
-                from jsonschema import ValidationError
-            except ImportError:
-                raise RuntimeError('Dependence "jsonschema" is not found.')
+            if jsonschema is None:
+                import_json_schema()
 
             if required:
                 schema = schema.copy()
@@ -460,8 +473,8 @@ class AssertionBase(object):
                     del schema['required']
 
             try:
-                validate(resp_data, schema)
-            except ValidationError as error:
+                jsonschema.validate(resp_data, schema)
+            except jsonschema.ValidationError as error:
                 self.fail('\n\n' + pyv.unicode(error))
         elif required:
             for field_name in required:
