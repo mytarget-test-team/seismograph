@@ -426,8 +426,6 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 'Use "GeventCaseGroup" to making case group',
             )
 
-            pyv.check_gevent_supported()
-
             from .groups.gevent import GeventCaseGroup
 
             return GeventCaseGroup(

@@ -342,8 +342,6 @@ class Program(runnable.RunnableObject):
                 'Use "GeventSuiteGroup" to making suite group',
             )
 
-            pyv.check_gevent_supported()
-
             from .groups.gevent import GeventSuiteGroup
 
             return GeventSuiteGroup(

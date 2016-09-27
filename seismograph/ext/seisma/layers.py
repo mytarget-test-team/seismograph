@@ -2,7 +2,7 @@
 
 try:
     from urllib import quote
-except ImportError:
+except ImportError:  # please python 3
     from urllib.parse import quote
 
 from ... import reason
