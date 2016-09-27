@@ -38,15 +38,11 @@ class TestFacadeOfLib(BaseTestCase):
 
     @staticmethod
     def assertImportAll():
-        try:
-            from seismograph import *
-        except BaseException as error:
-            raise AssertionError(
-                '{}: {}'.format(
-                    error.__class__.__name__,
-                    pyv.get_exc_message(error)
-                ),
-            )
+        from seismograph import __all__ as all
+
+        for import_name in all:
+            if getattr(seismograph, import_name, None) is None:
+                raise AssertionError('Incorrect import name in "__all__"')
 
     def runTest(self):
         facade = get_facade()

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from StringIO import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from seismograph import case
 from seismograph import suite

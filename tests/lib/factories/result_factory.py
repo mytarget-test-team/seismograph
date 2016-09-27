@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
 from seismograph.result import Result
 
 
