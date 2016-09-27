@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import unittest
-
 import seismograph
 from types import ModuleType
-from seismograph.utils import pyv
 
 from .lib.case import BaseTestCase
 
@@ -20,13 +17,12 @@ def get_facade():
             return type(getattr(seismograph, name)) != ModuleType
         return False
 
-    return filter(
+    return list(filter(
         filter_func,
         dir(seismograph),
-    )
+    ))
 
 
-@unittest.skipIf(pyv.IS_PYTHON_3, 'for python 2 only')
 class TestFacadeOfLib(BaseTestCase):
 
     def assertFacadeOfLib(self, facade):
