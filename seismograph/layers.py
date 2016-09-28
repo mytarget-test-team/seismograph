@@ -141,6 +141,8 @@ class SuiteLayer(runnable.LayerOfRunnableObject):
         :type error: BaseException
         :type suite: Suite
         :type result: seismograph.result.Result
+        :type tb: str
+        :type timer: callable
         """
         pass
 
@@ -176,6 +178,8 @@ class ProgramLayer(runnable.LayerOfRunnableObject):
         :type error: BaseException
         :type program: Program
         :type result: seismograph.result.Result
+        :type tb: str
+        :type timer: callable
         """
         pass
 
