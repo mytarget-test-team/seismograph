@@ -62,5 +62,5 @@ def dispatch_request(f):
         try:
             return f(*args, **kwargs)
         except KeyError:
-            abort(httplib.NOT_FOUND)
+            abort(int(httplib.NOT_FOUND))
     return wrapper
