@@ -76,26 +76,12 @@ class SeismaProgramLayer(_layers.ProgramLayer):
     client = None
 
     def on_init(self, program):
-        if not program.config.SEISMA:
+        if program.config.SEISMA:
+            self.client = SeismaClient(
+                **_get_client_kwargs_from_config(program.config)
+            )
+        else:
             self.enabled = False
-
-        self.client = SeismaClient(
-            **_get_client_kwargs_from_config(program.config)
-        )
-
-    def on_run(self, program):
-        program.result.console.writeln(u'Seisma stat aggregation:')
-        program.result.console.writeln(
-            u'    * API URL: {}'.format(self.client.api_url),
-        )
-        program.result.console.writeln(
-            u'    * Job unique name: {}'.format(self.client.job_name),
-        )
-        program.result.console.writeln(
-            u'    * Build unique name: {}'.format(self.client.build_name),
-        )
-        program.result.console.line_break()
-        program.result.console.flush()
 
     def on_setup(self, program):
         if not self.client.job_exists():
@@ -127,12 +113,12 @@ class SeismaCaseLayer(_layers.CaseLayer):
     client = None
 
     def on_init(self, case):
-        if not case.config.SEISMA:
+        if case.config.SEISMA:
+            self.client = SeismaClient(
+                **_get_client_kwargs_from_config(case.config)
+            )
+        else:
             self.enabled = False
-
-        self.client = SeismaClient(
-            **_get_client_kwargs_from_config(case.config)
-        )
 
     def on_setup(self, case):
         case_name = _get_case_name(case)
