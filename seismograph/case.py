@@ -34,15 +34,15 @@ SKIP_ATTRIBUTE_NAME = '__skip__'
 SKIP_WHY_ATTRIBUTE_NAME = '__skip_why__'
 
 
-jsonschema = None
+_jsonschema = None
 
 
-def import_json_schema():
-    global jsonschema
+def _import_json_schema():
+    global _jsonschema
 
     try:
-        import jsonschema as _jsonschema
-        jsonschema = _jsonschema
+        import jsonschema
+        _jsonschema = jsonschema
     except ImportError:
         raise DependencyError(
             'Dependence "jsonschema" is not found. Please install it and try again.',
@@ -461,8 +461,8 @@ class AssertionBase(object):
         )
 
         if schema:
-            if jsonschema is None:
-                import_json_schema()
+            if _jsonschema is None:
+                _import_json_schema()
 
             if required:
                 schema = schema.copy()
@@ -473,8 +473,8 @@ class AssertionBase(object):
                     del schema['required']
 
             try:
-                jsonschema.validate(resp_data, schema)
-            except jsonschema.ValidationError as error:
+                _jsonschema.validate(resp_data, schema)
+            except _jsonschema.ValidationError as error:
                 self.fail('\n\n' + pyv.unicode(error))
         elif required:
             for field_name in required:
@@ -504,6 +504,7 @@ class AssertionBase(object):
 
             else:
                 raise TypeError('Incorrect type of data')
+
 
 class CaseContext(runnable.ContextOfRunnableObject):
 
