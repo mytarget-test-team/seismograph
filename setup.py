@@ -19,11 +19,21 @@ with open('seismograph/__init__.py') as _:
 assert __version__
 
 
+class libs:
+
+    flask = 'flask>=0.7'
+    requests = 'requests>=2.5'
+    selenium = 'selenium>=2.46'
+    sqlalchemy = 'sqlalchemy>=0.8'
+    jsonschema = 'jsonschema>=1.0'
+
+
 EXTENSIONS = [
     'mocker',
     'alchemy',
     'builder',
     'selenium',
+    'seisma',
 ]
 
 REQUIREMENTS = [
@@ -37,17 +47,20 @@ CONSOLE_SCRIPTS = [
 
 EX_REQUIREMENTS = {
     'mocker': [
-        'requests',
-        'flask>=0.7',
+        libs.flask,
+        libs.requests,
     ],
     'selenium': [
-        'selenium>=2.46',
+        libs.selenium,
     ],
     'alchemy': [
-        'sqlalchemy>=0.8',
+        libs.sqlalchemy,
     ],
     'builder': [
-        'jsonschema>=1.0',
+        libs.jsonschema,
+    ],
+    'seisma': [
+        libs.requests,
     ],
 }
 
@@ -78,6 +91,8 @@ def prepare_extension_data(ex_name):
 
 
 def prepare_data():
+    global REQUIREMENTS
+
     if SIMPLE_INSTALL:
         return
 
@@ -92,6 +107,8 @@ def prepare_data():
     else:
         for ex_name in EXTENSIONS:
             prepare_extension_data(ex_name)
+
+    REQUIREMENTS = list(set(REQUIREMENTS))
 
 
 def install_package():

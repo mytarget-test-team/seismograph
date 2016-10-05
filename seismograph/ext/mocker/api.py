@@ -20,13 +20,13 @@ def make_response(status_code, *args, **kwargs):
     else:
         resp = jsonify(kwargs)
 
-    resp.status_code = status_code
+    resp.status_code = int(status_code)
     return resp
 
 
 def make_error_response(status_code, *errors):
     resp = jsonify({'errors': errors})
-    resp.status_code = status_code
+    resp.status_code = int(status_code)
     return resp
 
 

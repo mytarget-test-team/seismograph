@@ -61,9 +61,6 @@ def main():
     options, _ = parser.parse_args()
 
     if options.GEVENT:
-        from seismograph.utils import pyv
-        pyv.check_gevent_supported()
-
         from gevent.monkey import patch_all
         patch_all(thread=False)
 

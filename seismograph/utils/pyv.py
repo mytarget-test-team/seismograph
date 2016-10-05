@@ -24,11 +24,6 @@ def check_py_version():
         raise PyVersionError(error_mess)
 
 
-def check_gevent_supported():
-    if IS_PYTHON_3:
-        raise PyVersionError('gevent lib not supported with python 3')
-
-
 if IS_PYTHON_2:
     basestring = basestring
 elif IS_PYTHON_3:

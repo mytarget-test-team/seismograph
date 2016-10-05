@@ -112,14 +112,14 @@ class TestProgramContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'program', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'program', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_error', None))
 
         signature = inspect.getargspec(self.context.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'program', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'program', 'result', 'tb', 'timer'])
 
-        self.context.on_error(None, self.program, None)
+        self.context.on_error(None, self.program, None, None, None)
         self.assertEqual(self.program_layer.was_called, 'on_error')
         self.assertEqual(self.program_layer.counter, 1)
 

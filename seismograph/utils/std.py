@@ -4,7 +4,7 @@ import sys
 
 try:
     from StringIO import StringIO
-except ImportError:
+except ImportError:  # please python 3
     from io import StringIO
 
 from contextlib import contextmanager

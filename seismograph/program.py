@@ -28,53 +28,6 @@ DEFAULT_LAYERS = []
 CONFIG_ENV_NAME = 'SEISMOGRAPH_CONF'
 
 
-class ProgramLayer(runnable.LayerOfRunnableObject):
-
-    def on_init(self, program):
-        """
-        :type program: Program
-        """
-        pass
-
-    def on_config(self, config):
-        """
-        :type config: seismograph.config.Config
-        """
-        pass
-
-    def on_setup(self, program):
-        """
-        :type program: Program
-        """
-        pass
-
-    def on_teardown(self, program):
-        """
-        :type program: Program
-        """
-        pass
-
-    def on_error(self, error, program, result):
-        """
-        :type error: BaseException
-        :type program: Program
-        :type result: seismograph.result.Result
-        """
-        pass
-
-    def on_option_parser(self, parser):
-        """
-        :param parser: optparse.OptionParser
-        """
-        pass
-
-    def on_run(self, program):
-        """
-        :type program: Program
-        """
-        pass
-
-
 class ProgramContext(runnable.ContextOfRunnableObject):
 
     def __init__(self, setup, teardown):
@@ -104,11 +57,11 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 
     @property
     def layers(self):
-        for layer in DEFAULT_LAYERS:
+        for layer in self.__layers:
             if layer.enabled:
                 yield layer
 
-        for layer in self.__layers:
+        for layer in DEFAULT_LAYERS:
             if layer.enabled:
                 yield layer
 
@@ -166,7 +119,7 @@ class ProgramContext(runnable.ContextOfRunnableObject):
 
         call_to_chain(self.layers, 'on_config', config)
 
-    def on_error(self, error, program, result):
+    def on_error(self, error, program, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_error" of program "{}"'.format(
                 runnable.class_name(program),
@@ -174,7 +127,7 @@ class ProgramContext(runnable.ContextOfRunnableObject):
         )
 
         try:
-            call_to_chain(self.layers, 'on_error', error, program, result)
+            call_to_chain(self.layers, 'on_error', error, program, result, tb, timer)
         except BaseException:
             runnable.stopped_on(program, 'on_error')
             raise
@@ -256,9 +209,10 @@ class Program(runnable.RunnableObject):
                 raise
             except BaseException as error:
                 runnable.set_debug_if_allowed(self.config)
-                self.__context.on_error(error, self, self.__result)
+                tb = traceback.format_exc()
+                self.__context.on_error(error, self, self.__result, tb, timer)
                 self.__result.add_error(
-                    self, traceback.format_exc(), timer(), error,
+                    self, tb, timer(), error,
                 )
 
         if self.__exit:
@@ -369,6 +323,10 @@ class Program(runnable.RunnableObject):
     def scripts(self):
         return self.__scripts
 
+    @property
+    def result(self):
+        return self.__result
+
     def _make_group(self):
         if self.__suite_group_class__:
             logger.debug(
@@ -383,8 +341,6 @@ class Program(runnable.RunnableObject):
             logger.debug(
                 'Use "GeventSuiteGroup" to making suite group',
             )
-
-            pyv.check_gevent_supported()
 
             from .groups.gevent import GeventSuiteGroup
 

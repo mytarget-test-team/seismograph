@@ -373,8 +373,6 @@ class Result(object):
             self.__capture = LogCapture(config)
 
             if self.__config.GEVENT:
-                pyv.check_gevent_supported()
-
                 from gevent.lock import Semaphore
 
                 lock = Semaphore()
