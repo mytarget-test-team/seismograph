@@ -107,7 +107,7 @@ def reduce_dict(d1, d2):
 
         for i in l1:
             if isinstance(i, dict):
-                l1[l1.index(i)] = reduce_dict(i, **l2[l1.index(i)])
+                l1[l1.index(i)] = reduce_dict(i, l2[l1.index(i)])
 
         l1.sort()
         l2.sort()
