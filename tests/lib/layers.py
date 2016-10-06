@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from seismograph import case
-from seismograph import suite
-from seismograph import program
+from seismograph import ProgramLayer as _ProgramLayer
+from seismograph import CaseLayer as _CaseLayer
+from seismograph import SuiteLayer as _SuiteLayer
 
 
-class ProgramLayer(program.ProgramLayer):
+class ProgramLayer(_ProgramLayer):
 
     def __init__(self):
         super(ProgramLayer, self).__init__()
@@ -49,7 +49,7 @@ class ProgramLayer(program.ProgramLayer):
         self.calling_story.append(self.was_called)
 
 
-class SuiteLayer(suite.SuiteLayer):
+class SuiteLayer(_SuiteLayer):
 
     def __init__(self):
         super(SuiteLayer, self).__init__()
@@ -98,7 +98,7 @@ class SuiteLayer(suite.SuiteLayer):
         self.calling_story.append(self.was_called)
 
 
-class CaseLayer(case.CaseLayer):
+class CaseLayer(_CaseLayer):
 
     def __init__(self):
         super(CaseLayer, self).__init__()
@@ -151,7 +151,7 @@ class CaseLayer(case.CaseLayer):
         self.counter += 1
         self.calling_story.append(self.was_called)
 
-    def on_success(self, case):
+    def on_success(self, case, *args):
         self.was_called = 'on_success'
         self.counter += 1
         self.calling_story.append(self.was_called)

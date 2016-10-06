@@ -7,6 +7,7 @@ try:
 except ImportError:
     from io import StringIO
 
+import seismograph
 from seismograph import case
 from seismograph import suite
 from seismograph import config
@@ -23,18 +24,14 @@ from .lib.factories import (
     config_factory,
     program_factory,
 )
-from .lib.layers import (
-    CaseLayer,
-    SuiteLayer,
-    ProgramLayer,
-)
+from .lib import layers
 
 
 class TestProgramContext(BaseTestCase):
 
     def setUp(self):
-        self.base_layer = program.ProgramLayer()
-        self.program_layer = ProgramLayer()
+        self.base_layer = seismograph.ProgramLayer()
+        self.program_layer = layers.ProgramLayer()
         self.program = program.Program()
         self.context = program.ProgramContext(
             lambda: None,
@@ -343,9 +340,9 @@ class TestShared(BaseTestCase):
 class TestFullCycle(BaseTestCase):
 
     def runTest(self):
-        case_layer = CaseLayer()
-        suite_layer = SuiteLayer()
-        program_layer = ProgramLayer()
+        case_layer = layers.CaseLayer()
+        suite_layer = layers.SuiteLayer()
+        program_layer = layers.ProgramLayer()
 
         suite_inst = suite.Suite('test', layers=[suite_layer])
 
