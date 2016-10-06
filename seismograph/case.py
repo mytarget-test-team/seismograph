@@ -483,7 +483,7 @@ class AssertionBase(object):
         if data:
             if isinstance(data, dict):
                 self.is_instance(resp_data, dict, msg='response is not type of dict')
-                self.dict_equal(common.reduce_dict(resp_data, **data), data)
+                self.dict_equal(common.reduce_dict(resp_data, data), data)
 
             elif isinstance(data, (list, tuple)):
                 self.is_instance(resp_data, list, msg='response is not type of list')
@@ -496,7 +496,7 @@ class AssertionBase(object):
 
                 for item in resp_data:
                     index = resp_data.index(item)
-                    self.dict_equal(common.reduce_dict(item, **data[index]), data[index])
+                    self.dict_equal(common.reduce_dict(item, data[index]), data[index])
 
             elif isinstance(data, pyv.basestring):
                 self.is_instance(resp_data, pyv.basestring, msg='response is not type of string')

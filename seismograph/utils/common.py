@@ -97,7 +97,7 @@ def get_dict_from_list(lst, **kwargs):
     return lst
 
 
-def reduce_dict(d1, **kwargs):
+def reduce_dict(d1, d2):
     """
     Leads dictionaries to the same species.
     The standard dictionary is d2.
@@ -109,17 +109,20 @@ def reduce_dict(d1, **kwargs):
             if isinstance(i, dict):
                 l1[l1.index(i)] = reduce_dict(i, **l2[l1.index(i)])
 
+        l1.sort()
+        l2.sort()
+
     return dict(
         (
             k,
-            reduce_dict(v, **kwargs[k])
-            if isinstance(v, dict) and isinstance(kwargs[k], dict)
+            reduce_dict(v, d2[k])
+            if isinstance(v, dict) and isinstance(d2[k], dict)
             else
-            prepare_lists(v, kwargs[k]) or v.sort(key=lambda i: str(i)) or kwargs[k].sort(key=lambda i: str(i)) or v
-            if isinstance(v, list) and isinstance(kwargs[k], list)
+            prepare_lists(v, d2[k]) or v
+            if isinstance(v, list) and isinstance(d2[k], list)
             else
             v,
         )
         for k, v in d1.items()
-        if k in kwargs
+        if k in d2
     )
