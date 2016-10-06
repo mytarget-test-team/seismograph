@@ -109,8 +109,6 @@ def reduce_dict(d1, **kwargs):
             if isinstance(i, dict):
                 l1[l1.index(i)] = reduce_dict(i, **l2[l1.index(i)])
 
-        return l1
-
     return dict(
         (
             k,
