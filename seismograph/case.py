@@ -494,9 +494,14 @@ class AssertionBase(object):
                     ),
                 )
 
+                resp_data, data = common.reduce_list(resp_data, data)
+
                 for item in resp_data:
                     index = resp_data.index(item)
-                    self.dict_equal(common.reduce_dict(item, data[index]), data[index])
+                    if isinstance(item, dict):
+                        self.dict_equal(item, data[index])
+                    else:
+                        self.equal(item, data[index])
 
             elif isinstance(data, pyv.basestring):
                 self.is_instance(resp_data, pyv.basestring, msg='response is not type of string')

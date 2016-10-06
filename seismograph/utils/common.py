@@ -126,3 +126,25 @@ def reduce_dict(d1, d2):
         for k, v in d1.items()
         if k in d2
     )
+
+
+def reduce_list(l1, l2):
+    assert len(l1) == len(l2)
+
+    lst = []
+
+    for i in l1:
+        v1 = i
+        v2 = l2[l1.index(i)]
+
+        if isinstance(v1, dict):
+            lst.append(reduce_dict(v1, v2))
+        elif isinstance(v1, (list, tuple)):
+            lst.append(reduce_list(v1, v2))
+        else:
+            lst.append(v1)
+
+    lst.sort()
+    l2.sort()
+
+    return lst, list(l2)
