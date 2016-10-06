@@ -117,7 +117,7 @@ def reduce_dict(d1, **kwargs):
             reduce_dict(v, **kwargs[k])
             if isinstance(v, dict) and isinstance(kwargs[k], dict)
             else
-            prepare_lists(v, kwargs[k]) or v.sort() or kwargs[k].sort()
+            prepare_lists(v, kwargs[k]) or v.sort(key=lambda i: str(i)) or kwargs[k].sort(key=lambda i: str(i))
             if isinstance(v, list) and isinstance(kwargs[k], list)
             else
             v,
