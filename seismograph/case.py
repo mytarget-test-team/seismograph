@@ -477,8 +477,13 @@ class AssertionBase(object):
             except _jsonschema.ValidationError as error:
                 self.fail('\n\n' + pyv.unicode(error))
         elif required:
-            for field_name in required:
-                self.is_in(field_name, resp_data)
+            if isinstance(resp_data, list):
+                for resp_data_item in resp_data:
+                    for field_name in required:
+                        self.is_in(field_name, resp_data_item)
+            elif isinstance(resp_data, dict):
+                for field_name in required:
+                    self.is_in(field_name, resp_data)
 
         if data:
             if isinstance(data, dict):
