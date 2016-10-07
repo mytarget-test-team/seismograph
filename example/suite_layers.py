@@ -28,7 +28,7 @@ class SuiteLayerExample(SuiteLayer):
     def on_any_error(self, error, suite, result):
         pass
 
-    def on_error(self, error, suite, result):
+    def on_error(self, error, suite, result, tb, timer):
         pass
 
     def on_context_error(self, error, suite, result):

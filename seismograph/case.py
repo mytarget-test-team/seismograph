@@ -14,9 +14,11 @@ from . import reason
 from . import runnable
 from .utils import pyv
 from . import extensions
+from .utils import common
 from .exceptions import Skip
 from .utils.common import measure_time
 from .utils.common import call_to_chain
+from .exceptions import DependencyError
 from .exceptions import ExtensionNotRequired
 from .exceptions import ALLOW_RAISED_EXCEPTIONS
 
@@ -30,6 +32,21 @@ MATCH_CASE_TO_LAYER = {}
 
 SKIP_ATTRIBUTE_NAME = '__skip__'
 SKIP_WHY_ATTRIBUTE_NAME = '__skip_why__'
+
+
+_jsonschema = None
+
+
+def _import_json_schema():
+    global _jsonschema
+
+    try:
+        import jsonschema
+        _jsonschema = jsonschema
+    except ImportError:
+        raise DependencyError(
+            'Dependence "jsonschema" is not found. Please install it and try again.',
+        )
 
 
 def repeat(case):
@@ -239,13 +256,20 @@ class AssertionBase(object):
 
     __unittest__ = __UnitTest__('__call__')
 
+    def __json_schema_by_response__(self, resp):
+        raise NotImplementedError(
+            'You should implemented "__json_schema_by_response__" method in {}'.format(
+                self.__class__.__name__,
+            ),
+        )
+
     def len_equal(self, a, b, msg=None):
         """
         Check equal from length of list or tuple
 
         len_equal([1, 2, 3], 3)
         """
-        if isinstance(a, (list, tuple)):
+        if type(b) == int:
             self.equal(len(a), b, msg=msg)
         else:
             self.equal(a, len(b), msg=msg)
@@ -381,85 +405,110 @@ class AssertionBase(object):
         if d1 != d2:
             self.fail('{} != {}'.format(date1, date2))
 
+    def response(self,
+                 resp,
+                 status,
+                 data=None,
+                 schema=None,
+                 length=None,
+                 required=None,
+                 use_schema=True,
+                 use_required=True):
+        """
+        Validate HTTP response from request lib.
 
+        :param resp: validate http response
+        :param status: compare with http response status
+        :param data: compare with http response content
+        :param schema: compare with http response content json schema
+        :param length: compare with http response length
+        :param required: compare with required field in http response
+        :param use_schema: True or False
+        :param use_required: True or False
 
-class CaseLayer(runnable.LayerOfRunnableObject):
+        Example::
 
-    def on_init(self, case):
-        """
-        :type case: Case
-        """
-        pass
+            AssertionBase().response(
+                resp,
+                200,
+                data={'id': 100},
+                required=['id', 'name'],
+            )
 
-    def on_require(self, require):
+        You should implemented "__json_schema_by_response__" magic method in "AssertionBase"
+        and can use own strategy for obtaining json schema in depending of response.
+        Or use hard schema in parameter 'schema', parameter 'schema' has higher priority
+        than "__json_schema_by_response__" method.
         """
-        :type require: list
-        """
-        pass
+        if resp.status_code != status:
+            raise AssertionError(
+                'response status: {}, expected: {}'.format(
+                    resp.status_code, status,
+                ),
+            )
 
-    def on_setup(self, case):
-        """
-        :type case: Case
-        """
-        pass
+        schema = schema or self.__json_schema_by_response__(resp) if use_schema else None
 
-    def on_teardown(self, case):
-        """
-        :type case: Case
-        """
-        pass
+        if length is not None:
+            self.len_equal(resp.json(), length)
 
-    def on_skip(self, case, reason, result):
-        """
-        :type case: Case
-        :type reason: str
-        :type result: seismograph.result.Result
-        """
-        pass
+        if data is None and schema is None:
+            return
 
-    def on_any_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
+        resp_data = common.get_dict_from_list(
+            resp.json(),
+            **data if isinstance(data, dict) else {}
+        )
 
-    def on_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
+        if schema:
+            if _jsonschema is None:
+                _import_json_schema()
 
-    def on_context_error(self, error, case, result):
-        """
-        :type case: Case
-        :type error: BaseException
-        :type result: seismograph.result.Result
-        """
-        pass
+            if required:
+                schema = schema.copy()
+                schema.update(required=required)
+            elif not use_required:
+                if 'required' in schema:
+                    schema = schema.copy()
+                    del schema['required']
 
-    def on_fail(self, fail, case, result):
-        """
-        :type case: Case
-        :type fail: AssertionError
-        :type result: seismograph.result.Result
-        """
-        pass
+            try:
+                _jsonschema.validate(resp_data, schema)
+            except _jsonschema.ValidationError as error:
+                self.fail('\n\n' + pyv.unicode(error))
+        elif required:
+            for field_name in required:
+                self.is_in(field_name, resp_data)
 
-    def on_success(self, case):
-        """
-        :type case: Case
-        """
-        pass
+        if data:
+            if isinstance(data, dict):
+                self.is_instance(resp_data, dict, msg='response is not type of dict')
+                self.dict_equal(common.reduce_dict(resp_data, data), data)
 
-    def on_run(self, case):
-        """
-        :type case: Case
-        """
-        pass
+            elif isinstance(data, (list, tuple)):
+                self.is_instance(resp_data, list, msg='response is not type of list')
+                self.equal(
+                    len(resp_data), len(data),
+                    msg='objects of different lengths: {} != {}'.format(
+                        len(resp_data), len(data),
+                    ),
+                )
+
+                resp_data, data = common.reduce_list(resp_data, data)
+
+                for item in resp_data:
+                    index = resp_data.index(item)
+                    if isinstance(item, dict):
+                        self.dict_equal(item, data[index])
+                    else:
+                        self.equal(item, data[index])
+
+            elif isinstance(data, pyv.basestring):
+                self.is_instance(resp_data, pyv.basestring, msg='response is not type of string')
+                self.equal(resp_data, data)
+
+            else:
+                raise TypeError('Incorrect type of data')
 
 
 class CaseContext(runnable.ContextOfRunnableObject):
@@ -493,11 +542,11 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
     @property
     def layers(self):
-        for layer in DEFAULT_LAYERS:
+        for layer in self.__layers:
             if layer.enabled:
                 yield layer
 
-        for layer in self.__layers:
+        for layer in DEFAULT_LAYERS:
             if layer.enabled:
                 yield layer
 
@@ -575,7 +624,7 @@ class CaseContext(runnable.ContextOfRunnableObject):
             runnable.stopped_on(case, 'on_skip')
             raise
 
-    def on_any_error(self, error, case, result):
+    def on_any_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_any_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -584,13 +633,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_any_error', error, case, result,
+                with_match_layers(self, case), 'on_any_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_any_error')
             raise
 
-    def on_error(self, error, case, result):
+    def on_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -599,13 +648,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_error', error, case, result,
+                with_match_layers(self, case), 'on_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_error')
             raise
 
-    def on_context_error(self, error, case, result):
+    def on_context_error(self, error, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_context_error" of case "{}"'.format(
                 runnable.class_name(case),
@@ -614,13 +663,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_context_error', error, case, result,
+                with_match_layers(self, case), 'on_context_error', error, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_context_error')
             raise
 
-    def on_fail(self, fail, case, result):
+    def on_fail(self, fail, case, result, tb, timer):
         logger.debug(
             'Call to chain callbacks "on_fail" of case "{}"'.format(
                 runnable.class_name(case),
@@ -629,13 +678,13 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_fail', fail, case, result,
+                with_match_layers(self, case), 'on_fail', fail, case, result, tb, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_fail')
             raise
 
-    def on_success(self, case):
+    def on_success(self, case, timer):
         logger.debug(
             'Call to chain callbacks "on_success" of case "{}"'.format(
                 runnable.class_name(case),
@@ -644,7 +693,7 @@ class CaseContext(runnable.ContextOfRunnableObject):
 
         try:
             call_to_chain(
-                with_match_layers(self, case), 'on_success', case,
+                with_match_layers(self, case), 'on_success', case, timer,
             )
         except BaseException:
             runnable.stopped_on(case, 'on_success')
@@ -793,24 +842,26 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                         except AssertionError as fail:
                             runnable.set_debug_if_allowed(self.config)
                             was_success = False
-                            self.__context.on_fail(fail, self, result_proxy)
+                            tb = traceback.format_exc()
+                            self.__context.on_fail(fail, self, result_proxy, tb, timer)
                             result_proxy.add_fail(
-                                self, traceback.format_exc(), timer(), fail,
+                                self, tb, timer(), fail,
                             )
                         except BaseException as error:
                             runnable.set_debug_if_allowed(self.config)
                             was_success = False
-                            self.__context.on_error(error, self, result_proxy)
-                            self.__context.on_any_error(error, self, result_proxy)
+                            tb = traceback.format_exc()
+                            self.__context.on_error(error, self, result_proxy, tb, timer)
+                            self.__context.on_any_error(error, self, result_proxy, tb, timer)
                             result_proxy.add_error(
-                                self, traceback.format_exc(), timer(), error,
+                                self, tb, timer(), error,
                             )
 
                     if not was_success:
                         break
 
                 if was_success:
-                    self.__context.on_success(self)
+                    self.__context.on_success(self, timer)
                     result_proxy.add_success(
                         self, timer(),
                     )
@@ -818,10 +869,11 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
                 raise
             except BaseException as error:
                 runnable.set_debug_if_allowed(self.config)
-                self.__context.on_context_error(error, self, result_proxy)
-                self.__context.on_any_error(error, self, result_proxy)
+                tb = traceback.format_exc()
+                self.__context.on_context_error(error, self, result_proxy, tb, timer)
+                self.__context.on_any_error(error, self, result_proxy, tb, timer)
                 result_proxy.add_error(
-                    self, traceback.format_exc(), timer(), error,
+                    self, tb, timer(), error,
                 )
 
     #
@@ -935,6 +987,14 @@ class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.Moun
 
     def __prepare__(self, method):
         return method
+
+    @property
+    @runnable.mount_method
+    def name(self):
+        return '{}:{}'.format(
+            self.__mount_data__.suite_name,
+            self.__class__.__name__
+        )
 
     @property
     def config(self):

@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from StringIO import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:  # please python 3
+    from io import StringIO
+
 from contextlib import contextmanager
 
 

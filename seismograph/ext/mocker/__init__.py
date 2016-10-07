@@ -116,6 +116,17 @@ def mock(url_rule, **params):
     return wrapper
 
 
+def get_current_url():
+    if _client.instance is not None:
+        return 'http://{}:{}'.format(_client.instance.config.HOST, _client.instance.config.PORT)
+
+    raise RuntimeError('Working outside mocker context')
+
+
+def get_current_static_url():
+    return '{}{}'.format(get_current_url(), _client.instance.config.STATIC_URL_PATH)
+
+
 def path(url_rule, **params):
     """
     Contextmanager will be returned
@@ -208,5 +219,7 @@ __all__ = (
     'mock',
     'path',
     'unblock',
+    'get_current_url',
+    'get_current_static_url',
     'declare_external_resource',
 )

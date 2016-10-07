@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import inspect
-from StringIO import StringIO
 
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
+
+import seismograph
 from seismograph import case
 from seismograph import suite
 from seismograph import config
@@ -19,18 +24,14 @@ from .lib.factories import (
     config_factory,
     program_factory,
 )
-from .lib.layers import (
-    CaseLayer,
-    SuiteLayer,
-    ProgramLayer,
-)
+from .lib import layers
 
 
 class TestProgramContext(BaseTestCase):
 
     def setUp(self):
-        self.base_layer = program.ProgramLayer()
-        self.program_layer = ProgramLayer()
+        self.base_layer = seismograph.ProgramLayer()
+        self.program_layer = layers.ProgramLayer()
         self.program = program.Program()
         self.context = program.ProgramContext(
             lambda: None,
@@ -108,14 +109,14 @@ class TestProgramContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'program', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'program', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_error', None))
 
         signature = inspect.getargspec(self.context.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'program', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'program', 'result', 'tb', 'timer'])
 
-        self.context.on_error(None, self.program, None)
+        self.context.on_error(None, self.program, None, None, None)
         self.assertEqual(self.program_layer.was_called, 'on_error')
         self.assertEqual(self.program_layer.counter, 1)
 
@@ -339,9 +340,9 @@ class TestShared(BaseTestCase):
 class TestFullCycle(BaseTestCase):
 
     def runTest(self):
-        case_layer = CaseLayer()
-        suite_layer = SuiteLayer()
-        program_layer = ProgramLayer()
+        case_layer = layers.CaseLayer()
+        suite_layer = layers.SuiteLayer()
+        program_layer = layers.ProgramLayer()
 
         suite_inst = suite.Suite('test', layers=[suite_layer])
 

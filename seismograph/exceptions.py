@@ -47,6 +47,10 @@ class ExtensionNotRequired(SeismographError):
     pass
 
 
+class DependencyError(SeismographError):
+    pass
+
+
 ALLOW_RAISED_EXCEPTIONS = (
     EmergencyStop,
     KeyboardInterrupt,

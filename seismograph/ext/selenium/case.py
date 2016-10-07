@@ -17,6 +17,7 @@ from selenium.common.exceptions import StaleElementReferenceException
 from ... import case
 from ... import steps
 from ... import reason
+from ... import layers
 from ... import runnable
 from .extension import EX_NAME
 from .utils import random_file_name
@@ -304,7 +305,7 @@ class SeleniumAssertion(case.AssertionBase):
 assertion = SeleniumAssertion()
 
 
-class SeleniumCaseLayer(case.CaseLayer):
+class SeleniumCaseLayer(layers.CaseLayer):
 
     def on_require(self, require):
         if EX_NAME not in require:

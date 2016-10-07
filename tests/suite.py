@@ -7,6 +7,8 @@ from seismograph import (
     suite,
     steps,
     exceptions,
+    SuiteLayer,
+    CaseLayer,
 )
 from seismograph.utils import pyv
 
@@ -22,14 +24,14 @@ from .lib.case import (
     ResultTestCaseMixin,
     RunSuiteTestCaseMixin,
 )
-from .lib.layers import SuiteLayer
+from .lib import layers
 
 
 class TestSuiteContext(BaseTestCase):
 
     def setUp(self):
-        self.base_layer = suite.SuiteLayer()
-        self.suite_layer = SuiteLayer()
+        self.base_layer = SuiteLayer()
+        self.suite_layer = layers.SuiteLayer()
         self.suite = suite_factory.create()
         self.context = suite.SuiteContext(
             lambda: None,
@@ -152,14 +154,14 @@ class TestSuiteContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'suite', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'suite', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_error', None))
 
         signature = inspect.getargspec(self.context.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'suite', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'suite', 'result', 'tb', 'timer'])
 
-        self.context.on_error(None, self.suite, None)
+        self.context.on_error(None, self.suite, None, None, None)
         self.assertEqual(self.suite_layer.was_called, 'on_error')
         self.assertEqual(self.suite_layer.counter, 1)
 
@@ -178,7 +180,7 @@ class TestSuiteContext(BaseTestCase):
 class TestSuiteObject(BaseTestCase):
 
     def test_init(self):
-        layer = suite.SuiteLayer()
+        layer = SuiteLayer()
         suite_inst = suite.Suite(__name__, require=['hello'], layers=[layer])
 
         self.assertEqual(suite_inst.name, __name__)
@@ -238,7 +240,7 @@ class TestSuiteObject(BaseTestCase):
         )
 
     def test_assign_build_rule(self):
-        layer = SuiteLayer()
+        layer = layers.SuiteLayer()
         suite_inst = suite.Suite(__name__, layers=[layer])
         rule = suite.BuildRule(__name__, case_name='MyTestCase', test_name='test')
 
@@ -375,7 +377,7 @@ class TestRegisterCase(BaseTestCase):
         self.assertEqual(getattr(CaseClass, case.SKIP_WHY_ATTRIBUTE_NAME, None), 'some reason')
 
     def test_layers_param(self):
-        layers = (case.CaseLayer(), )
+        layers = (CaseLayer(), )
         suite_inst = suite_factory.create()
 
         @suite_inst.register(layers=layers)
@@ -386,8 +388,8 @@ class TestRegisterCase(BaseTestCase):
         self.assertEqual(CaseClass.__layers__, layers)
 
     def test_set_layers_with_existed(self):
-        layers = (case.CaseLayer(), )
-        cls_layers = (case.CaseLayer(), )
+        layers = (CaseLayer(), )
+        cls_layers = (CaseLayer(), )
         suite_inst = suite_factory.create()
 
         @suite_inst.register(layers=layers)
@@ -615,7 +617,7 @@ class TestRunSuite(RunSuiteTestCaseMixin, BaseTestCase):
 
     class SuiteClass(suite.Suite):
 
-        layer = SuiteLayer()
+        layer = layers.SuiteLayer()
         __layers__ = (layer, )
 
     def runTest(self):
@@ -649,7 +651,7 @@ class TestErrorOnContext(RunSuiteTestCaseMixin, BaseTestCase):
 
     class SuiteClass(suite.Suite):
 
-        class LayerClass(SuiteLayer):
+        class LayerClass(layers.SuiteLayer):
 
             def on_run(self, suite):
                 raise Exception('message')

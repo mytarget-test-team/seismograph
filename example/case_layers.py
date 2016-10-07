@@ -26,19 +26,19 @@ class ExampleCaseLayer(CaseLayer):
     def on_skip(self, case, reason, result):
         pass
 
-    def on_any_error(self, error, case, result):
+    def on_any_error(self, error, case, result, tb, timer):
         pass
 
-    def on_error(self, error, case, result):
+    def on_error(self, error, case, result, tb, timer):
         pass
 
-    def on_context_error(self, error, case, result):
+    def on_context_error(self, error, case, result, tb, timer):
         pass
 
-    def on_fail(self, fail, case, result):
+    def on_fail(self, fail, case, result, tb, timer):
         pass
 
-    def on_success(self, case):
+    def on_success(self, case, timer):
         pass
 
 

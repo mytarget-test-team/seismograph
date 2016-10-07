@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import unittest
-
 import seismograph
 from types import ModuleType
-from seismograph.utils import pyv
 
 from .lib.case import BaseTestCase
 
@@ -20,13 +17,12 @@ def get_facade():
             return type(getattr(seismograph, name)) != ModuleType
         return False
 
-    return filter(
+    return list(filter(
         filter_func,
         dir(seismograph),
-    )
+    ))
 
 
-@unittest.skipIf(pyv.IS_PYTHON_3, 'for python 2 only')
 class TestFacadeOfLib(BaseTestCase):
 
     def assertFacadeOfLib(self, facade):
@@ -38,15 +34,11 @@ class TestFacadeOfLib(BaseTestCase):
 
     @staticmethod
     def assertImportAll():
-        try:
-            from seismograph import *
-        except BaseException as error:
-            raise AssertionError(
-                '{}: {}'.format(
-                    error.__class__.__name__,
-                    pyv.get_exc_message(error)
-                ),
-            )
+        from seismograph import __all__ as all
+
+        for import_name in all:
+            if getattr(seismograph, import_name, None) is None:
+                raise AssertionError('Incorrect import name in "__all__"')
 
     def runTest(self):
         facade = get_facade()

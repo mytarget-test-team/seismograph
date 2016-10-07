@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from StringIO import StringIO
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from .factories import case_factory
 from .factories import suite_factory

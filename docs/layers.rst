@@ -8,7 +8,7 @@ Layers is chain of callbacks. Context object call to chain of layers, it is resp
 Program layer
 -------------
 
-.. autoclass:: seismograph.program.ProgramLayer
+.. autoclass:: seismograph.layers.ProgramLayer
     :members:
     :exclude-members: __dict__, __weakref__
     :private-members:
@@ -40,7 +40,7 @@ Program layer
 Suite layer
 -----------
 
-.. autoclass:: seismograph.suite.SuiteLayer
+.. autoclass:: seismograph.layers.SuiteLayer
     :members:
     :exclude-members: __dict__, __weakref__
     :private-members:
@@ -73,7 +73,7 @@ Case layer
 ----------
 
 
-.. autoclass:: seismograph.case.CaseLayer
+.. autoclass:: seismograph.layers.CaseLayer
     :members:
     :exclude-members: __dict__, __weakref__
     :private-members:

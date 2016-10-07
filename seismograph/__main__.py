@@ -10,12 +10,7 @@ from importlib import import_module
 
 
 def apply_gevent_patch():
-    try:
-        from gevent.monkey import patch_all
-    except ImportError as e:
-        from seismograph.utils import pyv
-        pyv.check_gevent_supported()
-        raise e
+    from gevent.monkey import patch_all
 
     patch_all()
 

@@ -3,6 +3,7 @@
 import inspect
 from collections import OrderedDict
 
+import seismograph
 from seismograph import case
 from seismograph import xunit
 from seismograph import result
@@ -18,14 +19,14 @@ from .lib.case import (
     CaseTestCaseMixin,
     RunCaseTestCaseMixin,
 )
-from .lib.layers import CaseLayer
+from .lib import layers
 
 
 class TestCaseContext(BaseTestCase):
 
     def setUp(self):
-        self.base_layer = case.CaseLayer()
-        self.case_layer = CaseLayer()
+        self.base_layer = seismograph.CaseLayer()
+        self.case_layer = layers.CaseLayer()
         self.case = case_factory.create()
         self.context = case.CaseContext(
             lambda: None,
@@ -112,14 +113,14 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_any_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_any_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_any_error', None))
 
         signature = inspect.getargspec(self.context.on_any_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
-        self.context.on_any_error(None, self.case, None)
+        self.context.on_any_error(None, self.case, None, None, None)
         self.assertEqual(self.case_layer.was_called, 'on_any_error')
         self.assertEqual(self.case_layer.counter, 1)
 
@@ -127,14 +128,14 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_error', None))
 
         signature = inspect.getargspec(self.context.on_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
-        self.context.on_error(None, self.case, None)
+        self.context.on_error(None, self.case, None, None, None)
         self.assertEqual(self.case_layer.was_called, 'on_error')
         self.assertEqual(self.case_layer.counter, 1)
 
@@ -142,14 +143,14 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_context_error', None))
 
         signature = inspect.getargspec(self.base_layer.on_context_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_context_error', None))
 
         signature = inspect.getargspec(self.context.on_context_error)
-        self.assertEqual(signature.args, ['self', 'error', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'error', 'case', 'result', 'tb', 'timer'])
 
-        self.context.on_context_error(None, self.case, None)
+        self.context.on_context_error(None, self.case, None, None, None)
         self.assertEqual(self.case_layer.was_called, 'on_context_error')
         self.assertEqual(self.case_layer.counter, 1)
 
@@ -157,14 +158,14 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_fail', None))
 
         signature = inspect.getargspec(self.base_layer.on_fail)
-        self.assertEqual(signature.args, ['self', 'fail', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'fail', 'case', 'result', 'tb', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_fail', None))
 
         signature = inspect.getargspec(self.context.on_fail)
-        self.assertEqual(signature.args, ['self', 'fail', 'case', 'result'])
+        self.assertEqual(signature.args, ['self', 'fail', 'case', 'result', 'tb', 'timer'])
 
-        self.context.on_fail(None, self.case, None)
+        self.context.on_fail(None, self.case, None, None, None)
         self.assertEqual(self.case_layer.was_called, 'on_fail')
         self.assertEqual(self.case_layer.counter, 1)
 
@@ -172,14 +173,14 @@ class TestCaseContext(BaseTestCase):
         self.assertIsNotNone(getattr(self.base_layer, 'on_success', None))
 
         signature = inspect.getargspec(self.base_layer.on_success)
-        self.assertEqual(signature.args, ['self', 'case'])
+        self.assertEqual(signature.args, ['self', 'case', 'timer'])
 
         self.assertIsNotNone(getattr(self.context, 'on_success', None))
 
         signature = inspect.getargspec(self.context.on_success)
-        self.assertEqual(signature.args, ['self', 'case'])
+        self.assertEqual(signature.args, ['self', 'case', 'timer'])
 
-        self.context.on_success(self.case)
+        self.context.on_success(self.case, None)
         self.assertEqual(self.case_layer.was_called, 'on_success')
         self.assertEqual(self.case_layer.counter, 1)
 
@@ -199,7 +200,7 @@ class TestCaseContext(BaseTestCase):
         self.assertEqual(self.case_layer.counter, 1)
 
     def test_init_context(self):
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
         setup = lambda: None
         teardown = lambda: None
 
@@ -478,7 +479,7 @@ class TestFailCase(RunCaseTestCaseMixin, BaseTestCase):
 
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
@@ -505,7 +506,7 @@ class TestErrorCase(RunCaseTestCaseMixin, BaseTestCase):
 
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
@@ -532,7 +533,7 @@ class TestSkipCase(RunCaseTestCaseMixin, BaseTestCase):
 
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
@@ -560,7 +561,7 @@ class TestSkipIfCase(TestSkipCase):
 
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
@@ -573,7 +574,7 @@ class TestSkipUnlessCase(TestSkipCase):
 
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
@@ -587,7 +588,7 @@ class TestSkipClass(RunCaseTestCaseMixin, BaseTestCase):
     @case.skip('reason')
     class CaseClass(case_factory.FakeCase):
 
-        layer = CaseLayer()
+        layer = layers.CaseLayer()
 
         __layers__ = (layer, )
 
