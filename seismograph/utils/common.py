@@ -133,7 +133,7 @@ def reduce_list(l1, l2):
     Do return new lists. l2 is standard list.
     Equal length of lists is important.
     """
-    assert len(l1) == len(l2)
+    assert len(l1) == len(l2), 'Length of lists is not equal: {} != {}'.format(len(l1), len(l2))
 
     lst = []
 
