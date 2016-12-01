@@ -5,6 +5,8 @@ try:
 except ImportError:
     import http.client as httplib
 
+from threading import Lock
+
 from flask import jsonify
 from flask import request
 
@@ -12,6 +14,9 @@ from . import constants
 from .mocks import BaseMock
 from .tools import endpoint
 from .mocks import get_mock_class_by_content_type
+
+
+_add_mock_lock = Lock()
 
 
 def make_response(status_code, *args, **kwargs):
@@ -78,36 +83,37 @@ class MockerApi(object):
         return make_response(httplib.OK, status=constants.OK_STATUS)
 
     def set_mock(self):
-        data = request.json
-        url_rule = data.get('url_rule')
+        with _add_mock_lock:
+            data = request.json
+            url_rule = data.get('url_rule')
 
-        if not url_rule:
-            return make_error_response(httplib.BAD_REQUEST, '"url_rule" is required param')
+            if not url_rule:
+                return make_error_response(httplib.BAD_REQUEST, '"url_rule" is required param')
 
-        content_type = data.get('content_type')
-        method = data.get('method', constants.DEFAULT_HTTP_METHOD)
-        status = data.get('status', httplib.OK)
-        headers = data.get('headers', {})
-        body = data.get('body', '')
+            content_type = data.get('content_type')
+            method = data.get('method', constants.DEFAULT_HTTP_METHOD)
+            status = data.get('status', httplib.OK)
+            headers = data.get('headers', {})
+            body = data.get('body', '')
 
-        if endpoint(url_rule, method) in self.__server.views:
-            return make_response(httplib.OK, status=constants.MOCK_BLOCKED_STATUS)
+            if endpoint(url_rule, method) in self.__server.views:
+                return make_response(httplib.OK, status=constants.MOCK_BLOCKED_STATUS)
 
-        mock_cls = get_mock_class_by_content_type(content_type)
+            mock_cls = get_mock_class_by_content_type(content_type)
 
-        self.__server.add_mock(
-            mock_cls(
-                url_rule,
-                body=body,
-                headers=headers,
-                status_code=status,
-                http_method=method,
-                mime_type=content_type,
-                content_type=content_type,
-            ),
-        )
+            self.__server.add_mock(
+                mock_cls(
+                    url_rule,
+                    body=body,
+                    headers=headers,
+                    status_code=status,
+                    http_method=method,
+                    mime_type=content_type,
+                    content_type=content_type,
+                ),
+            )
 
-        return make_response(httplib.OK, status=constants.MOCK_ADDED_STATUS)
+            return make_response(httplib.OK, status=constants.MOCK_ADDED_STATUS)
 
     def clean_mocks(self):
         for ep, view_func in self.__server.views.items():
