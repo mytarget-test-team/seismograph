@@ -2,13 +2,11 @@
 
 from optparse import OptionGroup
 
-from .client import SeismaClient
 from .layers import SeismaCaseLayer
 from .layers import SeismaProgramLayer
 
 
 __all__ = (
-    'SeismaClient',
     'SeismaCaseLayer',
     'SeismaProgramLayer',
 )

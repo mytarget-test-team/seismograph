@@ -22,6 +22,7 @@ assert __version__
 class libs:
 
     flask = 'flask>=0.7'
+    seisma = 'seisma>=0.0.1'
     requests = 'requests>=2.5'
     selenium = 'selenium>=2.46'
     sqlalchemy = 'sqlalchemy>=0.8'
@@ -60,7 +61,7 @@ EX_REQUIREMENTS = {
         libs.jsonschema,
     ],
     'seisma': [
-        libs.requests,
+        libs.seisma,
     ],
 }
 
