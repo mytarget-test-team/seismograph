@@ -33,6 +33,7 @@ class FakeConfig(object):
         self.PDB = False
         self.FIRST_FLOW_ONLY = False
         self.SPLIT_FLOWS = False
+        self.TAGS = []
 
     def __getitem__(self, item):
         try:
