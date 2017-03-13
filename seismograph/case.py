@@ -725,6 +725,7 @@ assertion = AssertionBase()
 
 class Case(with_metaclass(steps.CaseMeta, runnable.RunnableObject, runnable.MountObjectMixin)):
 
+    __tag__ = None
     __flows__ = None
     __layers__ = None
     __static__ = False

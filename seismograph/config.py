@@ -230,6 +230,13 @@ def create_option_parser():
         default=False,
         help='Set trace after raise exception on runnable object.',
     )
+    run_group.add_option(
+        '--tag',
+        action='append',
+        dest='TAGS',
+        default=[],
+        help='Run tests marked tags.',
+    )
     parser.add_option_group(run_group)
 
     return parser

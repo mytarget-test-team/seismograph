@@ -8,7 +8,6 @@ from . import case
 from . import reason
 from . import loader
 from . import runnable
-from .utils import pyv
 from . import extensions
 from .utils.common import measure_time
 from .utils.common import call_to_chain
@@ -537,7 +536,8 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                 require=None,
                 case_class=None,
                 always_success=False,
-                assertion_class=None):
+                assertion_class=None,
+                tag=None):
             logger.debug(
                 'Register case "{}.{}" on suite "{}"'.format(
                     _class.__module__, _class.__name__, self.name,
@@ -550,6 +550,9 @@ class Suite(runnable.RunnableObject, runnable.MountObjectMixin, runnable.BuildOb
                     static=static,
                     base_class=case_class or self.__case_class__,
                 )
+
+            if tag:
+                setattr(_class, '__tag__', tag)
 
             if skip:
                 case.skip(skip)(_class)
