@@ -126,6 +126,7 @@ def screening_line(string):
     string = string.replace('<', '&lt;')
     string = string.replace('>', '&gt;')
     string = string.replace('"', '&quot;')
+    string = string.replace("&", "&amp;")
     return string
 
 
