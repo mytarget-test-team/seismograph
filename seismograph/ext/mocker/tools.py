@@ -9,14 +9,10 @@ def set_log_level_for_dependency(debug):
         logging.getLogger('werkzeug'),
     )
 
-    handlers = {
-        False: logging.NullHandler,
-        True: logging.StreamHandler,
-    }
+    handler = [logging.StreamHandler() if debug else logging.NullHandler()]
 
     for logger in loggers:
-        logger.handlers = []
-        logger.handlers.append(handlers[bool(debug)]())
+        logger.handlers = handler
         logger.setLevel(logging.INFO if debug else logging.ERROR)
 
 
