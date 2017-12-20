@@ -388,14 +388,6 @@ class AssertionBase(object):
         self.__unittest__.assertDictEqual(d1, d2, msg=msg)
 
     def _dates_format(self, date1, date2):
-        """
-        To compare dates. Date can be as string and date object.
-
-        For example::
-
-            import datetime
-            dates_equal(datetime.date(2016, 8, 16), '16.08.2016')
-        """
         from_date = lambda d: sum(sorted((d.year, d.month, d.day)))
         from_string = lambda d: sum(sorted(int(i) for i in re.findall(r'[0-9]+', d)))
 
@@ -405,11 +397,27 @@ class AssertionBase(object):
         return d1, d2
 
     def dates_equal(self, date1, date2):
+        """
+        To compare dates. Date can be as string and date object.
+
+        For example::
+
+            import datetime
+            dates_equal(datetime.date(2016, 8, 16), '16.08.2016')
+        """
         dates = self._dates_format(date1, date2)
         if dates[0] != dates[1]:
             self.fail('{} != {}'.format(date1, date2))
 
     def dates_not_equal(self, date1, date2):
+        """
+        To compare dates. Date can be as string and date object.
+
+        For example::
+
+            import datetime
+            dates_not_equal(datetime.date(2016, 8, 16), '16.08.2016')
+        """
         dates = self._dates_format(date1, date2)
         if dates[0] == dates[1]:
             self.fail('{} = {}'.format(date1, date2))
