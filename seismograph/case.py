@@ -387,7 +387,7 @@ class AssertionBase(object):
         """
         self.__unittest__.assertDictEqual(d1, d2, msg=msg)
 
-    def dates_equal(self, date1, date2):
+    def _dates_format(self, date1, date2):
         """
         To compare dates. Date can be as string and date object.
 
@@ -400,10 +400,19 @@ class AssertionBase(object):
         from_string = lambda d: sum(sorted(int(i) for i in re.findall(r'[0-9]+', d)))
 
         d1 = from_string(date1) if isinstance(date1, pyv.basestring) else from_date(date1)
-        d2 = from_string(date2) if isinstance(date2, basestring) else from_date(date2)
+        d2 = from_string(date2) if isinstance(date2, pyv.basestring) else from_date(date2)
 
-        if d1 != d2:
+        return d1, d2
+
+    def dates_equal(self, date1, date2):
+        dates = self._dates_format(date1, date2)
+        if dates[0] != dates[1]:
             self.fail('{} != {}'.format(date1, date2))
+
+    def dates_not_equal(self, date1, date2):
+        dates = self._dates_format(date1, date2)
+        if dates[0] == dates[1]:
+            self.fail('{} = {}'.format(date1, date2))
 
     def response(self,
                  resp,
