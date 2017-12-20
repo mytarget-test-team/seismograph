@@ -88,8 +88,11 @@ def run_tests(pyv='2.7'):
 
 
 def upload_to_pip():
-    command = sudo(python('setup.py register sdist upload'))
+    command = sudo(python('setup.py sdist'))
     exit_code = call(command)
+
+    if not exit_code:
+        call('twine upload dist/*')
 
     assert exit_code == 0, 'Upload to pip error'
 
