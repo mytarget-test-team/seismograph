@@ -319,7 +319,7 @@ Url path can has params for format string
 
 
     page = MyPage(browser)
-    page.open(id=1)
+    page.open({'id': 1}, params={'npcache': '1'})
 
 
 Page class can to be related to URL ule. URL rule is regexp pattern.

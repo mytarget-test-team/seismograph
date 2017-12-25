@@ -92,7 +92,7 @@ SELENIUM_EX = {
     },
     'CHROME': {
         'executable_path': os.path.join(BIN_FOLDER, 'chromedriver'),
-        'service_log_path': os.path.join(TMP_FOLDER, 'chromedriver.log'),
+        # 'service_log_path': os.path.join(TMP_FOLDER, 'chromedriver.log'),
     },
 
     'REMOTE': {
