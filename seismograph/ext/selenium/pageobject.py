@@ -327,11 +327,11 @@ class Page(_Base):
 
         return self._proxy
 
-    def open(self, params=None):
+    def open(self, data=None, params=None):
         if self.__url_path__:
             self.cache.clear()
             self.browser.router.go_to(
-                furl(self.__url_path__).add(params or {}).url,
+                furl(self.__url_path__.format(**data or {})).add(params or {}).url,
             )
         else:
             raise RuntimeError(

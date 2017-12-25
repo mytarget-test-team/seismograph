@@ -112,8 +112,8 @@ def main():
     delete_old_files()
     run_tests(pyv='2.7')
     run_tests(pyv='3.4')
-    run_example(pyv='2.7')
-    run_example(pyv='3.4')
+    # run_example(pyv='2.7')
+    # run_example(pyv='3.4')
     rebuild_docs()
     upload_to_pip()
 
