@@ -21,6 +21,7 @@ assert __version__
 
 class libs:
 
+    furl = 'furl>=1.0.1'
     flask = 'flask>=0.7'
     seisma = 'seisma>=0.0.1'
     requests = 'requests>=2.5'
@@ -52,6 +53,7 @@ EX_REQUIREMENTS = {
         libs.requests,
     ],
     'selenium': [
+        libs.furl,
         libs.selenium,
     ],
     'alchemy': [

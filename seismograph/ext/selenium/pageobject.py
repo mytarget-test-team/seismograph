@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 
+from furl import furl
 from six import with_metaclass
 
 from ...utils import pyv
@@ -326,11 +327,11 @@ class Page(_Base):
 
         return self._proxy
 
-    def open(self, **kwargs):
+    def open(self, params=None):
         if self.__url_path__:
             self.cache.clear()
             self.browser.router.go_to(
-                self.__url_path__.format(**kwargs),
+                furl(self.__url_path__).add(params or {}).url,
             )
         else:
             raise RuntimeError(
