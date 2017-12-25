@@ -27,8 +27,8 @@ project = u'seismograph'
 copyright = u'2015, M.Trifonov'
 author = u'M.Trifonov'
 
-version = '0.3.x'
-release = '0.3.x'
+version = '0.5.x'
+release = '0.5.x'
 
 language = None
 exclude_patterns = ['_build']
