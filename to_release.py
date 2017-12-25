@@ -14,7 +14,7 @@ import subprocess
 
 GIT_BIN = 'git'
 PYTHON_BIN = 'python'
-FROM_BRANCH = 'master'
+FROM_BRANCH = '0.5.x'
 PACKAGE_NAME = 'seismograph'
 
 SELF_PATH = os.path.abspath(
@@ -74,7 +74,7 @@ def delete_old_files():
 
 
 def run_example(pyv='2.7'):
-    command = 'PYTHONPATH={} SEISMOGRAPH_CONF={} python{} -m seismograph {} -v'
+    command = 'PYTHONPATH={} SEISMOGRAPH_CONF={} python{} -m seismograph {} -v -x'
     assert call(
         command.format(
             SELF_PATH, 'example.etc.base', pyv, os.path.join(SELF_PATH, 'example'),
