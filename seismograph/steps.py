@@ -192,21 +192,22 @@ def _make_run_test():
                 if self.config.STEPS_LOG:
                     self.log(u'  Flow: ', pyv.unicode_string(flow))
 
-                for step_method in get_step_methods(self):
-                    setattr(
-                        self,
-                        CURRENT_STEP_ATTRIBUTE_NAME,
-                        _create_current_step_info(self, step_method),
-                    )
-                    getattr(self, STEPS_HISTORY_ATTRIBUTE_NAME).append(
-                        _create_history_line(step_method),
-                    )
+                try:
+                    for step_method in get_step_methods(self):
+                        setattr(
+                            self,
+                            CURRENT_STEP_ATTRIBUTE_NAME,
+                            _create_current_step_info(self, step_method),
+                        )
+                        getattr(self, STEPS_HISTORY_ATTRIBUTE_NAME).append(
+                            _create_history_line(step_method),
+                        )
 
-                    _run_step(self, step_method, flow=flow)
-                else:
-                    setattr(self, STEPS_HISTORY_ATTRIBUTE_NAME, [])
-
-                _call_to_finish_method_if_exist(self, flow=flow)
+                        _run_step(self, step_method, flow=flow)
+                    else:
+                        setattr(self, STEPS_HISTORY_ATTRIBUTE_NAME, [])
+                finally:
+                    _call_to_finish_method_if_exist(self, flow=flow)
 
                 if self.config.FIRST_FLOW_ONLY:
                     break
