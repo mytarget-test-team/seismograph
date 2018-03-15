@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 
-try:
-    from urllib import quote
-except ImportError:  # please python 3
-    from urllib.parse import quote
+from __future__ import absolute_import
+
+from seisma import Seisma
 
 from ... import reason
 from ...utils import pyv
-from .client import SeismaClient
 from ... import layers as _layers
 
 
@@ -63,11 +61,9 @@ def _get_reason(obj, tb):
 
 
 def _get_case_name(case):
-    return quote(
-        '{}:{}'.format(
-            case.__mount_data__.suite_name,
-            case.__class__.__name__
-        ),
+    return '{}:{}'.format(
+        case.__mount_data__.suite_name,
+        case.__class__.__name__
     )
 
 
@@ -77,7 +73,7 @@ class SeismaProgramLayer(_layers.ProgramLayer):
 
     def on_init(self, program):
         if program.config.SEISMA:
-            self.client = SeismaClient(
+            self.client = Seisma(
                 **_get_client_kwargs_from_config(program.config)
             )
         else:
@@ -114,7 +110,7 @@ class SeismaCaseLayer(_layers.CaseLayer):
 
     def on_init(self, case):
         if case.config.SEISMA:
-            self.client = SeismaClient(
+            self.client = Seisma(
                 **_get_client_kwargs_from_config(case.config)
             )
         else:

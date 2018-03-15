@@ -94,6 +94,11 @@ def load_tests_from_case(
         ),
     )
 
+    cls_tag = getattr(cls, '__tag__', None)
+
+    if (config and config.TAGS) and (cls_tag not in config.TAGS):
+        raise StopIteration
+
     if method_name:
         for name in filter(lambda n: n == method_name, dir(cls)):
             case = cls(name, config=config)

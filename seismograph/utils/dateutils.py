@@ -139,6 +139,11 @@ def plus_years(datetime, years, *handlers):
     return _make_result(_make_copy(datetime - relativedelta(years=-years)), *handlers)
 
 
+def to_start_week(datetime, *handlers):
+    days = _dt.datetime.now().weekday()
+    return _make_result(minus_delta(datetime, days=days), *handlers)
+
+
 def to_start_month(datetime, *handlers):
     return _make_result(_make_copy(datetime.replace(day=1)), *handlers)
 

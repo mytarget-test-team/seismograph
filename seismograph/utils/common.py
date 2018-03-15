@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import time
 from . import pyv
@@ -152,3 +153,11 @@ def reduce_list(l1, l2):
     l2.sort()
 
     return lst, list(l2)
+
+
+def which(name):
+    for location in os.environ['PATH'].split(os.pathsep):
+        path = os.path.join(location, name)
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None

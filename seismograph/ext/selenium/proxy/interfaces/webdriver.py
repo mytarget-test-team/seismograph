@@ -68,6 +68,10 @@ class CommonWebDriverInterface(BaseInterface):
     def log_types(self):
         return self.__getattr_from_webdriver_or_webelement__('log_types')
 
+    @property
+    def w3c(self):
+        return self.__getattr_from_webdriver_or_webelement__('w3c')
+
     def start_client(self, *args, **kwargs):
         return self.__getattr_from_webdriver_or_webelement__('start_client')(*args, **kwargs)
 
