@@ -37,6 +37,18 @@ def get_parser():
             ', '.join(('"simple"', '"json_api"')),
         )
     )
+    parser.add_option(
+        '--static-folder',
+        dest='STATIC_FOLDER',
+        default=None,
+        help='Static folder'
+    )
+    parser.add_option(
+        '--static-url-path',
+        dest='STATIC_URL_PATH',
+        default=None,
+        help='Static url path'
+    )
 
     parser.add_option(
         '--no-debug',
@@ -71,6 +83,8 @@ def main():
         gevent=options.GEVENT,
         path_to_mocks=options.PATH_TO_MOCKS,
         block_timeout=constants.DEFAULT_BLOCK_TIMEOUT,
+        static_folder=options.STATIC_FOLDER,
+        static_url_path=options.STATIC_URL_PATH,
     )
 
     server = MockServer(config)
