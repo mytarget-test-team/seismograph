@@ -310,11 +310,11 @@ class AssertionBase(object):
         """
         self.__unittest__.assertNotEqual(first, second, msg=msg)
 
-    def raises(self, exc_class, callable_obj=None, *args, **kwargs):
+    def raises(self, *args, **kwargs):
         """
         Like assertRaises in unittest
         """
-        return self.__unittest__.assertRaises(exc_class, callable_obj, *args, **kwargs)
+        return self.__unittest__.assertRaises(*args, **kwargs)
 
     def is_instance(self, obj, cls, msg=None):
         """
