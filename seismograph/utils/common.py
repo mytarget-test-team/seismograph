@@ -104,7 +104,7 @@ def reduce_dict(d1, d2):
     The standard dictionary is d2.
     """
     def prepare_lists(l1, l2):
-        assert len(l1) == len(l2)
+        assert len(l1) == len(l2), 'Quantity of dict values is not equal: {} != {}'.format(len(l1), len(l2))
 
         for i in l1:
             if isinstance(i, dict):
