@@ -103,8 +103,9 @@ def reduce_dict(d1, d2):
     Leads dictionaries to the same species.
     The standard dictionary is d2.
     """
-    def prepare_lists(l1, l2):
-        assert len(l1) == len(l2), 'Quantity of dict values is not equal: {} != {}'.format(len(l1), len(l2))
+    def prepare_lists(l1, l2, k):
+        assert len(l1) == len(l2), \
+            'Quantity of dict values of the key \'{}\' is not equal: {} != {}'.format(k, len(l1), len(l2))
 
         for i in l1:
             if isinstance(i, dict):
@@ -119,7 +120,7 @@ def reduce_dict(d1, d2):
             reduce_dict(v, d2[k])
             if isinstance(v, dict) and isinstance(d2[k], dict)
             else
-            prepare_lists(v, d2[k]) or v
+            prepare_lists(v, d2[k], k) or v
             if isinstance(v, list) and isinstance(d2[k], list)
             else
             v,
