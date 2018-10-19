@@ -42,15 +42,6 @@ def load_module(module_name, package=None):
 
     logger.debug('Load module "{}"'.format(module_name))
 
-    # Can be conflict with global name
-    # We're obliged to talk about this
-    if module_name in sys.modules:
-        raise LoaderError(
-            'Module "{}" already exist in program context. {}.'.format(
-                module_name, sys.modules[module_name],
-            ),
-        )
-
     module = import_module(module_name)
 
     load_session = str(time.time() + randint(0, 1000))
